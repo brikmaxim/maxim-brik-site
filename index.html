@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Maxim Brik — Art Direction and Multidisciplinary Design" />
+    <title>Maxim Brik, Art Direction and Multidisciplinary Design</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/web_icon.svg?v=1" />
+    <link rel="stylesheet" href="./style.css?v=94" />
+  </head>
+  <body>
+    <main class="layout">
+      <aside class="column intro-column">
+        <div class="identity">
+          <p class="identity-name">
+            <button class="brand-icon-frame" type="button" aria-label="Switch color theme" aria-pressed="false">
+              <img class="brand-icon" src="./assets/web_icon.svg?v=1" alt="" />
+            </button>
+            <span>Maxim Brik</span>
+          </p>
+          <h1>Art Direction and Multidisciplinary Design</h1>
+        </div>
+        <nav class="tabs" aria-label="Sections">
+          <button class="tab active" type="button" data-tab="work">Work</button>
+          <button class="tab" type="button" data-tab="about">About</button>
+          <button class="tab" type="button" data-tab="team">Team</button>
+        </nav>
+      </aside>
+
+      <section class="column work-only projects-column">
+        <p class="label">Projects</p>
+        <nav id="project-list" aria-label="Projects"></nav>
+      </section>
+
+      <section class="column work-only details-column">
+        <dl>
+          <dt>Year</dt>
+          <dd id="meta-year"></dd>
+          <dt>Design</dt>
+          <dd id="meta-design"></dd>
+          <dt>Visit</dt>
+          <dd><a id="meta-url" href="#"></a></dd>
+        </dl>
+      </section>
+
+      <section class="column work-only gallery-column">
+        <div id="gallery"></div>
+      </section>
+
+      <section class="column about-only info-column" hidden>
+        <p class="label">Info</p>
+        <p>We are a studio offering comprehensive solutions tailored to your objectives related to products and visual presentations.</p>
+        <p>We create content for digital environments and the physical world.</p>
+      </section>
+
+      <section class="column about-only services-column" hidden>
+        <p class="label">Services</p>
+        <div class="services-list">
+          <p>Industrial design</p>
+          <p>Visual identity</p>
+          <p>Graphic systems</p>
+          <p>Product strategy</p>
+          <p>Web identity</p>
+          <p>Branding</p>
+        </div>
+      </section>
+
+      <section class="column about-only contacts-column" hidden>
+        <p class="label">Contact</p>
+        <ul>
+          <li><a href="mailto:hello@maximbrik.com">Email</a></li>
+          <li><a href="#">Phone</a></li>
+          <li><a href="#">Instagram</a></li>
+          <li><a href="#">GitHub</a></li>
+        </ul>
+      </section>
+
+      <section class="column team-only team-column" hidden>
+        <p class="label">Team</p>
+        <nav class="team-list" aria-label="Team">
+          <button class="team-button active" type="button" data-team="0">Alexey Molchanov</button>
+          <button class="team-button" type="button" data-team="1">Rustam Gaifutdinov</button>
+          <button class="team-button" type="button" data-team="2">Maxim Brik</button>
+        </nav>
+      </section>
+
+      <section class="column team-only team-about-column" hidden>
+        <p class="label">About</p>
+        <p id="team-role"></p>
+        <p id="team-description"></p>
+      </section>
+
+      <section class="column team-only team-pfp-column" hidden>
+        <p class="label">PFP</p>
+        <div class="team-pfp" id="team-pfp">
+          <canvas id="team-pfp-canvas" aria-hidden="true"></canvas>
+          <span class="team-pfp-fallback" id="team-pfp-initials"></span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <a href="#">Disclaimer, Privacy Policy</a>
+      <a href="mailto:hello@maximbrik.com">hello@maximbrik.com</a>
+      <a href="#">Instagram</a>
+      <button type="button" class="help-toggle">Press esc for <b>↻</b></button>
+    </footer>
+    <script src="./portfolio.js?v=80"></script>
+    <script src="./pfp-points.js?v=19"></script>
+  </body>
+</html>

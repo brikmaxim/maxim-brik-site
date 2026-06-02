@@ -1,0 +1,11 @@
+.DS_Store
+.vercel/
+node_modules/
+
+# Local working directories
+outputs/
+work/
+
+# Unused local source assets
+assets/abstract-*.gif
+assets/team/human-points.bin
