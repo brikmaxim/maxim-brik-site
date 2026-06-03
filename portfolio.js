@@ -28,6 +28,7 @@ const contentManifest = {
 const projectList = document.querySelector("#project-list");
 const gallery = document.querySelector("#gallery");
 const metaYear = document.querySelector("#meta-year");
+const metaDesignLabel = document.querySelector("#meta-design-label");
 const metaDesign = document.querySelector("#meta-design");
 const metaUrl = document.querySelector("#meta-url");
 const detailsColumn = document.querySelector(".details-column");
@@ -56,6 +57,7 @@ let wheelScrollTarget = window.scrollY;
 let suppressScrollSync = false;
 let detailsTransitionToken = 0;
 let gallerySeed = createGallerySeed();
+const mobileQuery = window.matchMedia("(max-width: 700px)");
 const colorLayers = ["lime", "blue", "white", "lime", "blue", "white"];
 const formatRatios = {
   portrait: 9 / 16,
@@ -198,11 +200,17 @@ function scheduleWheelScroll() {
 
 function updateProjectMeta(index) {
   const [title, year, design, url, images] = projects[index];
+  const isMobile = mobileQuery.matches;
   metaYear.textContent = year;
-  metaDesign.textContent = design;
+  metaDesignLabel.textContent = isMobile ? "Client" : "Design";
+  metaDesign.textContent = isMobile ? title : design;
   metaUrl.textContent = url ? new URL(url).hostname.replace(/^www\./, "") : "—";
   metaUrl.href = url || "#";
 }
+
+mobileQuery.addEventListener("change", () => {
+  if (activeProject >= 0) updateProjectMeta(activeProject);
+});
 
 async function animateProjectDetails(index, token) {
   const closed = await animateDetailsHeight(false, token);

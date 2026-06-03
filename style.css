@@ -127,8 +127,11 @@ dd a { color: var(--muted); overflow-wrap: anywhere; }
 @media (max-width: 700px) {
   .layout { display: block; height: auto; padding-bottom: 44px; }
   .column { margin-bottom: var(--gap); }
-  .intro-column, .projects-column, .details-column { position: relative; top: auto; }
-  .intro-column, .projects-column, .details-column, .info-column, .services-column, .contacts-column, .team-column, .team-about-column, .team-pfp-column { min-height: auto; padding: 6px; }
+  .intro-column, .projects-column { position: relative; top: auto; }
+  .details-column { position: sticky; z-index: 4; top: 8px; }
+  .intro-column, .projects-column, .details-column, .info-column, .services-column, .contacts-column, .team-column, .team-about-column, .team-pfp-column { min-height: auto; padding: 5px 6px; }
+  .intro-column { padding: 0; }
+  .project-button, .team-button { padding-top: 0; padding-bottom: 0; }
   .tabs { margin-top: 20px; }
   .gallery-column { max-height: none; }
   .site-footer { flex-wrap: wrap; font-size: inherit; }
