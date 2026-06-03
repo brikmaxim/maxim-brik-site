@@ -203,5 +203,5 @@
   };
 
   window.addEventListener("team-pfp-model-change", (event) => loadModel(event.detail.model));
-  loadModel(root.dataset.model || "alexey");
+  if (root.offsetParent !== null) loadModel(root.dataset.model || "alexey");
 })();
