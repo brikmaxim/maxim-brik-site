@@ -153,6 +153,13 @@ dd a { color: var(--muted); overflow-wrap: anywhere; }
   transition: filter 700ms cubic-bezier(.16, 1, .3, 1), transform 1267ms cubic-bezier(.45, 0, .2, 1), opacity 520ms ease;
 }
 .visual-media.is-loaded { filter: blur(0); transform: scale(1); opacity: 1; }
+.video-cover {
+  position: absolute; z-index: 3; inset: 0; display: block; border-radius: 3px 3px 0 0;
+  background: var(--visual-empty); pointer-events: none; opacity: 1;
+  transition: opacity 280ms ease, visibility 280ms;
+}
+.visual-video.video-frame-ready .video-cover { opacity: 0; visibility: hidden; }
+.visual-video:not(.video-frame-ready) video { visibility: hidden; }
 .visual-video video::-webkit-media-controls,
 .visual-video video::-webkit-media-controls-panel,
 .visual-video video::-webkit-media-controls-play-button,
@@ -241,6 +248,7 @@ body.glass-theme .visual-tags {
     width: calc(100% - 20px); max-width: 340px; background: #1b1b1b;
     backdrop-filter: none; -webkit-backdrop-filter: none; animation: none;
   }
+  .video-cover { background: #111; transition: none; }
   .layout { display: block; height: auto; padding-bottom: 44px; }
   .column { margin-bottom: var(--gap); }
   .intro-column, .projects-column { position: relative; top: auto; }

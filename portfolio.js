@@ -55,23 +55,7 @@ let parallaxCompositions = [];
 let projectGroups = [];
 
 function updateVisibleVideos() {
-  if (!mobileQuery.matches) {
-    visibleVideos.forEach((video) => video.play().catch(() => {}));
-    return;
-  }
-
-  const viewportCenter = window.innerHeight / 2;
-  const activeVideo = [...visibleVideos].sort((left, right) => {
-    const leftRect = left.getBoundingClientRect();
-    const rightRect = right.getBoundingClientRect();
-    return Math.abs((leftRect.top + leftRect.bottom) / 2 - viewportCenter)
-      - Math.abs((rightRect.top + rightRect.bottom) / 2 - viewportCenter);
-  })[0];
-
-  visibleVideos.forEach((video) => {
-    if (video === activeVideo) video.play().catch(() => {});
-    else video.pause();
-  });
+  visibleVideos.forEach((video) => video.play().catch(() => {}));
 }
 
 function scheduleVisibleVideos() {
@@ -454,9 +438,11 @@ function createMedia(src, title) {
     media.setAttribute("webkit-playsinline", "");
     media.setAttribute("x-webkit-airplay", "deny");
     media.removeAttribute("controls");
-    media.preload = "none";
+    media.preload = "metadata";
     media.addEventListener("loadeddata", reveal, { once: true });
     media.addEventListener("canplay", reveal, { once: true });
+    media.addEventListener("playing", () => media.closest(".visual")?.classList.add("video-frame-ready"));
+    media.addEventListener("pause", () => media.closest(".visual")?.classList.remove("video-frame-ready"));
     media.addEventListener("error", fallbackToOriginal);
   } else {
     media.alt = `${title} preview`;
@@ -524,7 +510,14 @@ async function renderGallery() {
         link.style.setProperty("--delay", `${Math.round(randomBetween(random, 0, 420))}ms`);
         const visualBox = document.createElement("span");
         visualBox.className = "visual-box";
-        if (mediaElement) visualBox.append(mediaElement);
+        if (mediaElement) {
+          visualBox.append(mediaElement);
+          if (mediaElement.tagName === "VIDEO") {
+            const videoCover = document.createElement("span");
+            videoCover.className = "video-cover";
+            visualBox.append(videoCover);
+          }
+        }
         link.append(visualBox);
         const tagLabel = document.createElement("span");
         tagLabel.className = "visual-tags";
