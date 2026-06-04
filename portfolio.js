@@ -54,6 +54,8 @@ let videoPlaybackFrame = 0;
 let nearbyMediaFrame = 0;
 let parallaxCompositions = [];
 let projectGroups = [];
+let clientSliderSelectionTimer = 0;
+let clientSliderUserInteracting = false;
 
 function centerActiveClient(animate = true) {
   if (!mobileQuery.matches) return;
@@ -63,6 +65,28 @@ function centerActiveClient(animate = true) {
   const activeRect = activeClient.getBoundingClientRect();
   const targetTop = mobileClientSlider.scrollTop + activeRect.top - sliderRect.top - (sliderRect.height - activeRect.height) / 2;
   mobileClientSlider.scrollTo({ top: Math.max(0, targetTop), behavior: animate ? "smooth" : "auto" });
+}
+
+function selectCenteredClient() {
+  clientSliderSelectionTimer = 0;
+  if (!clientSliderUserInteracting || !detailsColumn.classList.contains("client-slider-visible")) return;
+  clientSliderUserInteracting = false;
+  const sliderCenter = mobileClientSlider.getBoundingClientRect().top + mobileClientSlider.clientHeight / 2;
+  const centeredButton = [...mobileClientSlider.querySelectorAll(".client-slider-button")].reduce((closest, button) => {
+    const rect = button.getBoundingClientRect();
+    const distance = Math.abs(rect.top + rect.height / 2 - sliderCenter);
+    return !closest || distance < closest.distance ? { button, distance } : closest;
+  }, null)?.button;
+  if (!centeredButton) return;
+  const index = Number(centeredButton.dataset.project);
+  if (index === activeProject) centerActiveClient(true);
+  else scrollToProject(index);
+}
+
+function scheduleCenteredClientSelection() {
+  if (!clientSliderUserInteracting) return;
+  clearTimeout(clientSliderSelectionTimer);
+  clientSliderSelectionTimer = setTimeout(selectCenteredClient, 110);
 }
 
 function updateVisibleVideos() {
@@ -573,6 +597,14 @@ projects.forEach(([title], index) => {
   clientButton.addEventListener("click", () => scrollToProject(index));
   mobileClientSlider.append(clientButton);
 });
+
+mobileClientSlider.addEventListener("touchstart", () => {
+  clientSliderUserInteracting = true;
+}, { passive: true });
+mobileClientSlider.addEventListener("pointerdown", () => {
+  clientSliderUserInteracting = true;
+});
+mobileClientSlider.addEventListener("scroll", scheduleCenteredClientSelection, { passive: true });
 
 const projectsVisibilityObserver = new IntersectionObserver(([entry]) => {
   const sliderVisible = mobileQuery.matches && !entry.isIntersecting;
