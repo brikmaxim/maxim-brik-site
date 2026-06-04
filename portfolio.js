@@ -55,19 +55,8 @@ let nearbyMediaFrame = 0;
 let parallaxCompositions = [];
 let projectGroups = [];
 let clientSliderSelectionTimer = 0;
-let clientSliderUserInteracting = false;
-let clientSliderTouchStartY = 0;
-let clientSliderTouchStartScroll = 0;
-let clientSliderTouchMoved = false;
-let clientSliderPointerId = null;
-let clientSliderPointerStartY = 0;
-let clientSliderPointerStartScroll = 0;
-let clientSliderVelocity = 0;
-let clientSliderLastY = 0;
-let clientSliderLastTime = 0;
-let clientSliderGestureStartY = 0;
-let clientSliderGestureStartTime = 0;
-let clientSliderMotionFrame = 0;
+let clientSliderUserScrolling = false;
+let clientSliderProgrammatic = false;
 
 function centerActiveClient(animate = true) {
   if (!mobileQuery.matches) return;
@@ -76,7 +65,12 @@ function centerActiveClient(animate = true) {
   const sliderRect = mobileClientSlider.getBoundingClientRect();
   const activeRect = activeClient.getBoundingClientRect();
   const targetTop = mobileClientSlider.scrollTop + activeRect.top - sliderRect.top - (sliderRect.height - activeRect.height) / 2;
+  clientSliderProgrammatic = true;
   mobileClientSlider.scrollTo({ top: Math.max(0, targetTop), behavior: animate ? "smooth" : "auto" });
+  clearTimeout(clientSliderSelectionTimer);
+  clientSliderSelectionTimer = setTimeout(() => {
+    clientSliderProgrammatic = false;
+  }, animate ? 380 : 0);
 }
 
 function getCenteredClientButton() {
@@ -88,148 +82,27 @@ function getCenteredClientButton() {
   }, null)?.button;
 }
 
-function previewCenteredClient() {
-  const centeredButton = getCenteredClientButton();
-  if (!centeredButton) return;
-  document.querySelectorAll(".client-slider-button").forEach((button) => button.classList.toggle("active", button === centeredButton));
-}
-
-function cancelClientSliderMotion() {
-  if (clientSliderMotionFrame) cancelAnimationFrame(clientSliderMotionFrame);
-  clientSliderMotionFrame = 0;
-}
-
-function getClientButtonTargetTop(button) {
-  return button.offsetTop - (mobileClientSlider.clientHeight - button.offsetHeight) / 2;
-}
-
-function commitCenteredClient(centeredButton = getCenteredClientButton()) {
+function selectCenteredClient() {
   clientSliderSelectionTimer = 0;
-  clientSliderUserInteracting = false;
+  if (!clientSliderUserScrolling || clientSliderProgrammatic || !detailsColumn.classList.contains("client-slider-visible")) return;
+  clientSliderUserScrolling = false;
+  const centeredButton = getCenteredClientButton();
   if (!centeredButton) return;
   const index = Number(centeredButton.dataset.project);
   if (index === activeProject) centerActiveClient(true);
   else scrollToProject(index);
 }
 
-function settleClientSlider(centeredButton = getCenteredClientButton(), duration = 340) {
-  cancelClientSliderMotion();
-  if (!centeredButton) return;
-  const startTop = mobileClientSlider.scrollTop;
-  const targetTop = getClientButtonTargetTop(centeredButton);
-  const distance = targetTop - startTop;
-  const startTime = performance.now();
-  const animate = (time) => {
-    const progress = Math.min(1, (time - startTime) / duration);
-    const eased = 1 - Math.pow(1 - progress, 3);
-    mobileClientSlider.scrollTop = startTop + distance * eased;
-    previewCenteredClient();
-    if (progress < 1) clientSliderMotionFrame = requestAnimationFrame(animate);
-    else {
-      clientSliderMotionFrame = 0;
-      commitCenteredClient(centeredButton);
-    }
-  };
-  clientSliderMotionFrame = requestAnimationFrame(animate);
-}
-
-function startClientSliderRoll() {
-  cancelClientSliderMotion();
-  const totalDistance = clientSliderGestureStartY - clientSliderLastY;
-  const gestureDuration = Math.max(40, performance.now() - clientSliderGestureStartTime);
-  const gestureVelocity = totalDistance / gestureDuration;
-  if (!clientSliderTouchMoved) {
-    settleClientSlider();
-    return;
-  }
-  const momentum = clamp(totalDistance * 0.85 + gestureVelocity * 90 + clientSliderVelocity * 70, -88, 88);
-  const projectedTop = mobileClientSlider.scrollTop + momentum;
-  const targetButton = [...mobileClientSlider.querySelectorAll(".client-slider-button")].reduce((closest, button) => {
-    const distance = Math.abs(getClientButtonTargetTop(button) - projectedTop);
-    return !closest || distance < closest.distance ? { button, distance } : closest;
-  }, null)?.button;
-  const duration = clamp(420 + Math.abs(momentum) * 2.2, 440, 620);
-  settleClientSlider(targetButton, duration);
-}
-
-function updateClientSliderVelocity(currentY) {
-  const time = performance.now();
-  const elapsed = Math.max(8, time - clientSliderLastTime);
-  const instantaneous = (clientSliderLastY - currentY) / elapsed;
-  clientSliderVelocity = clientSliderVelocity * 0.55 + instantaneous * 0.45;
-  clientSliderLastY = currentY;
-  clientSliderLastTime = time;
-}
-
-function beginClientSliderTouch(event) {
-  if (!detailsColumn.classList.contains("client-slider-visible")) return;
+function beginClientSliderScroll() {
   clearTimeout(clientSliderSelectionTimer);
-  cancelClientSliderMotion();
-  clientSliderUserInteracting = true;
-  clientSliderTouchMoved = false;
-  clientSliderTouchStartY = event.touches[0].clientY;
-  clientSliderTouchStartScroll = mobileClientSlider.scrollTop;
-  clientSliderVelocity = 0;
-  clientSliderLastY = clientSliderTouchStartY;
-  clientSliderLastTime = performance.now();
-  clientSliderGestureStartY = clientSliderTouchStartY;
-  clientSliderGestureStartTime = clientSliderLastTime;
+  clientSliderUserScrolling = true;
+  clientSliderProgrammatic = false;
 }
 
-function moveClientSliderTouch(event) {
-  if (!clientSliderUserInteracting) return;
-  const distance = clientSliderTouchStartY - event.touches[0].clientY;
-  if (Math.abs(distance) < 2 && !clientSliderTouchMoved) return;
-  clientSliderTouchMoved = true;
-  event.preventDefault();
-  event.stopPropagation();
-  mobileClientSlider.scrollTop = clientSliderTouchStartScroll + distance;
-  updateClientSliderVelocity(event.touches[0].clientY);
-  previewCenteredClient();
-}
-
-function endClientSliderTouch() {
-  if (!clientSliderUserInteracting) return;
+function handleClientSliderScroll() {
+  if (!clientSliderUserScrolling || clientSliderProgrammatic) return;
   clearTimeout(clientSliderSelectionTimer);
-  startClientSliderRoll();
-}
-
-function beginClientSliderPointer(event) {
-  if (event.pointerType === "touch") return;
-  if (!detailsColumn.classList.contains("client-slider-visible")) return;
-  clearTimeout(clientSliderSelectionTimer);
-  cancelClientSliderMotion();
-  clientSliderPointerId = event.pointerId;
-  clientSliderPointerStartY = event.clientY;
-  clientSliderPointerStartScroll = mobileClientSlider.scrollTop;
-  clientSliderTouchMoved = false;
-  clientSliderUserInteracting = true;
-  clientSliderVelocity = 0;
-  clientSliderLastY = event.clientY;
-  clientSliderLastTime = performance.now();
-  clientSliderGestureStartY = event.clientY;
-  clientSliderGestureStartTime = clientSliderLastTime;
-  mobileClientSlider.setPointerCapture?.(event.pointerId);
-}
-
-function moveClientSliderPointer(event) {
-  if (event.pointerType === "touch") return;
-  if (event.pointerId !== clientSliderPointerId || !clientSliderUserInteracting) return;
-  const distance = clientSliderPointerStartY - event.clientY;
-  if (Math.abs(distance) < 2 && !clientSliderTouchMoved) return;
-  clientSliderTouchMoved = true;
-  event.preventDefault();
-  event.stopPropagation();
-  mobileClientSlider.scrollTop = clientSliderPointerStartScroll + distance;
-  updateClientSliderVelocity(event.clientY);
-  previewCenteredClient();
-}
-
-function endClientSliderPointer(event) {
-  if (event.pointerType === "touch") return;
-  if (event.pointerId !== clientSliderPointerId) return;
-  clientSliderPointerId = null;
-  endClientSliderTouch();
+  clientSliderSelectionTimer = setTimeout(selectCenteredClient, 140);
 }
 
 function updateVisibleVideos() {
@@ -741,14 +614,9 @@ projects.forEach(([title], index) => {
   mobileClientSlider.append(clientButton);
 });
 
-mobileClientSlider.addEventListener("touchstart", beginClientSliderTouch, { passive: true });
-mobileClientSlider.addEventListener("touchmove", moveClientSliderTouch, { passive: false });
-mobileClientSlider.addEventListener("touchend", endClientSliderTouch, { passive: true });
-mobileClientSlider.addEventListener("touchcancel", endClientSliderTouch, { passive: true });
-mobileClientSlider.addEventListener("pointerdown", beginClientSliderPointer);
-mobileClientSlider.addEventListener("pointermove", moveClientSliderPointer);
-mobileClientSlider.addEventListener("pointerup", endClientSliderPointer);
-mobileClientSlider.addEventListener("pointercancel", endClientSliderPointer);
+mobileClientSlider.addEventListener("touchstart", beginClientSliderScroll, { passive: true });
+mobileClientSlider.addEventListener("pointerdown", beginClientSliderScroll);
+mobileClientSlider.addEventListener("scroll", handleClientSliderScroll, { passive: true });
 
 const projectsVisibilityObserver = new IntersectionObserver(([entry]) => {
   const sliderVisible = mobileQuery.matches && !entry.isIntersecting;
