@@ -150,8 +150,11 @@
   });
 
   const draw = (time) => {
+    if (!pointCount || root.offsetParent === null) {
+      setTimeout(() => requestAnimationFrame(draw), 180);
+      return;
+    }
     requestAnimationFrame(draw);
-    if (!pointCount || root.offsetParent === null) return;
     resize();
     if (!pointerInWindow) targetYaw = Math.sin(time * 0.00042) * Math.PI / 6;
     pointerYaw += (targetYaw - pointerYaw) * 0.045;

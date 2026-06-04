@@ -6,9 +6,28 @@
     <meta name="description" content="Maxim Brik — Art Direction and Multidisciplinary Design" />
     <title>Maxim Brik, Art Direction and Multidisciplinary Design</title>
     <link rel="icon" type="image/svg+xml" href="./assets/web_icon.svg?v=1" />
-    <link rel="stylesheet" href="./style.css?v=129" />
+    <script>
+      try {
+        document.documentElement.classList.add(
+          localStorage.getItem("maxim-brik-access-v2") === "granted" ? "is-authorized" : "auth-pending"
+        );
+      } catch {
+        document.documentElement.classList.add("auth-pending");
+      }
+    </script>
+    <link rel="stylesheet" href="./style.css?v=142" />
   </head>
   <body>
+    <section class="auth-gate" aria-label="Password access">
+      <form class="auth-form" id="auth-form">
+        <p class="auth-title">Under construction</p>
+        <label class="auth-label" for="auth-password">Password</label>
+        <input class="auth-input" id="auth-password" name="password" type="password" autocomplete="current-password" required />
+        <button class="auth-submit" type="submit">Enter</button>
+        <p class="auth-message" id="auth-message" aria-live="polite"></p>
+      </form>
+    </section>
+
     <main class="layout">
       <aside class="column intro-column">
         <div class="identity">
@@ -100,12 +119,27 @@
     </main>
 
     <footer class="site-footer">
-      <a href="#">Disclaimer, Privacy Policy</a>
-      <a href="mailto:brikmaximalexandrovich@gmail.com">brikmaximalexandrovich@gmail.com</a>
+      <button type="button" class="disclaimer-toggle">Disclaimer, Privacy Policy</button>
       <a href="https://www.instagram.com/iammaximbrik/">@iammaximbrik</a>
       <button type="button" class="help-toggle">Press esc for recomp <b>↻</b></button>
     </footer>
-    <script src="./portfolio.js?v=99"></script>
-    <script src="./pfp-points.js?v=20"></script>
+
+    <section class="disclaimer-modal" aria-label="Disclaimer and Privacy Policy" aria-hidden="true">
+      <article class="disclaimer-panel">
+        <header class="disclaimer-header">
+          <p class="label">Disclaimer, Privacy Policy</p>
+          <button type="button" class="disclaimer-close" aria-label="Close disclaimer">Close</button>
+        </header>
+        <div class="disclaimer-content">
+          <p>All visual materials, project names and trademarks remain the property of their respective owners and are presented for portfolio and informational purposes only.</p>
+          <p>This website may contain links to third-party websites. We are not responsible for their content, availability or privacy practices.</p>
+          <p>This website does not intentionally collect personal data or use advertising cookies. Technical information may be processed by the hosting provider to operate and secure the website.</p>
+          <p>For copyright, privacy or removal requests, contact <a href="mailto:brikmaximalexandrovich@gmail.com">brikmaximalexandrovich@gmail.com</a>.</p>
+        </div>
+      </article>
+    </section>
+
+    <script src="./auth.js?v=3"></script>
+    <script src="./portfolio.js?v=109"></script>
   </body>
 </html>

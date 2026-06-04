@@ -12,15 +12,17 @@ Open `http://127.0.0.1:4173/`.
 
 ## Publish to GitHub
 
-Create an empty repository on GitHub, then run:
+The repository is ready for GitHub and contains no files above the GitHub web-upload limit.
+
+To publish the latest changes:
 
 ```bash
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
-git branch -M main
-git push -u origin main
+git add .
+git commit -m "Update portfolio site"
+git push origin main
 ```
 
-Use GitHub Desktop or the terminal. The repository contains a media file larger than the browser upload limit.
+You can also upload the files through the GitHub website.
 
 ## Deploy to Vercel
 
@@ -32,3 +34,5 @@ Use GitHub Desktop or the terminal. The repository contains a media file larger 
 6. Deploy.
 
 The project is plain HTML, CSS and client-side JavaScript. No build step is required.
+
+The site serves optimized mobile media from `assets/mobile-content` and original desktop media from `assets/content`.

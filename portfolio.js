@@ -35,6 +35,9 @@ const metaDesign = document.querySelector("#meta-design");
 const metaUrl = document.querySelector("#meta-url");
 const detailsColumn = document.querySelector(".details-column");
 const helpToggle = document.querySelector(".help-toggle");
+const disclaimerToggle = document.querySelector(".disclaimer-toggle");
+const disclaimerModal = document.querySelector(".disclaimer-modal");
+const disclaimerClose = document.querySelector(".disclaimer-close");
 const galleryColumn = document.querySelector(".gallery-column");
 const teamAboutColumn = document.querySelector(".team-about-column");
 const teamRole = document.querySelector("#team-role");
@@ -43,12 +46,51 @@ const teamPfpColumn = document.querySelector(".team-pfp-column");
 const teamPfp = document.querySelector("#team-pfp");
 const teamPfpInitials = document.querySelector("#team-pfp-initials");
 const themeToggle = document.querySelector(".brand-icon-frame");
+const workTab = document.querySelector('[data-tab="work"]');
+const mobileQuery = window.matchMedia("(max-width: 700px)");
+const visibleVideos = new Set();
+let videoPlaybackFrame = 0;
+let parallaxCompositions = [];
+let projectGroups = [];
+
+function updateVisibleVideos() {
+  if (!mobileQuery.matches) {
+    visibleVideos.forEach((video) => video.play().catch(() => {}));
+    return;
+  }
+
+  const viewportCenter = window.innerHeight / 2;
+  const activeVideo = [...visibleVideos].sort((left, right) => {
+    const leftRect = left.getBoundingClientRect();
+    const rightRect = right.getBoundingClientRect();
+    return Math.abs((leftRect.top + leftRect.bottom) / 2 - viewportCenter)
+      - Math.abs((rightRect.top + rightRect.bottom) / 2 - viewportCenter);
+  })[0];
+
+  visibleVideos.forEach((video) => {
+    if (video === activeVideo) video.play().catch(() => {});
+    else video.pause();
+  });
+}
+
+function scheduleVisibleVideos() {
+  if (videoPlaybackFrame || !visibleVideos.size) return;
+  videoPlaybackFrame = requestAnimationFrame(() => {
+    videoPlaybackFrame = 0;
+    updateVisibleVideos();
+  });
+}
+
 const videoObserver = new IntersectionObserver((entries) => {
   entries.forEach(({ isIntersecting, target }) => {
-    if (isIntersecting) target.play().catch(() => {});
-    else target.pause();
+    if (isIntersecting) visibleVideos.add(target);
+    else {
+      visibleVideos.delete(target);
+      target.pause();
+    }
   });
-}, { rootMargin: "240px" });
+  scheduleVisibleVideos();
+}, { rootMargin: mobileQuery.matches ? "0px" : "240px" });
 let activeProject = -1;
 let scrollFrame = 0;
 let parallaxFrame = 0;
@@ -60,7 +102,6 @@ let wheelScrollTarget = window.scrollY;
 let suppressScrollSync = false;
 let detailsTransitionToken = 0;
 let gallerySeed = createGallerySeed();
-const mobileQuery = window.matchMedia("(max-width: 700px)");
 const colorLayers = ["lime", "blue", "white", "lime", "blue", "white"];
 const formatRatios = {
   portrait: 9 / 16,
@@ -74,9 +115,7 @@ const teamMembers = [
   ["Rustam Gaifutdinov", "Web development frontend", "Builds responsive frontend experiences with close attention to interaction, performance and detail.", "human"],
   ["Maxim Brik", "Art Direction, 3D Artist", "Develops visual concepts and art direction, combining digital design with 3D imagery.", "maxim"],
 ];
-const contentFormats = ["portrait", "square", "widescreen"];
-const mediaDimensions = new Map();
-let mediaDimensionsPromise = null;
+let pfpViewerPromise = null;
 
 function createGallerySeed() {
   return crypto.getRandomValues(new Uint32Array(1))[0];
@@ -102,6 +141,20 @@ function shuffle(items, random) {
     [items[index], items[target]] = [items[target], items[index]];
   }
   return items;
+}
+
+function updatePfpViewer(model) {
+  if (!pfpViewerPromise) {
+    pfpViewerPromise = new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "./pfp-points.js?v=21";
+      script.addEventListener("load", resolve, { once: true });
+      document.body.append(script);
+    });
+  }
+  pfpViewerPromise.then(() => {
+    window.dispatchEvent(new CustomEvent("team-pfp-model-change", { detail: { model } }));
+  });
 }
 
 function clamp(value, min, max) {
@@ -141,11 +194,11 @@ function updateParallax() {
   const viewportCenter = window.innerHeight / 2;
   const wheelMomentum = parallaxImpulse;
   let moving = false;
-  document.querySelectorAll(".project-composition").forEach((composition) => {
+  parallaxCompositions.forEach(({ composition, visuals }) => {
     const rect = composition.getBoundingClientRect();
     if (rect.bottom < -window.innerHeight || rect.top > window.innerHeight * 2) return;
     const distance = rect.top + rect.height / 2 - viewportCenter;
-    composition.querySelectorAll(".visual").forEach((visual) => {
+    visuals.forEach((visual) => {
       const speed = Number(visual.dataset.parallax || 0);
       const target = Math.max(-260, Math.min(260, distance * speed + wheelMomentum * speed * 2.4));
       const current = Number(visual.dataset.parallaxCurrent || 0);
@@ -183,21 +236,7 @@ function resetMobileWorkColumns() {
 
 function updateMobileWorkColumns() {
   mobileColumnsFrame = 0;
-  const workIsActive = document.querySelector('[data-tab="work"]').classList.contains("active");
-  if (!mobileQuery.matches || !workIsActive) {
-    resetMobileWorkColumns();
-    return;
-  }
-
-  const galleryTop = galleryColumn.getBoundingClientRect().top;
-  const start = window.innerHeight * 0.62;
-  const end = detailsColumn.getBoundingClientRect().height + 18;
-  const progress = clamp((start - galleryTop) / Math.max(1, start - end), 0, 1);
-  const eased = progress * progress * (3 - 2 * progress);
-
-  introColumn.style.transform = `translate3d(0, ${(-18 * eased).toFixed(2)}px, 0)`;
-  projectsColumn.style.transform = `translate3d(0, ${(-12 * eased).toFixed(2)}px, 0)`;
-  detailsColumn.style.transform = `translate3d(0, ${(-4 * eased).toFixed(2)}px, 0)`;
+  resetMobileWorkColumns();
 }
 
 function scheduleMobileWorkColumns() {
@@ -262,7 +301,7 @@ function setActiveProject(index, { animate = true } = {}) {
   if (activeProject === index) return;
   activeProject = index;
   document.querySelectorAll(".project-button").forEach((button) => button.classList.toggle("active", Number(button.dataset.project) === index));
-  const workIsVisible = !detailsColumn.hidden && document.querySelector('[data-tab="work"]').classList.contains("active");
+  const workIsVisible = !detailsColumn.hidden && workTab.classList.contains("active");
   if (mobileQuery.matches || !animate || !workIsVisible || !metaYear.textContent) {
     detailsTransitionToken += 1;
     detailsColumn.style.height = "";
@@ -286,61 +325,18 @@ function scrollToProject(index) {
 }
 
 function getContent(slug) {
-  return (contentManifest[slug] || []).map((filename) => `assets/content/${slug}/${filename}`);
+  return (contentManifest[slug] || []).map((filename) => {
+    const folder = mobileQuery.matches ? "mobile-content" : "content";
+    return `assets/${folder}/${slug}/${filename}`;
+  });
 }
 
 function isVideoSource(src) {
   return /\.(mp4|mov)$/i.test(src);
 }
 
-function measureMedia(src) {
-  return new Promise((resolve) => {
-    const isVideo = isVideoSource(src);
-    const media = document.createElement(isVideo ? "video" : "img");
-    let timeout = 0;
-    let settled = false;
-    const finish = (dimensions = null) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeout);
-      media.onload = null;
-      media.onerror = null;
-      media.onloadedmetadata = null;
-      resolve(dimensions);
-    };
-    if (isVideo) {
-      media.preload = "metadata";
-      media.onloadedmetadata = () => finish({ width: media.videoWidth, height: media.videoHeight });
-    } else {
-      media.onload = () => finish({ width: media.naturalWidth, height: media.naturalHeight });
-    }
-    media.onerror = () => finish();
-    timeout = setTimeout(() => finish(), 4000);
-    media.src = src;
-    if (isVideo) media.load();
-  });
-}
-
-function preloadMediaDimensions() {
-  if (mediaDimensionsPromise) return mediaDimensionsPromise;
-  const sources = [...new Set(Object.entries(contentManifest).flatMap(([slug, filenames]) => (
-    filenames.map((filename) => `assets/content/${slug}/${filename}`)
-  )))];
-  mediaDimensionsPromise = Promise.all(sources.map(async (src) => {
-    mediaDimensions.set(src, await measureMedia(src));
-  }));
-  return mediaDimensionsPromise;
-}
-
 function getContentFormat(src, fallback) {
-  const dimensions = mediaDimensions.get(src);
-  if (!dimensions?.width || !dimensions?.height) return fallback;
-  const ratio = dimensions.width / dimensions.height;
-  return contentFormats.reduce((closest, format) => (
-    Math.abs(Math.log(ratio / formatRatios[format])) < Math.abs(Math.log(ratio / formatRatios[closest]))
-      ? format
-      : closest
-  ), contentFormats[0]);
+  return fallback;
 }
 
 function getContentWidth(width, format, isVideo) {
@@ -354,6 +350,10 @@ function getContentWidth(width, format, isVideo) {
 function loadMediaElement(media) {
   if (!media.dataset.src || media.dataset.loadedSource) return;
   media.dataset.loadedSource = "true";
+  if (media.tagName === "IMG") {
+    const rect = media.getBoundingClientRect();
+    media.fetchPriority = rect.bottom >= 0 && rect.top <= window.innerHeight ? "high" : "low";
+  }
   media.src = media.dataset.src;
   if (media.tagName === "VIDEO") {
     media.load();
@@ -367,7 +367,7 @@ const lazyMediaObserver = new IntersectionObserver((entries) => {
     lazyMediaObserver.unobserve(target);
     loadMediaElement(target);
   });
-}, { rootMargin: "900px 0px" });
+}, { rootMargin: mobileQuery.matches ? "180px 0px" : "900px 0px" });
 
 function rectsOverlap(a, b) {
   return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
@@ -382,7 +382,7 @@ function placeVisualTags() {
     if (!tags.length) return;
     const width = tag.getBoundingClientRect().width;
     const count = width < 74 ? 1 : width < 132 ? 2 : 3;
-    tag.textContent = tags.slice(0, count).join("/ ");
+    tag.querySelector(".visual-tags-text").textContent = tags.slice(0, count).join("/ ");
   });
   document.querySelectorAll(".project-composition").forEach((composition) => {
     const visuals = [...composition.querySelectorAll(".visual")].map((visual) => ({
@@ -422,9 +422,16 @@ function createMedia(src, title) {
   media.className = "visual-media is-loading";
   if (isVideo) {
     media.autoplay = true;
+    media.controls = false;
+    media.disablePictureInPicture = true;
+    media.disableRemotePlayback = true;
     media.muted = true;
     media.loop = true;
     media.playsInline = true;
+    media.setAttribute("playsinline", "");
+    media.setAttribute("webkit-playsinline", "");
+    media.setAttribute("x-webkit-airplay", "deny");
+    media.removeAttribute("controls");
     media.preload = "none";
     media.addEventListener("canplay", reveal, { once: true });
   } else {
@@ -498,7 +505,10 @@ async function renderGallery() {
         const tagLabel = document.createElement("span");
         tagLabel.className = "visual-tags";
         tagLabel.dataset.tags = [title.toLowerCase(), contentFormat, isVideoSource(src) ? "motion" : "image"].join("|");
-        tagLabel.textContent = tagLabel.dataset.tags.split("|").join("/ ");
+        const tagText = document.createElement("span");
+        tagText.className = "visual-tags-text";
+        tagText.textContent = tagLabel.dataset.tags.split("|").join("/ ");
+        tagLabel.append(tagText);
         link.append(tagLabel);
         compositionElement.append(link);
       });
@@ -506,6 +516,11 @@ async function renderGallery() {
     }
     gallery.append(group);
   });
+  projectGroups = [...gallery.querySelectorAll(".project-group")];
+  parallaxCompositions = [...gallery.querySelectorAll(".project-composition")].map((composition) => ({
+    composition,
+    visuals: [...composition.querySelectorAll(".visual")],
+  }));
   scheduleParallax();
   scheduleVisualTags();
 }
@@ -527,7 +542,7 @@ function updateTeamMember(index) {
   teamPfpInitials.textContent = name.split(" ").map((part) => part[0]).join("");
   teamPfp.setAttribute("aria-label", `${name} PFP`);
   teamPfp.dataset.model = model;
-  window.dispatchEvent(new CustomEvent("team-pfp-model-change", { detail: { model } }));
+  updatePfpViewer(model);
 }
 
 document.querySelectorAll(".team-button").forEach((button) => {
@@ -548,8 +563,6 @@ document.querySelectorAll(".team-button").forEach((button) => {
     resetColumns(profileColumns, true);
   });
 });
-
-updateTeamMember(0);
 
 function getRevealHeights(column) {
   const top = column.getBoundingClientRect().top;
@@ -662,9 +675,11 @@ function setGalleryPlayback(active) {
     if (active) videoObserver.observe(video);
     else {
       videoObserver.unobserve(video);
+      visibleVideos.delete(video);
       video.pause();
     }
   });
+  if (active) scheduleVisibleVideos();
 }
 
 async function switchSection(targetSection, token) {
@@ -740,6 +755,15 @@ async function recomposeGallery() {
 
 helpToggle.innerHTML = "Press esc for recomp <b>↻</b>";
 helpToggle.addEventListener("click", recomposeGallery);
+function setDisclaimerOpen(open) {
+  disclaimerModal.classList.toggle("is-open", open);
+  disclaimerModal.setAttribute("aria-hidden", String(!open));
+}
+disclaimerToggle.addEventListener("click", () => setDisclaimerOpen(true));
+disclaimerClose.addEventListener("click", () => setDisclaimerOpen(false));
+disclaimerModal.addEventListener("click", (event) => {
+  if (event.target === disclaimerModal) setDisclaimerOpen(false);
+});
 const themeOrder = ["dark", "light", "glass"];
 let themeIndex = 0;
 themeToggle.addEventListener("click", () => {
@@ -751,33 +775,41 @@ themeToggle.addEventListener("click", () => {
   themeToggle.setAttribute("aria-label", `Switch color theme, current: ${theme}`);
 });
 window.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") recomposeGallery();
+  if (event.key !== "Escape") return;
+  if (disclaimerModal.classList.contains("is-open")) setDisclaimerOpen(false);
+  else recomposeGallery();
 });
 
-const initialSection = location.hash.slice(1);
-if (initialSection && initialSection !== "work") document.querySelector(`[data-tab="${initialSection}"]`)?.click();
-renderGallery();
-setActiveProject(0, { animate: false });
-scheduleMobileWorkColumns();
+let siteInitialized = false;
+function initializeSite() {
+  if (siteInitialized) return;
+  siteInitialized = true;
+  const initialSection = location.hash.slice(1);
+  if (initialSection && initialSection !== "work") document.querySelector(`[data-tab="${initialSection}"]`)?.click();
+  renderGallery();
+  setActiveProject(0, { animate: false });
+  scheduleMobileWorkColumns();
+}
+
+if (document.documentElement.classList.contains("is-authorized")) initializeSite();
+else window.addEventListener("site-authorized", initializeSite, { once: true });
 
 window.addEventListener("scroll", () => {
   scheduleParallax();
-  scheduleMobileWorkColumns();
+  scheduleVisibleVideos();
   if (suppressScrollSync) return;
-  if (!document.querySelector('[data-tab="work"]').classList.contains("active")) return;
+  if (!workTab.classList.contains("active")) return;
+  if (!projectGroups.length) return;
   if (scrollFrame) return;
   scrollFrame = requestAnimationFrame(() => {
     scrollFrame = 0;
     const marker = window.scrollY + window.innerHeight * 0.35;
-    const groups = [...document.querySelectorAll(".project-group")];
-    const active = groups.reduce((current, group) => group.offsetTop <= marker ? group : current, groups[0]);
+    const active = projectGroups.reduce((current, group) => group.offsetTop <= marker ? group : current, projectGroups[0]);
     setActiveProject(Number(active.dataset.project));
   });
 });
 
-window.addEventListener("resize", scheduleMobileWorkColumns);
 window.addEventListener("resize", scheduleVisualTags);
-mobileQuery.addEventListener("change", scheduleMobileWorkColumns);
 
 window.addEventListener("wheel", (event) => {
   event.preventDefault();

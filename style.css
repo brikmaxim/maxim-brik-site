@@ -9,6 +9,37 @@ body {
   margin: 0; overflow-x: clip; background: var(--page); color: var(--text); font: 300 0.8rem/1.547 Arial, Helvetica, sans-serif;
   transition: background-color 320ms ease, color 320ms ease;
 }
+html.auth-pending { overflow: hidden; }
+html.auth-pending .layout, html.auth-pending .site-footer { pointer-events: none; user-select: none; }
+.auth-gate {
+  position: fixed; z-index: 1000; inset: 0; display: grid; padding: 8px 10px; place-items: center; background: rgba(0, 0, 0, 0.22); color: #eee;
+  backdrop-filter: blur(20px) saturate(0.75); -webkit-backdrop-filter: blur(20px) saturate(0.75);
+  opacity: 1; visibility: visible; transition: opacity 520ms cubic-bezier(.16, 1, .3, 1), visibility 520ms;
+}
+html.is-authorized .auth-gate { opacity: 0; visibility: hidden; pointer-events: none; }
+.auth-form {
+  display: grid; width: max(240px, calc((100vw - 40px) / 6)); max-width: 340px; padding: 5px 6px; border-radius: 3px; background: rgba(27, 27, 27, 0.88); text-align: center;
+  row-gap: 4px;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  animation: auth-reveal 700ms cubic-bezier(.16, 1, .3, 1) both;
+}
+.auth-title { margin-bottom: 0; }
+.auth-label { font-size: 0.805em; opacity: 0.6; }
+.auth-input {
+  width: 100%; margin: 0; padding: 2px 0; border: 0; border-bottom: 1px solid #555; border-radius: 0;
+  outline: 0; background: transparent; color: #eee; font: inherit; text-align: center; transition: border-color 240ms ease;
+}
+.auth-input:focus { border-color: #eee; }
+.auth-submit {
+  justify-self: center; padding: 0; border: 0; background: transparent; color: #888;
+  transition: color 240ms ease;
+}
+.auth-submit:hover, .auth-submit:focus-visible { color: #fff; }
+.auth-message:empty { display: none; }
+.auth-message { margin: 0; color: #888; font-size: 0.805em; }
+.auth-error { animation: auth-shake 360ms cubic-bezier(.16, 1, .3, 1); }
+@keyframes auth-reveal { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes auth-shake { 0%, 100% { transform: translateX(0); } 35% { transform: translateX(-5px); } 70% { transform: translateX(3px); } }
 body.light-theme {
   --page: #fff; --panel: #000; --text: #111; --panel-text: #eee; --muted: #888;
   --subtle: #777; --active: #fff; --hover: #555; --visual-empty: #222; --icon-filter: none; --panel-filter: none;
@@ -100,7 +131,8 @@ dd a { color: var(--muted); overflow-wrap: anywhere; }
 }
 .visual-box {
   position: relative; display: block; width: 100%; aspect-ratio: var(--ratio); overflow: hidden; border-radius: 3px 3px 0 0;
-  background: var(--visual-empty);
+  background: var(--visual-empty); transform-origin: center bottom;
+  transition: transform 1267ms cubic-bezier(.45, 0, .2, 1);
 }
 .visual-box::before {
   content: ""; display: block; width: 100%; height: 100%; border-radius: 3px 3px 0 0; background: var(--visual-empty);
@@ -113,7 +145,7 @@ dd a { color: var(--muted); overflow-wrap: anywhere; }
 .visual-img .visual-box, .visual-video .visual-box,
 .visual-img .visual-box::before, .visual-video .visual-box::before { background: transparent; }
 .visual:hover { opacity: 1; }
-.visual:hover .visual-box::before { transform: scale(1.15); }
+.visual:hover .visual-box { transform: scale(1.15); }
 .visual-media {
   position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 3px 3px 0 0;
   pointer-events: none; filter: blur(14px); transform: scale(1.055); opacity: 0.86;
@@ -121,15 +153,29 @@ dd a { color: var(--muted); overflow-wrap: anywhere; }
   transition: filter 700ms cubic-bezier(.16, 1, .3, 1), transform 1267ms cubic-bezier(.45, 0, .2, 1), opacity 520ms ease;
 }
 .visual-media.is-loaded { filter: blur(0); transform: scale(1); opacity: 1; }
-.visual:hover .visual-media.is-loaded { transform: scale(1.15); }
+.visual-video video::-webkit-media-controls,
+.visual-video video::-webkit-media-controls-panel,
+.visual-video video::-webkit-media-controls-play-button,
+.visual-video video::-webkit-media-controls-start-playback-button,
+.visual-video video::-webkit-media-controls-overlay-play-button { display: none !important; -webkit-appearance: none; opacity: 0; pointer-events: none; }
 .visual-tags {
   position: relative; z-index: 2; display: block; width: 100%; margin-top: 0;
   min-height: 14px; overflow: hidden; padding: 2px 4px; border-radius: 0 0 3px 3px; background: #000; color: #fff;
   font-size: 0.805em; line-height: 1.1; opacity: 1;
   pointer-events: none; text-overflow: ellipsis; white-space: nowrap;
+  transform-origin: center top;
+  transition: transform 1267ms cubic-bezier(.45, 0, .2, 1);
 }
+.visual-tags-text {
+  display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  transform-origin: left center;
+  transition: transform 1267ms cubic-bezier(.45, 0, .2, 1);
+}
+.visual:hover .visual-tags { transform: scaleX(1.15); }
+.visual:hover .visual-tags-text { transform: scaleX(0.869565); }
 .visual-tags-shift-left .visual-tags { text-align: left; padding-right: 28px; }
 .visual-tags-shift-right .visual-tags { text-align: right; padding-left: 28px; }
+.visual-tags-shift-right .visual-tags-text { transform-origin: right center; }
 body.glass-theme .visual-tags {
   background: var(--panel); color: var(--panel-text);
   backdrop-filter: var(--panel-filter); -webkit-backdrop-filter: var(--panel-filter);
@@ -163,24 +209,44 @@ body.glass-theme .visual-tags {
   display: flex; gap: 10px; align-items: center; color: var(--text); background: var(--page);
   transition: background-color 320ms ease, color 320ms ease;
 }
+.disclaimer-toggle, .disclaimer-close { padding: 0; border: 0; background: transparent; color: inherit; }
 .help-toggle { margin-left: auto; padding: 0; border: 0; background: transparent; }
 .help-toggle b { display: inline-grid; width: 17px; height: 17px; place-items: center; border: 1px solid var(--text); border-radius: 50%; font-size: 11px; }
+.disclaimer-modal {
+  position: fixed; z-index: 900; inset: 0; display: grid; padding: 10px; place-items: center;
+  background: rgba(0, 0, 0, 0.22); backdrop-filter: blur(20px) saturate(0.75); -webkit-backdrop-filter: blur(20px) saturate(0.75);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 420ms cubic-bezier(.16, 1, .3, 1), visibility 420ms;
+}
+.disclaimer-modal.is-open { opacity: 1; visibility: visible; pointer-events: auto; }
+.disclaimer-panel {
+  position: relative; display: grid; width: min(560px, 100%); row-gap: 16px; padding: 12px 14px 14px;
+  border-radius: 3px; background: var(--panel); color: var(--panel-text);
+  backdrop-filter: var(--panel-filter); -webkit-backdrop-filter: var(--panel-filter);
+  animation: auth-reveal 520ms cubic-bezier(.16, 1, .3, 1) both;
+}
+.disclaimer-header { display: flex; gap: 16px; align-items: baseline; justify-content: space-between; }
+.disclaimer-header .label { margin: 0; }
+.disclaimer-content { display: grid; width: 100%; row-gap: 10px; }
+.disclaimer-content p { text-align: left; line-height: 1.55; }
+.disclaimer-panel a { color: var(--muted); overflow-wrap: anywhere; }
+.disclaimer-close { flex: 0 0 auto; color: var(--muted); }
 
 @media (max-width: 700px) {
+  .auth-form { width: 100%; max-width: none; }
   .layout { display: block; height: auto; padding-bottom: 44px; }
   .column { margin-bottom: var(--gap); }
   .intro-column, .projects-column { position: relative; top: auto; }
   .details-column { position: sticky; z-index: 4; top: 8px; }
-  .intro-column, .projects-column, .details-column {
-    transition: transform 260ms cubic-bezier(.16, 1, .3, 1);
-    will-change: transform;
-  }
   .intro-column, .projects-column, .details-column, .info-column, .services-column, .contacts-column, .team-column, .team-about-column, .team-pfp-column { min-height: auto; padding: 5px 6px; }
   .intro-column { padding: 0; }
   .project-button, .team-button { padding-top: 0; padding-bottom: 0; }
   .tabs { margin-top: 20px; }
   .gallery-column { position: relative; z-index: auto; top: auto; right: auto; left: auto; max-height: none; }
+  .visual { --visual-scale: 1; }
   .project-composition { --composition-scale: 0.58; }
   .site-footer { flex-wrap: wrap; font-size: inherit; }
-  .site-footer a:first-child { display: none; }
+  .disclaimer-modal { padding: 10px; align-items: center; }
+  .disclaimer-panel { width: 100%; row-gap: 12px; padding: 10px; }
+  .disclaimer-content { row-gap: 8px; }
 }
