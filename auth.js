@@ -21,7 +21,16 @@ function grantAccess() {
   window.dispatchEvent(new CustomEvent("site-authorized"));
 }
 
+const authFallbackTimer = setTimeout(() => {
+  if (!document.documentElement.classList.contains("auth-pending")) return;
+  authForm.hidden = false;
+  authForm.style.display = "grid";
+  authForm.style.opacity = "1";
+  authForm.style.visibility = "visible";
+}, 1200);
+
 if (document.documentElement.classList.contains("is-authorized")) {
+  clearTimeout(authFallbackTimer);
   authForm.hidden = true;
 } else {
   requestAnimationFrame(() => authPassword.focus());

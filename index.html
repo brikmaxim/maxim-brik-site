@@ -15,7 +15,12 @@
         document.documentElement.classList.add("auth-pending");
       }
     </script>
-    <link rel="stylesheet" href="./style.css?v=142" />
+    <style>
+      .auth-gate { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; background: #000; color: #eee; }
+      .auth-form { display: grid; width: min(340px, calc(100% - 20px)); padding: 5px 6px; border-radius: 3px; background: #1b1b1b; text-align: center; }
+      html.is-authorized .auth-gate { display: none; }
+    </style>
+    <link rel="stylesheet" href="./style.css?v=143" />
   </head>
   <body>
     <section class="auth-gate" aria-label="Password access">
@@ -139,7 +144,7 @@
       </article>
     </section>
 
-    <script src="./auth.js?v=3"></script>
-    <script src="./portfolio.js?v=110"></script>
+    <script src="./auth.js?v=4"></script>
+    <script src="./portfolio.js?v=111"></script>
   </body>
 </html>

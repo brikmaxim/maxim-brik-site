@@ -233,7 +233,14 @@ body.glass-theme .visual-tags {
 .disclaimer-close { flex: 0 0 auto; color: var(--muted); }
 
 @media (max-width: 700px) {
-  .auth-form { width: 100%; max-width: none; }
+  .auth-gate {
+    background: #000;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  .auth-form {
+    width: calc(100% - 20px); max-width: 340px; background: #1b1b1b;
+    backdrop-filter: none; -webkit-backdrop-filter: none; animation: none;
+  }
   .layout { display: block; height: auto; padding-bottom: 44px; }
   .column { margin-bottom: var(--gap); }
   .intro-column, .projects-column { position: relative; top: auto; }
