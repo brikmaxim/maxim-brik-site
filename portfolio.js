@@ -55,6 +55,16 @@ let nearbyMediaFrame = 0;
 let parallaxCompositions = [];
 let projectGroups = [];
 
+function centerActiveClient(animate = true) {
+  if (!mobileQuery.matches) return;
+  const activeClient = mobileClientSlider.querySelector(".active");
+  if (!activeClient || !mobileClientSlider.clientHeight) return;
+  const sliderRect = mobileClientSlider.getBoundingClientRect();
+  const activeRect = activeClient.getBoundingClientRect();
+  const targetTop = mobileClientSlider.scrollTop + activeRect.top - sliderRect.top - (sliderRect.height - activeRect.height) / 2;
+  mobileClientSlider.scrollTo({ top: Math.max(0, targetTop), behavior: animate ? "smooth" : "auto" });
+}
+
 function updateVisibleVideos() {
   visibleVideos.forEach((video) => video.play().catch(() => {}));
 }
@@ -288,13 +298,7 @@ function setActiveProject(index, { animate = true } = {}) {
   activeProject = index;
   document.querySelectorAll(".project-button").forEach((button) => button.classList.toggle("active", Number(button.dataset.project) === index));
   document.querySelectorAll(".client-slider-button").forEach((button) => button.classList.toggle("active", Number(button.dataset.project) === index));
-  if (mobileQuery.matches) {
-    const activeClient = mobileClientSlider.querySelector(`[data-project="${index}"]`);
-    if (activeClient) {
-      const targetLeft = activeClient.offsetLeft - (mobileClientSlider.clientWidth - activeClient.offsetWidth) / 2;
-      mobileClientSlider.scrollTo({ left: Math.max(0, targetLeft), behavior: animate ? "smooth" : "auto" });
-    }
-  }
+  centerActiveClient(animate);
   const workIsVisible = !detailsColumn.hidden && workTab.classList.contains("active");
   if (mobileQuery.matches || !animate || !workIsVisible || !metaYear.textContent) {
     detailsTransitionToken += 1;
@@ -569,6 +573,13 @@ projects.forEach(([title], index) => {
   clientButton.addEventListener("click", () => scrollToProject(index));
   mobileClientSlider.append(clientButton);
 });
+
+const projectsVisibilityObserver = new IntersectionObserver(([entry]) => {
+  const sliderVisible = mobileQuery.matches && !entry.isIntersecting;
+  detailsColumn.classList.toggle("client-slider-visible", sliderVisible);
+  if (sliderVisible) requestAnimationFrame(() => centerActiveClient(false));
+}, { threshold: 0 });
+projectsVisibilityObserver.observe(projectsColumn);
 
 function updateTeamMember(index) {
   const [name, role, description, model] = teamMembers[index];

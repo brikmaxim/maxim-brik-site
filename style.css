@@ -257,20 +257,24 @@ body.glass-theme .visual-tags {
   .intro-column, .projects-column, .details-column, .info-column, .services-column, .contacts-column, .team-column, .team-about-column, .team-pfp-column { min-height: auto; padding: 5px 6px; }
   .intro-column { padding: 0; }
   .project-button, .team-button { padding-top: 0; padding-bottom: 0; }
+  .meta-client { min-width: 0; overflow: hidden; }
+  .meta-client > #meta-design { display: inline; }
   .mobile-client-slider {
-    display: flex; width: calc(100% + 12px); margin: 5px -6px -5px; overflow-x: auto; overflow-y: hidden;
-    padding: 4px 6px 5px; gap: 12px; scroll-padding-inline: 6px; scroll-snap-type: x proximity;
-    overscroll-behavior-x: contain; touch-action: pan-x; -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    display: none; width: 100%; height: 58px; overflow-x: hidden; overflow-y: auto;
+    padding: 19px 0; gap: 0; scroll-padding-block: 19px; scroll-snap-type: y mandatory;
+    overscroll-behavior-y: contain; touch-action: pan-y; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; mask-image: linear-gradient(to bottom, transparent, #000 28%, #000 72%, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 28%, #000 72%, transparent);
   }
   .mobile-client-slider::-webkit-scrollbar { display: none; }
+  .details-column.client-slider-visible .meta-client > #meta-design { display: none; }
+  .details-column.client-slider-visible .mobile-client-slider { display: flex; flex-direction: column; }
   .client-slider-button {
-    flex: 0 0 auto; padding: 0; border: 0; background: transparent; color: var(--subtle); text-align: left;
+    flex: 0 0 auto; min-height: 20px; padding: 0; border: 0; outline: 0; background: transparent; color: var(--panel-text); opacity: 0.22; text-align: left;
     scroll-snap-align: center; white-space: nowrap;
-    transition: color 240ms ease, transform 320ms cubic-bezier(.16, 1, .3, 1);
+    transition: color 240ms ease, opacity 320ms cubic-bezier(.16, 1, .3, 1);
   }
-  .client-slider-button.active { color: var(--active); transform: translateX(5px); }
-  .client-slider-button.active::before { content: "• "; }
+  .client-slider-button.active { color: var(--active); opacity: 1; }
   .tabs { margin-top: 20px; }
   .gallery-column { position: relative; z-index: auto; top: auto; right: auto; left: auto; max-height: none; }
   .visual { --visual-scale: 1; }
