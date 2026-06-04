@@ -21,7 +21,7 @@ const contentManifest = {
     "021.mp4", "022.mp4", "023.mp4", "024.mp4", "025.mp4", "026.mp4", "027.mp4", "028.jpg", "029.jpg", "030.jpg",
     "031.jpg", "032.jpg", "033.jpg", "034.jpg", "035.png", "036.png", "037.png", "038.jpg", "039.png", "040.png",
     "041.mp4", "042.jpg", "043.png", "044.png", "045.jpg", "046.png", "047.jpg", "048.jpg", "049.jpg", "050.jpg",
-    "051.mp4", "052.jpg", "053.jpg",
+    "051.mp4", "052.jpg", "053.jpg", "054.jpg", "055.jpg",
   ],
   "sicko": ["001.png", "002.png", "003.png"],
   "solutions": ["001.jpg", "002.png", "003.png", "004.png", "005.png", "006.png", "007.png"],
@@ -42,6 +42,8 @@ const contentTags = {
     "051.mp4": ["AI", "RnD", "Motion"],
     "052.jpg": ["AI", "RnD"],
     "053.jpg": ["AI", "RnD"],
+    "054.jpg": ["AI", "RnD"],
+    "055.jpg": ["AI", "RnD"],
   },
 };
 
