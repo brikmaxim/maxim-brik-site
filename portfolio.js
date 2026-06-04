@@ -50,6 +50,7 @@ const workTab = document.querySelector('[data-tab="work"]');
 const mobileQuery = window.matchMedia("(max-width: 700px)");
 const visibleVideos = new Set();
 let videoPlaybackFrame = 0;
+let nearbyMediaFrame = 0;
 let parallaxCompositions = [];
 let projectGroups = [];
 
@@ -353,12 +354,27 @@ function loadMediaElement(media) {
   if (media.tagName === "IMG") {
     const rect = media.getBoundingClientRect();
     media.fetchPriority = rect.bottom >= 0 && rect.top <= window.innerHeight ? "high" : "low";
+    media.loading = "eager";
   }
   media.src = media.dataset.src;
   if (media.tagName === "VIDEO") {
     media.load();
     videoObserver.observe(media);
   }
+}
+
+function loadNearbyMedia() {
+  nearbyMediaFrame = 0;
+  const margin = mobileQuery.matches ? 600 : 1000;
+  document.querySelectorAll(".visual-media:not([data-loaded-source])").forEach((media) => {
+    const rect = media.getBoundingClientRect();
+    if (rect.bottom >= -margin && rect.top <= window.innerHeight + margin) loadMediaElement(media);
+  });
+}
+
+function scheduleNearbyMedia() {
+  if (nearbyMediaFrame) return;
+  nearbyMediaFrame = requestAnimationFrame(loadNearbyMedia);
 }
 
 const lazyMediaObserver = new IntersectionObserver((entries) => {
@@ -419,6 +435,12 @@ function createMedia(src, title) {
   const isVideo = isVideoSource(src);
   const media = document.createElement(isVideo ? "video" : "img");
   const reveal = () => media.classList.add("is-loaded");
+  const fallbackToOriginal = () => {
+    if (!media.dataset.src.includes("assets/mobile-content/") || media.dataset.usedFallback) return;
+    media.dataset.usedFallback = "true";
+    media.src = media.dataset.src.replace("assets/mobile-content/", "assets/content/");
+    if (isVideo) media.load();
+  };
   media.className = "visual-media is-loading";
   if (isVideo) {
     media.autoplay = true;
@@ -433,12 +455,14 @@ function createMedia(src, title) {
     media.setAttribute("x-webkit-airplay", "deny");
     media.removeAttribute("controls");
     media.preload = "none";
+    media.addEventListener("loadeddata", reveal, { once: true });
     media.addEventListener("canplay", reveal, { once: true });
+    media.addEventListener("error", fallbackToOriginal);
   } else {
     media.alt = `${title} preview`;
-    media.loading = "lazy";
     media.decoding = "async";
     media.addEventListener("load", reveal, { once: true });
+    media.addEventListener("error", fallbackToOriginal);
   }
   media.dataset.src = src;
   lazyMediaObserver.observe(media);
@@ -523,6 +547,7 @@ async function renderGallery() {
   }));
   scheduleParallax();
   scheduleVisualTags();
+  scheduleNearbyMedia();
 }
 
 projects.forEach(([title], index) => {
@@ -797,6 +822,7 @@ else window.addEventListener("site-authorized", initializeSite, { once: true });
 window.addEventListener("scroll", () => {
   scheduleParallax();
   scheduleVisibleVideos();
+  scheduleNearbyMedia();
   if (suppressScrollSync) return;
   if (!workTab.classList.contains("active")) return;
   if (!projectGroups.length) return;
@@ -810,6 +836,7 @@ window.addEventListener("scroll", () => {
 });
 
 window.addEventListener("resize", scheduleVisualTags);
+window.addEventListener("resize", scheduleNearbyMedia);
 
 window.addEventListener("wheel", (event) => {
   event.preventDefault();
