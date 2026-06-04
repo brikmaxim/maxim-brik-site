@@ -56,6 +56,12 @@ let parallaxCompositions = [];
 let projectGroups = [];
 let clientSliderSelectionTimer = 0;
 let clientSliderUserInteracting = false;
+let clientSliderTouchStartY = 0;
+let clientSliderTouchStartScroll = 0;
+let clientSliderTouchMoved = false;
+let clientSliderPointerId = null;
+let clientSliderPointerStartY = 0;
+let clientSliderPointerStartScroll = 0;
 
 function centerActiveClient(animate = true) {
   if (!mobileQuery.matches) return;
@@ -67,16 +73,26 @@ function centerActiveClient(animate = true) {
   mobileClientSlider.scrollTo({ top: Math.max(0, targetTop), behavior: animate ? "smooth" : "auto" });
 }
 
-function selectCenteredClient() {
-  clientSliderSelectionTimer = 0;
-  if (!clientSliderUserInteracting || !detailsColumn.classList.contains("client-slider-visible")) return;
-  clientSliderUserInteracting = false;
+function getCenteredClientButton() {
   const sliderCenter = mobileClientSlider.getBoundingClientRect().top + mobileClientSlider.clientHeight / 2;
-  const centeredButton = [...mobileClientSlider.querySelectorAll(".client-slider-button")].reduce((closest, button) => {
+  return [...mobileClientSlider.querySelectorAll(".client-slider-button")].reduce((closest, button) => {
     const rect = button.getBoundingClientRect();
     const distance = Math.abs(rect.top + rect.height / 2 - sliderCenter);
     return !closest || distance < closest.distance ? { button, distance } : closest;
   }, null)?.button;
+}
+
+function previewCenteredClient() {
+  const centeredButton = getCenteredClientButton();
+  if (!centeredButton) return;
+  document.querySelectorAll(".client-slider-button").forEach((button) => button.classList.toggle("active", button === centeredButton));
+}
+
+function selectCenteredClient() {
+  clientSliderSelectionTimer = 0;
+  if (!clientSliderUserInteracting || !detailsColumn.classList.contains("client-slider-visible")) return;
+  clientSliderUserInteracting = false;
+  const centeredButton = getCenteredClientButton();
   if (!centeredButton) return;
   const index = Number(centeredButton.dataset.project);
   if (index === activeProject) centerActiveClient(true);
@@ -87,6 +103,60 @@ function scheduleCenteredClientSelection() {
   if (!clientSliderUserInteracting) return;
   clearTimeout(clientSliderSelectionTimer);
   clientSliderSelectionTimer = setTimeout(selectCenteredClient, 110);
+}
+
+function beginClientSliderTouch(event) {
+  if (!detailsColumn.classList.contains("client-slider-visible")) return;
+  clearTimeout(clientSliderSelectionTimer);
+  clientSliderUserInteracting = true;
+  clientSliderTouchMoved = false;
+  clientSliderTouchStartY = event.touches[0].clientY;
+  clientSliderTouchStartScroll = mobileClientSlider.scrollTop;
+}
+
+function moveClientSliderTouch(event) {
+  if (!clientSliderUserInteracting) return;
+  const distance = clientSliderTouchStartY - event.touches[0].clientY;
+  if (Math.abs(distance) < 2 && !clientSliderTouchMoved) return;
+  clientSliderTouchMoved = true;
+  event.preventDefault();
+  event.stopPropagation();
+  mobileClientSlider.scrollTop = clientSliderTouchStartScroll + distance;
+  previewCenteredClient();
+}
+
+function endClientSliderTouch() {
+  if (!clientSliderUserInteracting) return;
+  clearTimeout(clientSliderSelectionTimer);
+  clientSliderSelectionTimer = setTimeout(selectCenteredClient, clientSliderTouchMoved ? 16 : 0);
+}
+
+function beginClientSliderPointer(event) {
+  if (!detailsColumn.classList.contains("client-slider-visible")) return;
+  clearTimeout(clientSliderSelectionTimer);
+  clientSliderPointerId = event.pointerId;
+  clientSliderPointerStartY = event.clientY;
+  clientSliderPointerStartScroll = mobileClientSlider.scrollTop;
+  clientSliderTouchMoved = false;
+  clientSliderUserInteracting = true;
+  mobileClientSlider.setPointerCapture?.(event.pointerId);
+}
+
+function moveClientSliderPointer(event) {
+  if (event.pointerId !== clientSliderPointerId || !clientSliderUserInteracting) return;
+  const distance = clientSliderPointerStartY - event.clientY;
+  if (Math.abs(distance) < 2 && !clientSliderTouchMoved) return;
+  clientSliderTouchMoved = true;
+  event.preventDefault();
+  event.stopPropagation();
+  mobileClientSlider.scrollTop = clientSliderPointerStartScroll + distance;
+  previewCenteredClient();
+}
+
+function endClientSliderPointer(event) {
+  if (event.pointerId !== clientSliderPointerId) return;
+  clientSliderPointerId = null;
+  endClientSliderTouch();
 }
 
 function updateVisibleVideos() {
@@ -598,12 +668,14 @@ projects.forEach(([title], index) => {
   mobileClientSlider.append(clientButton);
 });
 
-mobileClientSlider.addEventListener("touchstart", () => {
-  clientSliderUserInteracting = true;
-}, { passive: true });
-mobileClientSlider.addEventListener("pointerdown", () => {
-  clientSliderUserInteracting = true;
-});
+mobileClientSlider.addEventListener("touchstart", beginClientSliderTouch, { passive: true });
+mobileClientSlider.addEventListener("touchmove", moveClientSliderTouch, { passive: false });
+mobileClientSlider.addEventListener("touchend", endClientSliderTouch, { passive: true });
+mobileClientSlider.addEventListener("touchcancel", endClientSliderTouch, { passive: true });
+mobileClientSlider.addEventListener("pointerdown", beginClientSliderPointer);
+mobileClientSlider.addEventListener("pointermove", moveClientSliderPointer);
+mobileClientSlider.addEventListener("pointerup", endClientSliderPointer);
+mobileClientSlider.addEventListener("pointercancel", endClientSliderPointer);
 mobileClientSlider.addEventListener("scroll", scheduleCenteredClientSelection, { passive: true });
 
 const projectsVisibilityObserver = new IntersectionObserver(([entry]) => {
