@@ -26,6 +26,7 @@ const contentManifest = {
 };
 
 const projectList = document.querySelector("#project-list");
+const mobileClientSlider = document.querySelector("#mobile-client-slider");
 const gallery = document.querySelector("#gallery");
 const introColumn = document.querySelector(".intro-column");
 const projectsColumn = document.querySelector(".projects-column");
@@ -286,6 +287,14 @@ function setActiveProject(index, { animate = true } = {}) {
   if (activeProject === index) return;
   activeProject = index;
   document.querySelectorAll(".project-button").forEach((button) => button.classList.toggle("active", Number(button.dataset.project) === index));
+  document.querySelectorAll(".client-slider-button").forEach((button) => button.classList.toggle("active", Number(button.dataset.project) === index));
+  if (mobileQuery.matches) {
+    const activeClient = mobileClientSlider.querySelector(`[data-project="${index}"]`);
+    if (activeClient) {
+      const targetLeft = activeClient.offsetLeft - (mobileClientSlider.clientWidth - activeClient.offsetWidth) / 2;
+      mobileClientSlider.scrollTo({ left: Math.max(0, targetLeft), behavior: animate ? "smooth" : "auto" });
+    }
+  }
   const workIsVisible = !detailsColumn.hidden && workTab.classList.contains("active");
   if (mobileQuery.matches || !animate || !workIsVisible || !metaYear.textContent) {
     detailsTransitionToken += 1;
@@ -551,6 +560,14 @@ projects.forEach(([title], index) => {
   button.textContent = title;
   button.addEventListener("click", () => scrollToProject(index));
   projectList.append(button);
+
+  const clientButton = document.createElement("button");
+  clientButton.type = "button";
+  clientButton.className = "client-slider-button";
+  clientButton.dataset.project = index;
+  clientButton.textContent = title;
+  clientButton.addEventListener("click", () => scrollToProject(index));
+  mobileClientSlider.append(clientButton);
 });
 
 function updateTeamMember(index) {
