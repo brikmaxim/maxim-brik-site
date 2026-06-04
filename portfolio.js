@@ -20,9 +20,29 @@ const contentManifest = {
     "011.mp4", "012.png", "013.png", "014.png", "015.mp4", "016.mp4", "017.mp4", "018.mp4", "019.mp4", "020.mp4",
     "021.mp4", "022.mp4", "023.mp4", "024.mp4", "025.mp4", "026.mp4", "027.mp4", "028.jpg", "029.jpg", "030.jpg",
     "031.jpg", "032.jpg", "033.jpg", "034.jpg", "035.png", "036.png", "037.png", "038.jpg", "039.png", "040.png",
+    "041.mp4", "042.jpg", "043.png", "044.png", "045.jpg", "046.png", "047.jpg", "048.jpg", "049.jpg", "050.jpg",
+    "051.mp4", "052.jpg", "053.jpg",
   ],
   "sicko": ["001.png", "002.png", "003.png"],
   "solutions": ["001.jpg", "002.png", "003.png", "004.png", "005.png", "006.png", "007.png"],
+};
+
+const contentTags = {
+  rnd: {
+    "041.mp4": ["AI", "RnD", "Motion"],
+    "042.jpg": ["AI", "RnD"],
+    "043.png": ["AI", "RnD"],
+    "044.png": ["AI", "RnD"],
+    "045.jpg": ["AI", "RnD"],
+    "046.png": ["AI", "RnD"],
+    "047.jpg": ["AI", "RnD"],
+    "048.jpg": ["AI", "RnD"],
+    "049.jpg": ["AI", "RnD"],
+    "050.jpg": ["AI", "RnD"],
+    "051.mp4": ["AI", "RnD", "Motion"],
+    "052.jpg": ["AI", "RnD"],
+    "053.jpg": ["AI", "RnD"],
+  },
 };
 
 const projectList = document.querySelector("#project-list");
@@ -574,7 +594,9 @@ async function renderGallery() {
         link.append(visualBox);
         const tagLabel = document.createElement("span");
         tagLabel.className = "visual-tags";
-        tagLabel.dataset.tags = [title.toLowerCase(), contentFormat, isVideoSource(src) ? "motion" : "image"].join("|");
+        const filename = src?.split("/").pop();
+        const tags = contentTags[slug]?.[filename] || [title.toLowerCase(), contentFormat, isVideoSource(src) ? "motion" : "image"];
+        tagLabel.dataset.tags = tags.join("|");
         const tagText = document.createElement("span");
         tagText.className = "visual-tags-text";
         tagText.textContent = tagLabel.dataset.tags.split("|").join("/ ");
