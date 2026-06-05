@@ -82,6 +82,7 @@ let clientSliderProgrammatic = false;
 let clientSliderProxyTouch = null;
 let expandedVisual = null;
 let expandedOverlay = null;
+let expandedBackdrop = null;
 let expandedVisualAnimating = false;
 let expandedVisualPendingClose = false;
 
@@ -552,6 +553,8 @@ function setOverlayRect(overlay, rect) {
 
 function removeExpandedOverlay() {
   expandedVisual?.classList.remove("visual-source-expanded");
+  expandedBackdrop?.remove();
+  expandedBackdrop = null;
   expandedOverlay?.remove();
   expandedOverlay = null;
   expandedVisual = null;
@@ -580,6 +583,7 @@ function closeExpandedVisual(animate = true) {
   setOverlayRect(expandedOverlay, expandedOverlay.getBoundingClientRect());
   expandedVisual.classList.remove("visual-source-expanded");
   expandedOverlay.classList.add("visual-lightbox-closing");
+  expandedBackdrop?.classList.remove("is-open");
   requestAnimationFrame(() => setOverlayRect(expandedOverlay, targetRect));
   window.setTimeout(removeExpandedOverlay, 540);
 }
@@ -645,6 +649,10 @@ function openExpandedVisual(visual) {
   const inset = 8;
   const targetRect = getFullscreenRect(visual, inset);
   const overlay = document.createElement("button");
+  const backdrop = document.createElement("button");
+  backdrop.type = "button";
+  backdrop.className = "visual-lightbox-backdrop";
+  backdrop.setAttribute("aria-label", "Close fullscreen media");
   overlay.type = "button";
   overlay.className = "visual-lightbox";
   overlay.setAttribute("aria-label", "Close fullscreen media");
@@ -658,10 +666,16 @@ function openExpandedVisual(visual) {
   overlay.addEventListener("pointerdown", requestClose);
   overlay.addEventListener("touchend", requestClose);
   overlay.addEventListener("click", requestClose);
+  backdrop.addEventListener("pointerdown", requestClose);
+  backdrop.addEventListener("touchend", requestClose);
+  backdrop.addEventListener("click", requestClose);
+  document.body.append(backdrop);
   document.body.append(overlay);
+  requestAnimationFrame(() => backdrop.classList.add("is-open"));
   overlay.querySelectorAll("video").forEach((video) => video.play?.().catch(() => {}));
   expandedVisual = visual;
   expandedOverlay = overlay;
+  expandedBackdrop = backdrop;
   visual.classList.add("visual-source-expanded");
   setOverlayRect(overlay, sourceRect);
   overlay.getBoundingClientRect();
