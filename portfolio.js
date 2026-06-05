@@ -98,7 +98,7 @@ function centerActiveClient(animate = true) {
   clearTimeout(clientSliderSelectionTimer);
   clientSliderSelectionTimer = setTimeout(() => {
     clientSliderProgrammatic = false;
-  }, animate ? 380 : 0);
+  }, animate ? 560 : 0);
 }
 
 function getCenteredClientButton() {
@@ -130,7 +130,7 @@ function beginClientSliderScroll() {
 function handleClientSliderScroll() {
   if (!clientSliderUserScrolling || clientSliderProgrammatic) return;
   clearTimeout(clientSliderSelectionTimer);
-  clientSliderSelectionTimer = setTimeout(selectCenteredClient, 140);
+  clientSliderSelectionTimer = setTimeout(selectCenteredClient, 260);
 }
 
 function detailsClientSliderVisible() {
@@ -161,7 +161,7 @@ function endClientSliderProxy() {
   if (!clientSliderProxyTouch) return;
   clientSliderProxyTouch = null;
   clearTimeout(clientSliderSelectionTimer);
-  clientSliderSelectionTimer = setTimeout(selectCenteredClient, 140);
+  clientSliderSelectionTimer = setTimeout(selectCenteredClient, 260);
 }
 
 function updateVisibleVideos() {
