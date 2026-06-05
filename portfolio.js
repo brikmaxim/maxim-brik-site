@@ -80,6 +80,7 @@ let clientSliderSelectionTimer = 0;
 let clientSliderUserScrolling = false;
 let clientSliderProgrammatic = false;
 let clientSliderProxyTouch = null;
+let clientPickerIndex = 0;
 let expandedVisual = null;
 let expandedOverlay = null;
 let expandedBackdrop = null;
@@ -88,31 +89,19 @@ let expandedVisualPendingClose = false;
 
 function centerActiveClient(animate = true) {
   if (!mobileQuery.matches) return;
-  const activeClient = mobileClientSlider.querySelector(".active");
-  if (!activeClient || !mobileClientSlider.clientHeight) return;
-  const sliderRect = mobileClientSlider.getBoundingClientRect();
-  const activeRect = activeClient.getBoundingClientRect();
-  const targetTop = mobileClientSlider.scrollTop + activeRect.top - sliderRect.top - (sliderRect.height - activeRect.height) / 2;
-  clientSliderProgrammatic = true;
-  mobileClientSlider.scrollTo({ top: Math.max(0, targetTop), behavior: animate ? "smooth" : "auto" });
-  clearTimeout(clientSliderSelectionTimer);
-  clientSliderSelectionTimer = setTimeout(() => {
-    clientSliderProgrammatic = false;
-  }, animate ? 560 : 0);
+  clientPickerIndex = Math.max(0, activeProject);
+  mobileClientSlider.style.setProperty("--client-picker-index", clientPickerIndex);
+  mobileClientSlider.classList.toggle("is-instant", !animate);
+  if (!animate) requestAnimationFrame(() => mobileClientSlider.classList.remove("is-instant"));
 }
 
 function getCenteredClientButton() {
-  const sliderCenter = mobileClientSlider.getBoundingClientRect().top + mobileClientSlider.clientHeight / 2;
-  return [...mobileClientSlider.querySelectorAll(".client-slider-button")].reduce((closest, button) => {
-    const rect = button.getBoundingClientRect();
-    const distance = Math.abs(rect.top + rect.height / 2 - sliderCenter);
-    return !closest || distance < closest.distance ? { button, distance } : closest;
-  }, null)?.button;
+  return mobileClientSlider.querySelector(`.client-slider-button[data-project="${clientPickerIndex}"]`);
 }
 
 function selectCenteredClient() {
   clientSliderSelectionTimer = 0;
-  if (!clientSliderUserScrolling || clientSliderProgrammatic || !detailsColumn.classList.contains("client-slider-visible")) return;
+  if (!clientSliderUserScrolling || !detailsColumn.classList.contains("client-slider-visible")) return;
   clientSliderUserScrolling = false;
   const centeredButton = getCenteredClientButton();
   if (!centeredButton) return;
@@ -141,9 +130,10 @@ function beginClientSliderProxy(event) {
   if (!detailsClientSliderVisible()) return;
   const touch = event.touches?.[0];
   if (!touch) return;
+  event.preventDefault();
   clientSliderProxyTouch = {
     y: touch.clientY,
-    top: mobileClientSlider.scrollTop,
+    index: clientPickerIndex,
   };
   beginClientSliderScroll();
 }
@@ -153,7 +143,14 @@ function moveClientSliderProxy(event) {
   const touch = event.touches?.[0];
   if (!touch) return;
   event.preventDefault();
-  mobileClientSlider.scrollTop = clientSliderProxyTouch.top + clientSliderProxyTouch.y - touch.clientY;
+  const itemStep = 18;
+  const nextIndex = clamp(Math.round(clientSliderProxyTouch.index + (clientSliderProxyTouch.y - touch.clientY) / itemStep), 0, projects.length - 1);
+  if (nextIndex === clientPickerIndex) return;
+  clientPickerIndex = nextIndex;
+  mobileClientSlider.style.setProperty("--client-picker-index", clientPickerIndex);
+  document.querySelectorAll(".client-slider-button").forEach((button) => {
+    button.classList.toggle("active", Number(button.dataset.project) === clientPickerIndex);
+  });
   handleClientSliderScroll();
 }
 
@@ -856,6 +853,7 @@ projects.forEach(([title], index) => {
   clientButton.type = "button";
   clientButton.className = "client-slider-button";
   clientButton.dataset.project = index;
+  clientButton.style.setProperty("--project-index", index);
   clientButton.textContent = title;
   clientButton.addEventListener("click", () => scrollToProject(index));
   mobileClientSlider.append(clientButton);
