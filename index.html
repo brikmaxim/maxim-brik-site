@@ -20,7 +20,7 @@
       .auth-form { display: grid; width: min(340px, calc(100% - 20px)); padding: 5px 6px; border-radius: 3px; background: #1b1b1b; text-align: center; }
       html.is-authorized .auth-gate { display: none; }
     </style>
-    <link rel="stylesheet" href="./style.css?v=152" />
+    <link rel="stylesheet" href="./style.css?v=153" />
   </head>
   <body>
     <section class="auth-gate" aria-label="Password access">
@@ -128,8 +128,11 @@
 
     <footer class="site-footer">
       <button type="button" class="disclaimer-toggle">Disclaimer, Privacy Policy</button>
-      <a href="https://www.instagram.com/iammaximbrik/">@iammaximbrik</a>
-      <button type="button" class="help-toggle">Press esc for recomp <b>↻</b></button>
+      <a class="footer-instagram" href="https://www.instagram.com/iammaximbrik/">@iammaximbrik</a>
+      <button type="button" class="help-toggle">
+        <span>ESC for Recomp</span>
+        <img src="./assets/web_recomp.svg?v=1" alt="" />
+      </button>
     </footer>
 
     <section class="disclaimer-modal" aria-label="Disclaimer and Privacy Policy" aria-hidden="true">
@@ -148,6 +151,6 @@
     </section>
 
     <script src="./auth.js?v=4"></script>
-    <script src="./portfolio.js?v=123"></script>
+    <script src="./portfolio.js?v=124"></script>
   </body>
 </html>

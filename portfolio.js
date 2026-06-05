@@ -867,7 +867,7 @@ async function recomposeGallery() {
   });
 }
 
-helpToggle.innerHTML = "Press esc for recomp <b>↻</b>";
+helpToggle.innerHTML = '<span>ESC for Recomp</span><img src="./assets/web_recomp.svg?v=1" alt="" />';
 helpToggle.addEventListener("click", recomposeGallery);
 function setDisclaimerOpen(open) {
   disclaimerModal.classList.toggle("is-open", open);
