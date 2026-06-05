@@ -186,6 +186,12 @@
     return modelBuffers.get(model);
   };
 
+  const preloadModels = () => {
+    Object.keys(modelSources).forEach((model) => {
+      fetchModel(model).catch((error) => console.error(error));
+    });
+  };
+
   const loadModel = (model) => {
     if (!modelSources[model] || model === activeModel) return;
     activeModel = model;
@@ -206,5 +212,7 @@
   };
 
   window.addEventListener("team-pfp-model-change", (event) => loadModel(event.detail.model));
+  if ("requestIdleCallback" in window) window.requestIdleCallback(preloadModels, { timeout: 1600 });
+  else setTimeout(preloadModels, 900);
   if (root.offsetParent !== null) loadModel(root.dataset.model || "alexey");
 })();

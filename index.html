@@ -20,7 +20,7 @@
       .auth-form { display: grid; width: min(340px, calc(100% - 20px)); padding: 5px 6px; border-radius: 3px; background: #1b1b1b; text-align: center; }
       html.is-authorized .auth-gate { display: none; }
     </style>
-    <link rel="stylesheet" href="./style.css?v=153" />
+    <link rel="stylesheet" href="./style.css?v=170" />
   </head>
   <body>
     <section class="auth-gate" aria-label="Password access">
@@ -45,18 +45,18 @@
           <h1>Art Direction and Multidisciplinary Design</h1>
         </div>
         <nav class="tabs" aria-label="Sections">
-          <button class="tab active" type="button" data-tab="work">Work</button>
-          <button class="tab" type="button" data-tab="about">About</button>
+          <button class="tab" type="button" data-tab="work">Work</button>
+          <button class="tab active" type="button" data-tab="about">About</button>
           <button class="tab" type="button" data-tab="team">Team</button>
         </nav>
       </aside>
 
-      <section class="column work-only projects-column">
+      <section class="column work-only projects-column" hidden>
         <p class="label">Projects</p>
         <nav id="project-list" aria-label="Projects"></nav>
       </section>
 
-      <section class="column work-only details-column">
+      <section class="column work-only details-column" hidden>
         <dl>
           <dt>Year</dt>
           <dd id="meta-year"></dd>
@@ -70,17 +70,17 @@
         </dl>
       </section>
 
-      <section class="column work-only gallery-column">
+      <section class="column work-only gallery-column" hidden>
         <div id="gallery"></div>
       </section>
 
-      <section class="column about-only info-column" hidden>
+      <section class="column about-only info-column">
         <p class="label">Info</p>
         <p>We are a studio offering comprehensive solutions tailored to your objectives related to products and visual presentations.</p>
         <p>We create content for digital environments and the physical world.</p>
       </section>
 
-      <section class="column about-only services-column" hidden>
+      <section class="column about-only services-column">
         <p class="label">Services</p>
         <div class="services-list">
           <p>Industrial design</p>
@@ -92,7 +92,7 @@
         </div>
       </section>
 
-      <section class="column about-only contacts-column" hidden>
+      <section class="column about-only contacts-column">
         <p class="label">Contact</p>
         <ul>
           <li><a href="mailto:brikmaximalexandrovich@gmail.com">Email</a></li>
@@ -130,7 +130,7 @@
       <button type="button" class="disclaimer-toggle">Disclaimer, Privacy Policy</button>
       <a class="footer-instagram" href="https://www.instagram.com/iammaximbrik/">@iammaximbrik</a>
       <button type="button" class="help-toggle">
-        <span>ESC for Recomp</span>
+        <span>RECOMP</span>
         <img src="./assets/web_recomp.svg?v=1" alt="" />
       </button>
     </footer>
@@ -151,6 +151,6 @@
     </section>
 
     <script src="./auth.js?v=4"></script>
-    <script src="./portfolio.js?v=125"></script>
+    <script src="./portfolio.js?v=147"></script>
   </body>
 </html>
