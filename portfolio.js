@@ -424,7 +424,7 @@ function loadMediaElement(media) {
 
 function loadNearbyMedia() {
   nearbyMediaFrame = 0;
-  const margin = mobileQuery.matches ? 600 : 1000;
+  const margin = mobileQuery.matches ? 40 : 1000;
   document.querySelectorAll(".visual-media:not([data-loaded-source])").forEach((media) => {
     const rect = media.getBoundingClientRect();
     if (rect.bottom >= -margin && rect.top <= window.innerHeight + margin) loadMediaElement(media);
@@ -442,7 +442,7 @@ const lazyMediaObserver = new IntersectionObserver((entries) => {
     lazyMediaObserver.unobserve(target);
     loadMediaElement(target);
   });
-}, { rootMargin: mobileQuery.matches ? "180px 0px" : "900px 0px" });
+}, { rootMargin: mobileQuery.matches ? "40px 0px" : "900px 0px" });
 
 function rectsOverlap(a, b) {
   return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
@@ -513,7 +513,7 @@ function createMedia(src, title) {
     media.setAttribute("webkit-playsinline", "");
     media.setAttribute("x-webkit-airplay", "deny");
     media.removeAttribute("controls");
-    media.preload = "metadata";
+    media.preload = mobileQuery.matches ? "none" : "metadata";
     media.addEventListener("loadeddata", reveal, { once: true });
     media.addEventListener("canplay", reveal, { once: true });
     media.addEventListener("playing", () => media.closest(".visual")?.classList.add("video-frame-ready"));
