@@ -14,7 +14,7 @@ const contentManifest = {
   "angel333": ["001.jpg", "002.jpg", "003.jpg", "004.jpg", "005.jpg", "006.jpg", "007.jpg", "008.jpg"],
   "kyng": ["001.jpg", "002.jpg", "003.jpg", "004.jpg", "005.jpg", "006.jpg", "007.mp4", "008.mp4", "009.jpg"],
   "ndsp": ["001.jpg", "002.jpg", "003.jpg", "004.jpg", "005.jpg", "006.mp4", "007.jpg", "008.jpg"],
-  "reckless-scholars": ["001.png"],
+  "reckless-scholars": ["001.png", "002.jpg", "003.jpg", "004.jpg", "005.jpg"],
   "rnd": [
     "001.jpg", "002.png", "003.jpg", "004.png", "005.jpg", "006.jpg", "007.jpg", "008.jpg", "009.jpg", "010.jpg",
     "011.mp4", "012.png", "013.png", "014.png", "015.mp4", "016.mp4", "017.mp4", "018.mp4", "019.mp4", "020.mp4",
@@ -24,7 +24,7 @@ const contentManifest = {
     "051.mp4", "052.jpg", "053.jpg", "054.jpg", "055.jpg",
   ],
   "sicko": ["001.png", "002.png", "003.png"],
-  "solutions": ["001.jpg", "002.png", "003.png", "004.png", "005.png", "006.png", "007.png"],
+  "solutions": ["001.jpg", "002.png", "003.png", "004.png", "005.png", "006.png", "007.png", "008.jpg", "009.jpg"],
 };
 
 const contentTags = {
