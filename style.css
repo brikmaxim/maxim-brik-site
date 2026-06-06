@@ -290,7 +290,7 @@ body.glass-theme .visual-tags {
   .client-slider-button {
     position: absolute; top: 50%; left: 0; width: 100%; min-height: 20px; padding: 0; border: 0; outline: 0; background: transparent; color: var(--panel-text); opacity: 0.22; text-align: left;
     white-space: nowrap;
-    transform: translate3d(0, calc((var(--project-index) - var(--client-picker-index)) * 20px - 50%), 0);
+    transform: translate3d(0, calc((var(--project-index) - var(--client-picker-index)) * 28px - 50%), 0);
     will-change: transform, opacity;
     transition: transform 520ms cubic-bezier(.16, 1, .3, 1), color 320ms ease, opacity 420ms cubic-bezier(.16, 1, .3, 1);
   }

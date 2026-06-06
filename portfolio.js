@@ -101,7 +101,7 @@ function getCenteredClientButton() {
 
 function selectCenteredClient() {
   clientSliderSelectionTimer = 0;
-  if (!clientSliderUserScrolling || !detailsColumn.classList.contains("client-slider-visible")) return;
+  if (!detailsColumn.classList.contains("client-slider-visible")) return;
   clientSliderUserScrolling = false;
   const centeredButton = getCenteredClientButton();
   if (!centeredButton) return;
@@ -143,7 +143,7 @@ function moveClientSliderProxy(event) {
   const touch = event.touches?.[0];
   if (!touch) return;
   event.preventDefault();
-  const itemStep = 18;
+  const itemStep = 34;
   const nextIndex = clamp(Math.round(clientSliderProxyTouch.index + (clientSliderProxyTouch.y - touch.clientY) / itemStep), 0, projects.length - 1);
   if (nextIndex === clientPickerIndex) return;
   clientPickerIndex = nextIndex;
@@ -158,7 +158,7 @@ function endClientSliderProxy() {
   if (!clientSliderProxyTouch) return;
   clientSliderProxyTouch = null;
   clearTimeout(clientSliderSelectionTimer);
-  clientSliderSelectionTimer = setTimeout(selectCenteredClient, 260);
+  selectCenteredClient();
 }
 
 function updateVisibleVideos() {
@@ -855,7 +855,11 @@ projects.forEach(([title], index) => {
   clientButton.dataset.project = index;
   clientButton.style.setProperty("--project-index", index);
   clientButton.textContent = title;
-  clientButton.addEventListener("click", () => scrollToProject(index));
+  clientButton.addEventListener("click", () => {
+    clientPickerIndex = index;
+    mobileClientSlider.style.setProperty("--client-picker-index", clientPickerIndex);
+    scrollToProject(index);
+  });
   mobileClientSlider.append(clientButton);
 });
 
