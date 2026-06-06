@@ -22,11 +22,11 @@
       }
     </script>
     <style>
-      .auth-gate { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; background: #000; color: #eee; }
-      .auth-form { display: grid; width: min(340px, calc(100% - 20px)); padding: 5px 6px; border-radius: 3px; background: #1b1b1b; text-align: center; }
+      .auth-gate { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, 0.22); color: #eee; backdrop-filter: blur(20px) saturate(0.75); -webkit-backdrop-filter: blur(20px) saturate(0.75); pointer-events: none; }
+      .auth-form { display: grid; width: min(340px, calc(100% - 20px)); padding: 5px 6px; border-radius: 3px; background: #1b1b1b; text-align: center; pointer-events: auto; }
       html.is-authorized .auth-gate { display: none; }
     </style>
-    <link rel="stylesheet" href="./style.css?v=178" />
+    <link rel="stylesheet" href="./style.css?v=179" />
   </head>
   <body>
     <section class="auth-gate" aria-label="Password access">
