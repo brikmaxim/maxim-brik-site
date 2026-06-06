@@ -218,6 +218,7 @@ body.glass-theme .visual-tags {
   transition: background-color 320ms ease, color 320ms ease;
 }
 .disclaimer-toggle, .disclaimer-close { padding: 0; border: 0; background: transparent; color: inherit; }
+.disclaimer-toggle { justify-self: start; transform: translateX(-6px); }
 .footer-instagram { justify-self: center; }
 .help-toggle { display: inline-flex; gap: 4px; align-items: center; justify-self: end; margin-left: 0; padding: 0; border: 0; background: transparent; }
 .help-toggle img { display: block; width: auto; height: 0.86em; max-height: 0.86em; object-fit: contain; filter: var(--icon-filter); transform: translateY(-2px); }
