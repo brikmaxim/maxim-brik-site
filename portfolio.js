@@ -6,13 +6,14 @@ const projects = [
   ["KYNG", "2026", "Maxim Brik", "https://www.instagram.com/khemgendwrld/", "kyng"],
   ["Reckless Scholars", "2022", "Maxim Brik", "https://www.recklessscholars.com/", "reckless-scholars"],
   ["Solutions", "2022", "Maxim Brik", "https://www.nobody.solutions/", "solutions"],
-  ["KM 20", "2021", "Maxim Brik", "https://www.km20.ru/", ""],
+  ["KM 20", "2021", "Maxim Brik", "https://www.km20.ru/", "km20"],
   ["Bogema Leningrad", "2020", "Maxim Brik", "https://bogema.market/collection/all", ""],
 ];
 
 const contentManifest = {
   "angel333": ["001.jpg", "002.jpg", "003.jpg", "004.jpg", "005.jpg", "006.jpg", "007.jpg", "008.jpg"],
   "kyng": ["001.jpg", "002.jpg", "003.jpg", "004.jpg", "005.jpg", "006.jpg", "007.mp4", "008.mp4", "009.jpg"],
+  "km20": ["001.png", "002.png", "003.png"],
   "ndsp": ["001.jpg", "002.jpg", "003.jpg", "004.jpg", "005.jpg", "006.mp4", "007.jpg", "008.jpg"],
   "reckless-scholars": ["001.png", "002.jpg", "003.jpg", "004.jpg", "005.jpg"],
   "rnd": [
@@ -21,7 +22,7 @@ const contentManifest = {
     "021.mp4", "022.mp4", "023.mp4", "024.mp4", "025.mp4", "026.mp4", "027.mp4", "028.jpg", "029.jpg", "030.jpg",
     "031.jpg", "032.jpg", "033.jpg", "034.jpg", "035.png", "036.png", "037.png", "038.jpg", "039.png", "040.png",
     "041.mp4", "042.jpg", "043.png", "044.png", "045.jpg", "046.png", "047.jpg", "048.jpg", "049.jpg", "050.jpg",
-    "051.mp4", "052.jpg", "053.jpg", "054.jpg", "055.jpg",
+    "051.mp4", "052.jpg", "053.jpg", "054.jpg", "055.jpg", "056.mp4", "057.png", "058.png",
   ],
   "sicko": ["001.png", "002.png", "003.png"],
   "solutions": ["001.jpg", "002.png", "003.png", "004.png", "005.png", "006.png", "007.png", "008.jpg", "009.jpg"],
@@ -44,6 +45,9 @@ const contentTags = {
     "053.jpg": ["AI", "RnD"],
     "054.jpg": ["AI", "RnD"],
     "055.jpg": ["AI", "RnD"],
+    "056.mp4": ["RnD", "Motion"],
+    "057.png": ["RnD", "Product"],
+    "058.png": ["RnD", "Product"],
   },
 };
 
