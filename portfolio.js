@@ -24,7 +24,7 @@ const contentManifest = {
     "051.mp4", "052.jpg", "053.jpg", "054.jpg", "055.jpg",
   ],
   "sicko": ["001.png", "002.png", "003.png"],
-  "solutions": ["001.jpg", "002.png", "003.png", "004.png", "005.png", "006.png", "007.png", "008.usdz"],
+  "solutions": ["001.jpg", "002.png", "003.png", "004.png", "005.png", "006.png", "007.png"],
 };
 
 const contentTags = {
@@ -451,10 +451,6 @@ function isVideoSource(src) {
   return /\.(mp4|mov)$/i.test(src);
 }
 
-function isModelSource(src) {
-  return /\.(usdz|glb|gltf)$/i.test(src);
-}
-
 function getContentFormat(src, fallback) {
   return fallback;
 }
@@ -720,14 +716,6 @@ function handleVisualClick(event) {
 
 function createMedia(src, title) {
   if (!src) return null;
-  if (isModelSource(src)) {
-    const model = document.createElement("span");
-    model.className = "visual-media visual-model is-loaded";
-    model.dataset.src = src;
-    model.setAttribute("aria-hidden", "true");
-    model.innerHTML = "<span>3D</span><span>USDZ</span><span>MODEL</span>";
-    return model;
-  }
   const isVideo = isVideoSource(src);
   const media = document.createElement(isVideo ? "video" : "img");
   const reveal = () => {
@@ -815,8 +803,7 @@ async function renderGallery() {
         const contentY = clamp(y, 0, Math.max(0, 100 - visualHeight - 2));
         const mediaElement = createMedia(src, title);
         visualButton.type = "button";
-        const visualType = isModelSource(src) ? "model" : mediaElement?.tagName.toLowerCase();
-        visualButton.className = `visual visual-${color}${visualType ? ` visual-${visualType}` : ""}`;
+        visualButton.className = `visual visual-${color}${mediaElement ? ` visual-${mediaElement.tagName.toLowerCase()}` : ""}`;
         visualButton.setAttribute("aria-label", `${title} project media`);
         visualButton.addEventListener("click", handleVisualClick);
         visualButton.dataset.format = contentFormat;
@@ -842,7 +829,7 @@ async function renderGallery() {
         const tagLabel = document.createElement("span");
         tagLabel.className = "visual-tags";
         const filename = src?.split("/").pop();
-        const tags = contentTags[slug]?.[filename] || [title.toLowerCase(), contentFormat, isModelSource(src) ? "model" : isVideoSource(src) ? "motion" : "image"];
+        const tags = contentTags[slug]?.[filename] || [title.toLowerCase(), contentFormat, isVideoSource(src) ? "motion" : "image"];
         tagLabel.dataset.tags = tags.join("|");
         const tagText = document.createElement("span");
         tagText.className = "visual-tags-text";
