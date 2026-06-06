@@ -87,6 +87,18 @@ let expandedBackdrop = null;
 let expandedVisualAnimating = false;
 let expandedVisualPendingClose = false;
 
+function getCookieValue(name) {
+  return document.cookie.split("; ").reduce((value, item) => {
+    const [key, ...rest] = item.split("=");
+    return decodeURIComponent(key) === name ? decodeURIComponent(rest.join("=")) : value;
+  }, "");
+}
+
+function setCookieValue(name, value, maxAge = 60 * 60 * 24 * 365) {
+  const secure = location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax${secure}`;
+}
+
 function centerActiveClient(animate = true) {
   if (!mobileQuery.matches) return;
   clientPickerIndex = Math.max(0, activeProject);
@@ -1109,14 +1121,22 @@ disclaimerModal.addEventListener("click", (event) => {
   if (event.target === disclaimerModal) setDisclaimerOpen(false);
 });
 const themeOrder = ["dark", "light", "glass"];
-let themeIndex = 0;
-themeToggle.addEventListener("click", () => {
-  themeIndex = (themeIndex + 1) % themeOrder.length;
-  const theme = themeOrder[themeIndex];
+const themeCookie = "maxim-brik-theme";
+let themeIndex = Math.max(0, themeOrder.indexOf(getCookieValue(themeCookie)));
+
+function applyTheme(theme) {
   document.body.classList.toggle("light-theme", theme === "light");
   document.body.classList.toggle("glass-theme", theme === "glass");
   themeToggle.setAttribute("aria-pressed", String(theme !== "dark"));
   themeToggle.setAttribute("aria-label", `Switch color theme, current: ${theme}`);
+}
+
+applyTheme(themeOrder[themeIndex]);
+themeToggle.addEventListener("click", () => {
+  themeIndex = (themeIndex + 1) % themeOrder.length;
+  const theme = themeOrder[themeIndex];
+  applyTheme(theme);
+  setCookieValue(themeCookie, theme);
 });
 window.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;

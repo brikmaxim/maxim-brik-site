@@ -2,6 +2,12 @@ const authForm = document.querySelector("#auth-form");
 const authPassword = document.querySelector("#auth-password");
 const authMessage = document.querySelector("#auth-message");
 const accessHash = "8bfbce8c7346ca070994455a6fdf4aa96a7930427f43a082779eff7455715568";
+const accessCookie = "maxim-brik-access-v2";
+const oneYear = 60 * 60 * 24 * 365;
+
+function cookieSuffix(maxAge = oneYear) {
+  return `; path=/; max-age=${maxAge}; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
+}
 
 function toHex(buffer) {
   return [...new Uint8Array(buffer)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -14,8 +20,9 @@ async function hashPassword(password) {
 
 function grantAccess() {
   try {
-    localStorage.setItem("maxim-brik-access-v2", "granted");
+    localStorage.setItem(accessCookie, "granted");
   } catch {}
+  document.cookie = `${encodeURIComponent(accessCookie)}=granted${cookieSuffix()}`;
   document.documentElement.classList.remove("auth-pending");
   document.documentElement.classList.add("is-authorized");
   window.dispatchEvent(new CustomEvent("site-authorized"));
@@ -31,6 +38,7 @@ const authFallbackTimer = setTimeout(() => {
 
 if (document.documentElement.classList.contains("is-authorized")) {
   clearTimeout(authFallbackTimer);
+  document.cookie = `${encodeURIComponent(accessCookie)}=granted${cookieSuffix()}`;
   authForm.hidden = true;
 } else {
   requestAnimationFrame(() => authPassword.focus());

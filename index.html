@@ -8,8 +8,14 @@
     <link rel="icon" type="image/svg+xml" href="./assets/web_icon.svg?v=1" />
     <script>
       try {
+        const cookies = Object.fromEntries(
+          document.cookie.split("; ").filter(Boolean).map((item) => {
+            const [key, ...value] = item.split("=");
+            return [decodeURIComponent(key), decodeURIComponent(value.join("="))];
+          })
+        );
         document.documentElement.classList.add(
-          localStorage.getItem("maxim-brik-access-v2") === "granted" ? "is-authorized" : "auth-pending"
+          cookies["maxim-brik-access-v2"] === "granted" || localStorage.getItem("maxim-brik-access-v2") === "granted" ? "is-authorized" : "auth-pending"
         );
       } catch {
         document.documentElement.classList.add("auth-pending");
@@ -144,13 +150,13 @@
         <div class="disclaimer-content">
           <p>All visual materials, project names and trademarks remain the property of their respective owners and are presented for portfolio and informational purposes only.</p>
           <p>This website may contain links to third-party websites. We are not responsible for their content, availability or privacy practices.</p>
-          <p>This website does not intentionally collect personal data or use advertising cookies. Technical information may be processed by the hosting provider to operate and secure the website.</p>
+          <p>This website uses functional cookies only to remember password access and the selected color theme. It does not use advertising cookies or tracking cookies. Technical information may be processed by the hosting provider to operate and secure the website.</p>
           <p>For copyright, privacy or removal requests, contact <a href="mailto:brikmaximalexandrovich@gmail.com">brikmaximalexandrovich@gmail.com</a>.</p>
         </div>
       </article>
     </section>
 
-    <script src="./auth.js?v=4"></script>
-    <script src="./portfolio.js?v=151"></script>
+    <script src="./auth.js?v=5"></script>
+    <script src="./portfolio.js?v=152"></script>
   </body>
 </html>
