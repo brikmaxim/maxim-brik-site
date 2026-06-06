@@ -5,6 +5,7 @@ const projects = [
   ["ANGEL333", "2025", "Maxim Brik", "https://angel333.online/", "angel333"],
   ["KYNG", "2026", "Maxim Brik", "https://www.instagram.com/khemgendwrld/", "kyng"],
   ["Reckless Scholars", "2022", "Maxim Brik", "https://www.recklessscholars.com/", "reckless-scholars"],
+  ["OMANKO", "2026", "Maxim Brik", "https://www.instagram.com/iammaximbrik/", "omanko"],
   ["Solutions", "2022", "Maxim Brik", "https://www.nobody.solutions/", "solutions"],
   ["KM 20", "2021", "Maxim Brik", "https://www.km20.ru/", "km20"],
   ["Bogema Leningrad", "2020", "Maxim Brik", "https://bogema.market/collection/all", ""],
@@ -15,6 +16,7 @@ const contentManifest = {
   "kyng": ["001.jpg", "002.jpg", "003.jpg", "004.jpg", "005.jpg", "006.jpg", "007.mp4", "008.mp4", "009.jpg"],
   "km20": ["001.png", "002.png", "003.png"],
   "ndsp": ["001.jpg", "002.jpg", "003.jpg", "004.jpg", "005.jpg", "006.mp4", "007.jpg", "008.jpg"],
+  "omanko": ["001.mp4", "002.png", "003.png", "004.png", "005.jpg"],
   "reckless-scholars": ["001.png", "002.jpg", "003.jpg", "004.jpg", "005.jpg"],
   "rnd": [
     "001.jpg", "002.png", "003.jpg", "004.png", "005.jpg", "006.jpg", "007.jpg", "008.jpg", "009.jpg", "010.jpg",
