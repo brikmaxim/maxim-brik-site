@@ -44,8 +44,8 @@ body.light-theme {
   --subtle: #777; --active: #fff; --hover: #555; --visual-empty: #222; --icon-filter: none; --panel-filter: none;
 }
 body.glass-theme {
-  --page: #fff; --panel: rgba(0, 0, 0, 0.56); --text: #111; --panel-text: #fff; --muted: rgba(255, 255, 255, 0.62);
-  --subtle: rgba(255, 255, 255, 0.56); --active: #fff; --hover: #fff; --visual-empty: #222; --icon-filter: none; --panel-filter: blur(14px) saturate(1.25);
+  --page: #f4f4f2; --panel: rgba(232, 232, 230, 0.82); --text: #050505; --panel-text: #050505; --muted: rgba(5, 5, 5, 0.62);
+  --subtle: rgba(5, 5, 5, 0.48); --active: #050505; --hover: #000; --visual-empty: #ececea; --icon-filter: none; --panel-filter: blur(18px) saturate(1.1);
 }
 a { color: inherit; text-decoration: none; }
 a:hover, button:hover { color: var(--hover); }
