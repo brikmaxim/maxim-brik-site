@@ -86,6 +86,7 @@ let clientSliderSelectionTimer = 0;
 let clientSliderUserScrolling = false;
 let clientSliderProgrammatic = false;
 let clientSliderProxyTouch = null;
+let mobileWorkColumnsPassed = false;
 let clientPickerIndex = 0;
 let expandedVisual = null;
 let expandedOverlay = null;
@@ -142,6 +143,10 @@ function handleClientSliderScroll() {
 
 function detailsClientSliderVisible() {
   return mobileQuery.matches && detailsColumn.classList.contains("client-slider-visible");
+}
+
+function updateFooterUpVisibility() {
+  document.body.classList.toggle("footer-up-visible", mobileQuery.matches && workTab.classList.contains("active") && mobileWorkColumnsPassed);
 }
 
 function beginClientSliderProxy(event) {
@@ -402,6 +407,7 @@ function updateProjectMeta(index) {
 mobileQuery.addEventListener("change", () => {
   closeExpandedVisual(false);
   if (activeProject >= 0) updateProjectMeta(activeProject);
+  updateFooterUpVisibility();
 });
 
 async function animateProjectDetails(index, token) {
@@ -891,8 +897,9 @@ gallery.addEventListener("click", handleVisualClick);
 
 const projectsVisibilityObserver = new IntersectionObserver(([entry]) => {
   const sliderVisible = mobileQuery.matches && !entry.isIntersecting;
+  mobileWorkColumnsPassed = sliderVisible;
   detailsColumn.classList.toggle("client-slider-visible", sliderVisible);
-  document.body.classList.toggle("footer-up-visible", sliderVisible);
+  updateFooterUpVisibility();
   if (sliderVisible) requestAnimationFrame(() => centerActiveClient(false));
 }, { threshold: 0 });
 projectsVisibilityObserver.observe(projectsColumn);
@@ -1081,6 +1088,7 @@ document.querySelectorAll(".tab").forEach((tab) => {
     detailsColumn.style.visibility = detailsColumn.hidden ? "" : "visible";
     const token = ++transitionToken;
     document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item === tab));
+    updateFooterUpVisibility();
     location.hash = targetSection;
     if (!await switchSection(targetSection, token)) return;
     if (targetSection === "work") requestAnimationFrame(() => {
