@@ -67,6 +67,7 @@ const helpToggle = document.querySelector(".help-toggle");
 const disclaimerToggle = document.querySelector(".disclaimer-toggle");
 const disclaimerModal = document.querySelector(".disclaimer-modal");
 const disclaimerClose = document.querySelector(".disclaimer-close");
+const footerUp = document.querySelector(".footer-up");
 const galleryColumn = document.querySelector(".gallery-column");
 const teamAboutColumn = document.querySelector(".team-about-column");
 const teamRole = document.querySelector("#team-role");
@@ -1125,6 +1126,9 @@ disclaimerToggle.addEventListener("click", () => setDisclaimerOpen(true));
 disclaimerClose.addEventListener("click", () => setDisclaimerOpen(false));
 disclaimerModal.addEventListener("click", (event) => {
   if (event.target === disclaimerModal) setDisclaimerOpen(false);
+});
+footerUp.addEventListener("click", () => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
 });
 const themeOrder = ["glass", "dark"];
 const themeCookie = "maxim-brik-theme";
