@@ -221,7 +221,11 @@ body.glass-theme .visual-tags {
 }
 .disclaimer-toggle, .disclaimer-close, .footer-up { padding: 0; border: 0; background: transparent; color: inherit; }
 .disclaimer-toggle { justify-self: start; }
-.footer-up { justify-self: center; }
+.footer-up {
+  justify-self: center; opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 320ms ease, visibility 320ms ease;
+}
+body.footer-up-visible .footer-up { opacity: 1; visibility: visible; pointer-events: auto; }
 .help-toggle { display: inline-flex; gap: 4px; align-items: center; justify-self: end; margin-left: 0; padding: 0; border: 0; background: transparent; }
 .help-toggle img { display: block; width: auto; height: 0.86em; max-height: 0.86em; object-fit: contain; filter: var(--icon-filter); transform: translateY(-2px); }
 .disclaimer-modal {

@@ -1,6 +1,5 @@
 const projects = [
   ["R&D", "2026", "Maxim Brik", "https://www.instagram.com/iammaximbrik/", "rnd"],
-  ["Sicko", "2026", "Maxim Brik", "https://sicko.jp/", "sicko"],
   ["NDSP", "2026", "Maxim Brik", "https://newdaysamepain.com/", "ndsp"],
   ["ANGEL333", "2025", "Maxim Brik", "https://angel333.online/", "angel333"],
   ["KYNG", "2026", "Maxim Brik", "https://www.instagram.com/khemgendwrld/", "kyng"],
@@ -393,11 +392,10 @@ function scheduleWheelScroll() {
 
 function updateProjectMeta(index) {
   const [title, year, design, url, images] = projects[index];
-  const isMobile = mobileQuery.matches;
   metaYear.textContent = year;
-  metaDesignLabel.textContent = isMobile ? "Client" : "Design";
-  metaDesign.textContent = isMobile ? title : design;
-  metaUrl.textContent = title === "R&D" ? "@iammaximbrik" : (url ? new URL(url).hostname.replace(/^www\./, "") : "—");
+  metaDesignLabel.textContent = "Designed";
+  metaDesign.textContent = design;
+  metaUrl.textContent = title;
   metaUrl.href = url || "#";
 }
 
@@ -894,6 +892,7 @@ gallery.addEventListener("click", handleVisualClick);
 const projectsVisibilityObserver = new IntersectionObserver(([entry]) => {
   const sliderVisible = mobileQuery.matches && !entry.isIntersecting;
   detailsColumn.classList.toggle("client-slider-visible", sliderVisible);
+  document.body.classList.toggle("footer-up-visible", sliderVisible);
   if (sliderVisible) requestAnimationFrame(() => centerActiveClient(false));
 }, { threshold: 0 });
 projectsVisibilityObserver.observe(projectsColumn);
@@ -1116,7 +1115,7 @@ async function recomposeGallery() {
   });
 }
 
-helpToggle.innerHTML = '<span>RECOMP</span><img src="./assets/web_recomp.svg?v=1" alt="" />';
+helpToggle.innerHTML = '<img src="./assets/web_recomp.svg?v=1" alt="RECOMP" />';
 helpToggle.addEventListener("click", recomposeGallery);
 function setDisclaimerOpen(open) {
   disclaimerModal.classList.toggle("is-open", open);
