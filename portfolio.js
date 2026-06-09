@@ -977,7 +977,8 @@ async function animateDetailsHeight(opening, token) {
 
 async function animateColumns(columns, opening, token) {
   const ordered = opening ? columns : [...columns].reverse();
-  for (const column of ordered) {
+  const animations = ordered.map(async (column, index) => {
+    await wait(index * 120);
     if (token !== transitionToken) return false;
     column.getAnimations().forEach((animation) => animation.cancel());
     column.style.visibility = "visible";
@@ -1013,7 +1014,10 @@ async function animateColumns(columns, opening, token) {
       column.style.visibility = "hidden";
     }
     column.style.willChange = "";
-  }
+    return true;
+  });
+  const results = await Promise.all(animations);
+  if (results.some((result) => result === false)) return false;
   return true;
 }
 

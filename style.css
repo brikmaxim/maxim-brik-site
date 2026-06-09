@@ -203,7 +203,7 @@ body.glass-theme .visual-tags {
 .services-column h2 { margin-top: 12px; }
 .services-column h2:first-of-type { margin-top: 0; }
 .services-list {
-  background: linear-gradient(to bottom, #8eaad9, #00ff1a);
+  background: linear-gradient(to bottom, #8eaad9, #7effa2);
   background-clip: text;
   color: transparent;
   -webkit-background-clip: text;
