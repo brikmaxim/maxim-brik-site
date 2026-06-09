@@ -979,52 +979,40 @@ async function animateColumns(columns, opening, token) {
   const ordered = opening ? columns : [...columns].reverse();
   for (const column of ordered) {
     if (token !== transitionToken) return false;
-    const isGallery = column.classList.contains("gallery-column");
-    const currentHeight = column.getBoundingClientRect().height;
-    const currentClip = isGallery && getComputedStyle(column).clipPath !== "none"
-      ? getComputedStyle(column).clipPath
-      : "inset(0 round 3px)";
     column.getAnimations().forEach((animation) => animation.cancel());
-    if (isGallery) {
-      column.style.clipPath = currentClip;
-      column.style.visibility = "visible";
-      const animation = column.animate(
-        opening
-          ? [{ clipPath: currentClip }, { clipPath: "inset(0 round 3px)" }]
-          : [{ clipPath: currentClip }, { clipPath: "inset(0 0 100% round 3px)" }],
-        { duration: 210, easing: "cubic-bezier(.16, 1, .3, 1)", fill: "both" },
-      );
-      await animation.finished.catch(() => {});
-      if (token !== transitionToken) return false;
-      animation.cancel();
-      column.style.clipPath = opening ? "inset(0 round 3px)" : "inset(0 0 100% round 3px)";
-      if (!opening) column.style.visibility = "hidden";
-      continue;
-    }
-    const totalHeight = column.scrollHeight;
-    const revealed = getRevealHeights(column);
-    const heights = opening
-      ? revealed.filter((height) => height > currentHeight + 1)
-      : [...revealed].reverse().filter((height) => height < currentHeight - 1).concat(0);
     column.style.visibility = "visible";
-    column.style.height = `${currentHeight}px`;
-    for (const height of heights) {
-      await wait(43);
-      if (token !== transitionToken) return false;
-      column.style.height = `${height}px`;
-    }
+    column.style.clipPath = "";
+    column.style.height = "";
+    column.style.willChange = "opacity, filter, transform";
+    if (opening) column.hidden = false;
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    if (token !== transitionToken) return false;
+    const from = opening
+      ? { opacity: 0, filter: "blur(18px)", transform: "translate3d(0, 8px, 0)" }
+      : { opacity: getComputedStyle(column).opacity || 1, filter: "blur(0)", transform: "translate3d(0, 0, 0)" };
+    const to = opening
+      ? { opacity: 1, filter: "blur(0)", transform: "translate3d(0, 0, 0)" }
+      : { opacity: 0, filter: "blur(18px)", transform: "translate3d(0, -6px, 0)" };
+    const animation = column.animate([from, to], {
+      duration: opening ? 520 : 360,
+      easing: "cubic-bezier(.16, 1, .3, 1)",
+      fill: "both",
+    });
+    await animation.finished.catch(() => {});
+    if (token !== transitionToken) return false;
+    animation.cancel();
     if (opening) {
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-      if (token !== transitionToken) return false;
-      column.style.height = `${totalHeight}px`;
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-      if (token !== transitionToken) return false;
-      column.style.height = "";
+      column.style.opacity = "";
+      column.style.filter = "";
+      column.style.transform = "";
     }
     else {
-      column.style.height = "0px";
+      column.style.opacity = "0";
+      column.style.filter = "blur(18px)";
+      column.style.transform = "translate3d(0, -6px, 0)";
       column.style.visibility = "hidden";
     }
+    column.style.willChange = "";
   }
   return true;
 }
@@ -1034,8 +1022,12 @@ function resetColumns(columns, visible) {
     column.getAnimations().forEach((animation) => animation.cancel());
     column.hidden = !visible;
     column.style.clipPath = "";
+    column.style.filter = "";
     column.style.height = "";
+    column.style.opacity = "";
+    column.style.transform = "";
     column.style.visibility = visible ? "visible" : "";
+    column.style.willChange = "";
   });
 }
 
@@ -1060,16 +1052,23 @@ async function switchSection(targetSection, token) {
   oldColumns.forEach((column) => {
     column.hidden = true;
     column.style.clipPath = "";
+    column.style.filter = "";
     column.style.height = "";
+    column.style.opacity = "";
+    column.style.transform = "";
     column.style.visibility = "";
+    column.style.willChange = "";
   });
   newColumns.forEach((column) => {
     const wasHidden = column.hidden;
     column.hidden = false;
     if (!wasHidden) return;
+    column.style.clipPath = "";
+    column.style.height = "";
     column.style.visibility = "hidden";
-    if (column.classList.contains("gallery-column")) column.style.clipPath = "inset(0 0 100% round 3px)";
-    else column.style.height = "0px";
+    column.style.opacity = "0";
+    column.style.filter = "blur(18px)";
+    column.style.transform = "translate3d(0, 8px, 0)";
   });
   const opened = await animateColumns(newColumns, true, token);
   if (!opened || token !== transitionToken) return false;
