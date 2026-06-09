@@ -336,8 +336,7 @@ body.glass-theme .visual-tags {
   .visual-lightbox .visual-tags-text { transform: none !important; }
   .project-composition { --composition-scale: 0.86; }
   .project-composition + .project-composition { margin-top: -56px; }
-  .site-footer { display: flex; flex-wrap: wrap; font-size: inherit; }
-  .help-toggle { margin-left: auto; }
+  .site-footer { font-size: inherit; }
   .disclaimer-modal { padding: 10px; align-items: center; }
   .disclaimer-panel { width: 100%; row-gap: 12px; padding: 10px; }
   .disclaimer-content { row-gap: 8px; }
