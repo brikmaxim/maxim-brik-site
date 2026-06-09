@@ -262,7 +262,7 @@ function updatePfpViewer(model) {
   if (!pfpViewerPromise) {
     pfpViewerPromise = new Promise((resolve) => {
       const script = document.createElement("script");
-      script.src = "./pfp-points.js?v=23";
+      script.src = "./pfp-points.js?v=25";
       script.addEventListener("load", resolve, { once: true });
       document.body.append(script);
     });
@@ -1126,12 +1126,12 @@ disclaimerClose.addEventListener("click", () => setDisclaimerOpen(false));
 disclaimerModal.addEventListener("click", (event) => {
   if (event.target === disclaimerModal) setDisclaimerOpen(false);
 });
-const themeOrder = ["dark", "light", "glass"];
+const themeOrder = ["glass", "dark"];
 const themeCookie = "maxim-brik-theme";
 let themeIndex = Math.max(0, themeOrder.indexOf(getCookieValue(themeCookie)));
 
 function applyTheme(theme) {
-  document.body.classList.toggle("light-theme", theme === "light");
+  document.body.classList.remove("light-theme");
   document.body.classList.toggle("glass-theme", theme === "glass");
   themeToggle.setAttribute("aria-pressed", String(theme !== "dark"));
   themeToggle.setAttribute("aria-label", `Switch color theme, current: ${theme}`);

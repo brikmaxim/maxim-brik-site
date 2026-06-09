@@ -22,13 +22,13 @@
       }
     </script>
     <style>
-      .auth-gate { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, 0.22); color: #eee; backdrop-filter: blur(20px) saturate(0.75); -webkit-backdrop-filter: blur(20px) saturate(0.75); pointer-events: none; }
-      .auth-form { display: grid; width: min(340px, calc(100% - 20px)); padding: 5px 6px; border-radius: 3px; background: #1b1b1b; text-align: center; pointer-events: auto; }
+      .auth-gate { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; background: rgba(244, 244, 242, 0.18); color: #050505; backdrop-filter: blur(20px) saturate(1.05); -webkit-backdrop-filter: blur(20px) saturate(1.05); pointer-events: none; }
+      .auth-form { display: grid; width: min(340px, calc(100% - 20px)); padding: 5px 6px; border-radius: 3px; background: rgba(232, 232, 230, 0.82); text-align: center; pointer-events: auto; backdrop-filter: blur(18px) saturate(1.1); -webkit-backdrop-filter: blur(18px) saturate(1.1); }
       html.is-authorized .auth-gate { display: none; }
     </style>
-    <link rel="stylesheet" href="./style.css?v=181" />
+    <link rel="stylesheet" href="./style.css?v=183" />
   </head>
-  <body>
+  <body class="glass-theme">
     <section class="auth-gate" aria-label="Password access">
       <form class="auth-form" id="auth-form">
         <p class="auth-title">Under construction</p>
@@ -157,6 +157,6 @@
     </section>
 
     <script src="./auth.js?v=5"></script>
-    <script src="./portfolio.js?v=157"></script>
+    <script src="./portfolio.js?v=159"></script>
   </body>
 </html>
