@@ -49,11 +49,12 @@
   `);
   const fragmentShader = createShader(gl.FRAGMENT_SHADER, `
     precision mediump float;
+    uniform vec3 uColor;
 
     void main() {
       vec2 center = gl_PointCoord - 0.5;
       if (dot(center, center) > 0.25) discard;
-      gl_FragColor = vec4(1.0, 0.035, 0.02, 0.92);
+      gl_FragColor = vec4(uColor, 0.92);
     }
   `);
   const program = gl.createProgram();
@@ -70,6 +71,13 @@
   const rollLocation = gl.getUniformLocation(program, "uRoll");
   const scaleLocation = gl.getUniformLocation(program, "uScale");
   const yawLocation = gl.getUniformLocation(program, "uYaw");
+  const colorLocation = gl.getUniformLocation(program, "uColor");
+  const getPointColor = () => {
+    const source = getComputedStyle(document.body).getPropertyValue("--pfp-color") || getComputedStyle(document.documentElement).getPropertyValue("--pfp-color");
+    const values = source.split(",").map((value) => Number(value.trim()));
+    if (values.length < 3 || values.some((value) => !Number.isFinite(value))) return [1, 0.035, 0.02];
+    return values.slice(0, 3).map((value) => Math.max(0, Math.min(255, value)) / 255);
+  };
   const modelSources = {
     alexey: "./assets/team/alexey-points.bin?v=1",
     human: "./assets/team/rustam-points.bin?v=1",
@@ -161,6 +169,8 @@
     pointerPitch += (targetPitch - pointerPitch) * 0.045;
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.useProgram(program);
+    const pointColor = getPointColor();
+    gl.uniform3f(colorLocation, pointColor[0], pointColor[1], pointColor[2]);
     gl.uniformMatrix4fv(projectionLocation, false, projection);
     gl.uniform1f(pitchLocation, pointerPitch * modelPitchDirection[activeModel]);
     gl.uniform1f(rollLocation, modelRoll[activeModel]);

@@ -1,7 +1,7 @@
 * { box-sizing: border-box; }
 :root {
   --gap: 4px; --page: #000; --panel: #1b1b1b; --text: #eee; --panel-text: #eee; --muted: #888;
-  --subtle: #777; --active: #fff; --hover: #999; --visual-empty: #222; --icon-filter: invert(1); --panel-filter: none;
+  --subtle: #777; --active: #fff; --hover: #999; --visual-empty: #222; --icon-filter: invert(1); --panel-filter: none; --pfp-color: 255, 9, 5;
 }
 html { min-height: 100%; overflow-y: scroll; scrollbar-gutter: stable; }
 body { min-height: 100%; }
@@ -41,7 +41,7 @@ html.is-authorized .auth-gate { opacity: 0; visibility: hidden; pointer-events: 
 @keyframes auth-shake { 0%, 100% { transform: translateX(0); } 35% { transform: translateX(-5px); } 70% { transform: translateX(3px); } }
 body.light-theme {
   --page: #fff; --panel: #000; --text: #111; --panel-text: #eee; --muted: #888;
-  --subtle: #777; --active: #fff; --hover: #555; --visual-empty: #222; --icon-filter: none; --panel-filter: none;
+  --subtle: #777; --active: #fff; --hover: #555; --visual-empty: #222; --icon-filter: none; --panel-filter: none; --pfp-color: 126, 255, 162;
 }
 body.glass-theme {
   --page: #f4f4f2; --panel: rgba(232, 232, 230, 0.82); --text: #050505; --panel-text: #050505; --muted: rgba(5, 5, 5, 0.62);

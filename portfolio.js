@@ -262,7 +262,7 @@ function updatePfpViewer(model) {
   if (!pfpViewerPromise) {
     pfpViewerPromise = new Promise((resolve) => {
       const script = document.createElement("script");
-      script.src = "./pfp-points.js?v=22";
+      script.src = "./pfp-points.js?v=23";
       script.addEventListener("load", resolve, { once: true });
       document.body.append(script);
     });
