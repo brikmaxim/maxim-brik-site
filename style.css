@@ -89,6 +89,9 @@ p, h1, h2 { margin: 0; font-size: inherit; font-weight: 400; }
 .tab.active { padding-left: 5px; color: var(--active); }
 .tab::before { content: ""; }
 .tab.active::before { content: "• "; }
+.tab.active::before, .project-button.active::before, .team-button.active::before {
+  color: #7effa2; font-size: 2em; line-height: 0; vertical-align: -0.08em;
+}
 .label { margin-bottom: 4px; color: inherit; font-size: 0.805em; opacity: 0.6; }
 
 #project-list { display: grid; }
