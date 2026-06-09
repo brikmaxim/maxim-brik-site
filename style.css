@@ -273,8 +273,8 @@ body.glass-theme .visual-tags {
     transition: opacity 320ms ease, transform 420ms cubic-bezier(.16, 1, .3, 1), visibility 420ms;
   }
   .mobile-client-slider {
-    position: absolute; top: 50%; right: 0; left: 0; display: block; width: 100%; height: 58px; overflow: hidden;
-    padding: 19px 0; gap: 0; --client-picker-index: 0;
+    position: absolute; top: 50%; right: 0; left: 0; display: block; width: 100%; height: 46px; overflow: hidden;
+    padding: 13px 0; gap: 0; --client-picker-index: 0;
     overscroll-behavior-y: contain; touch-action: none;
     scrollbar-width: none; user-select: none; -webkit-user-select: none; mask-image: linear-gradient(to bottom, transparent, #000 28%, #000 72%, transparent);
     -webkit-mask-image: linear-gradient(to bottom, transparent, #000 28%, #000 72%, transparent);
@@ -285,14 +285,14 @@ body.glass-theme .visual-tags {
   .details-column.client-slider-visible .meta-client > #meta-design {
     opacity: 0; visibility: hidden; transform: translateY(-3px);
   }
-  .details-column.client-slider-visible .meta-client { height: 58px; }
+  .details-column.client-slider-visible .meta-client { height: 46px; }
   .details-column.client-slider-visible .mobile-client-slider {
     opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(-50%);
   }
   .client-slider-button {
     position: absolute; top: 50%; left: 0; width: 100%; min-height: 20px; padding: 0; border: 0; outline: 0; background: transparent; color: var(--panel-text); opacity: 0.22; text-align: left;
     white-space: nowrap;
-    transform: translate3d(0, calc((var(--project-index) - var(--client-picker-index)) * 28px - 50%), 0);
+    transform: translate3d(0, calc((var(--project-index) - var(--client-picker-index)) * 21px - 50%), 0);
     will-change: transform, opacity;
     transition: transform 520ms cubic-bezier(.16, 1, .3, 1), color 320ms ease, opacity 420ms cubic-bezier(.16, 1, .3, 1);
   }
