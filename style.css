@@ -110,6 +110,7 @@ dt, dd { min-height: 1.547em; margin: 0 0 2px; font-weight: 400; line-height: in
 dt { font-size: 0.805em; opacity: 0.6; }
 dd a { color: var(--muted); overflow-wrap: anywhere; text-decoration: none; text-underline-offset: 0.12em; }
 dd a.has-link { text-decoration: underline; }
+dd a.is-disabled-link { cursor: default; pointer-events: none; }
 
 .gallery-column { position: relative; z-index: 1; align-self: start; overflow: visible; border-radius: 3px; background: transparent; }
 #gallery { display: block; }

@@ -408,6 +408,7 @@ function updateProjectMeta(index) {
     metaUrl.href = url || "#";
   }
   metaUrl.classList.toggle("has-link", Boolean(url) && !disableMobileLink);
+  metaUrl.classList.toggle("is-disabled-link", disableMobileLink);
 }
 
 mobileQuery.addEventListener("change", () => {
@@ -910,6 +911,9 @@ detailsColumn.addEventListener("touchmove", moveClientSliderProxy, { passive: fa
 detailsColumn.addEventListener("touchend", endClientSliderProxy, { passive: true });
 detailsColumn.addEventListener("touchcancel", endClientSliderProxy, { passive: true });
 gallery.addEventListener("click", handleVisualClick);
+metaUrl.addEventListener("click", (event) => {
+  if (metaUrl.classList.contains("is-disabled-link")) event.preventDefault();
+});
 
 const projectsVisibilityObserver = new IntersectionObserver(([entry]) => {
   const sliderVisible = mobileQuery.matches && entry.boundingClientRect.bottom <= 0;
