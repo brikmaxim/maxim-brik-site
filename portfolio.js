@@ -1,5 +1,5 @@
 const projects = [
-  ["R&D", "2026", "Maxim Brik", "https://www.instagram.com/iammaximbrik/", "rnd"],
+  ["R&D", "2026", "Alexey Molchanov", "https://www.instagram.com/iammaximbrik/", "rnd"],
   ["NDSP", "2026", "Maxim Brik", "https://newdaysamepain.com/", "ndsp"],
   ["ANGEL333", "2025", "Maxim Brik", "https://angel333.online/", "angel333"],
   ["KYNG", "2026", "Maxim Brik", "https://www.instagram.com/khemgendwrld/", "kyng"],
@@ -900,7 +900,7 @@ detailsColumn.addEventListener("touchcancel", endClientSliderProxy, { passive: t
 gallery.addEventListener("click", handleVisualClick);
 
 const projectsVisibilityObserver = new IntersectionObserver(([entry]) => {
-  const sliderVisible = mobileQuery.matches && !entry.isIntersecting;
+  const sliderVisible = mobileQuery.matches && entry.boundingClientRect.bottom <= 0;
   mobileWorkColumnsPassed = sliderVisible;
   detailsColumn.classList.toggle("client-slider-visible", sliderVisible);
   updateFooterUpVisibility();
