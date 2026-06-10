@@ -990,8 +990,8 @@ async function animateDetailsText(opening, token, detailsContent = getDetailsVal
         { opacity: 0, filter: "blur(12px)", transform: "translate3d(0, -4px, 0)" },
       ],
     {
-      duration: opening ? 420 : 260,
-      easing: "cubic-bezier(.16, 1, .3, 1)",
+      duration: opening ? 220 : 150,
+      easing: "cubic-bezier(.2, .8, .2, 1)",
       fill: "both",
     },
   ));

@@ -276,12 +276,13 @@ body.footer-up-visible .footer-up { opacity: 1; visibility: visible; pointer-eve
   #meta-client-label { align-self: baseline; }
   .meta-client {
     position: relative; min-width: 0; height: 20px; overflow: hidden;
-    transition: height 420ms cubic-bezier(.16, 1, .3, 1);
+    transition: height 240ms cubic-bezier(.16, 1, .3, 1);
+    will-change: height;
   }
   .meta-client > #meta-url {
     position: absolute; inset: 0; display: flex; align-items: center;
     opacity: 1; visibility: visible; transform: translateY(0);
-    transition: opacity 320ms ease, transform 420ms cubic-bezier(.16, 1, .3, 1), visibility 420ms;
+    transition: opacity 180ms ease, transform 220ms cubic-bezier(.16, 1, .3, 1), visibility 220ms;
   }
   .mobile-client-slider {
     position: absolute; top: 50%; right: 0; left: 0; display: block; width: 100%; height: 46px; overflow: hidden;
@@ -290,13 +291,12 @@ body.footer-up-visible .footer-up { opacity: 1; visibility: visible; pointer-eve
     scrollbar-width: none; user-select: none; -webkit-user-select: none; mask-image: linear-gradient(to bottom, transparent, #000 28%, #000 72%, transparent);
     -webkit-mask-image: linear-gradient(to bottom, transparent, #000 28%, #000 72%, transparent);
     opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-50%);
-    transition: opacity 320ms ease, visibility 420ms;
+    transition: opacity 180ms ease, visibility 220ms;
   }
   .mobile-client-slider::-webkit-scrollbar { display: none; }
   .details-column.client-slider-visible .meta-client > #meta-url {
     opacity: 0; visibility: hidden; transform: translateY(-3px);
   }
-  .details-column.client-slider-visible #meta-client-label { align-self: center; }
   .details-column.client-slider-visible .meta-client { height: 46px; }
   .details-column.client-slider-visible .mobile-client-slider {
     opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(-50%);
