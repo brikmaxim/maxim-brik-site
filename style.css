@@ -297,6 +297,7 @@ body.footer-up-visible .footer-up { opacity: 1; visibility: visible; pointer-eve
   .details-column.client-slider-visible .meta-client > #meta-url {
     opacity: 0; visibility: hidden; transform: translateY(-3px);
   }
+  .details-column.client-slider-visible #meta-client-label { align-self: center; }
   .details-column.client-slider-visible .meta-client { height: 46px; }
   .details-column.client-slider-visible .mobile-client-slider {
     opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(-50%);
