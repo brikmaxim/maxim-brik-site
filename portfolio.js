@@ -411,12 +411,12 @@ mobileQuery.addEventListener("change", () => {
 });
 
 async function animateProjectDetails(index, token) {
-  const closed = await animateDetailsHeight(false, token);
+  const closed = await animateDetailsText(false, token);
   if (!closed || token !== detailsTransitionToken) return;
   updateProjectMeta(index);
   detailsColumn.style.visibility = "visible";
-  detailsColumn.style.height = "0px";
-  const opened = await animateDetailsHeight(true, token);
+  detailsColumn.style.height = "";
+  const opened = await animateDetailsText(true, token);
   if (!opened || token !== detailsTransitionToken) return;
   detailsColumn.style.height = "";
   detailsColumn.style.visibility = "visible";
@@ -433,6 +433,10 @@ function setActiveProject(index, { animate = true } = {}) {
     detailsTransitionToken += 1;
     detailsColumn.style.height = "";
     detailsColumn.style.visibility = detailsColumn.hidden ? "" : "visible";
+    const detailsContent = detailsColumn.querySelector("dl");
+    detailsContent.style.opacity = "";
+    detailsContent.style.filter = "";
+    detailsContent.style.transform = "";
     updateProjectMeta(index);
     return;
   }
@@ -956,22 +960,35 @@ let transitionToken = 0;
 
 const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
-async function animateDetailsHeight(opening, token) {
-  const currentHeight = detailsColumn.getBoundingClientRect().height;
-  const totalHeight = detailsColumn.scrollHeight;
-  const revealed = getRevealHeights(detailsColumn);
-  const heights = opening
-    ? revealed.filter((height) => height > currentHeight + 1)
-    : [...revealed].reverse().filter((height) => height < currentHeight - 1).concat(0);
+async function animateDetailsText(opening, token) {
+  const detailsContent = detailsColumn.querySelector("dl");
   detailsColumn.style.visibility = "visible";
-  detailsColumn.style.height = `${currentHeight}px`;
-  for (const height of heights) {
-    await wait(43);
-    if (token !== detailsTransitionToken) return false;
-    detailsColumn.style.height = `${height}px`;
-  }
-  if (opening) detailsColumn.style.height = `${totalHeight}px`;
-  else detailsColumn.style.visibility = "hidden";
+  detailsColumn.style.height = "";
+  detailsContent.getAnimations().forEach((animation) => animation.cancel());
+  detailsContent.style.willChange = "opacity, filter, transform";
+  const animation = detailsContent.animate(
+    opening
+      ? [
+        { opacity: 0, filter: "blur(12px)", transform: "translate3d(0, 4px, 0)" },
+        { opacity: 1, filter: "blur(0)", transform: "translate3d(0, 0, 0)" },
+      ]
+      : [
+        { opacity: 1, filter: "blur(0)", transform: "translate3d(0, 0, 0)" },
+        { opacity: 0, filter: "blur(12px)", transform: "translate3d(0, -4px, 0)" },
+      ],
+    {
+      duration: opening ? 420 : 260,
+      easing: "cubic-bezier(.16, 1, .3, 1)",
+      fill: "both",
+    },
+  );
+  await animation.finished.catch(() => {});
+  if (token !== detailsTransitionToken) return false;
+  animation.cancel();
+  detailsContent.style.opacity = opening ? "" : "0";
+  detailsContent.style.filter = opening ? "" : "blur(12px)";
+  detailsContent.style.transform = opening ? "" : "translate3d(0, -4px, 0)";
+  detailsContent.style.willChange = "";
   return true;
 }
 
