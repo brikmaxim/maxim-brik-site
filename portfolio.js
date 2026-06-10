@@ -1,5 +1,5 @@
 const projects = [
-  ["R&D", "2026", "Alexey Molchanov", "https://www.instagram.com/iammaximbrik/", "rnd"],
+  ["R&D", "2026", "Maxim Brik, Alexey Molchanov", "https://www.instagram.com/iammaximbrik/", "rnd"],
   ["NDSP", "2026", "Maxim Brik", "https://newdaysamepain.com/", "ndsp"],
   ["ANGEL333", "2025", "Maxim Brik", "https://angel333.online/", "angel333"],
   ["KYNG", "2026", "Maxim Brik", "https://www.instagram.com/khemgendwrld/", "kyng"],
