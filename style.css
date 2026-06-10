@@ -266,12 +266,12 @@ body.footer-up-visible .footer-up { opacity: 1; visibility: visible; pointer-eve
   .intro-column, .projects-column, .details-column, .info-column, .services-column, .contacts-column, .team-column, .team-about-column, .team-pfp-column { min-height: auto; padding: 5px 6px; }
   .intro-column { padding: 0; }
   .project-button, .team-button { padding-top: 0; padding-bottom: 0; }
-  #meta-design-label { align-self: center; }
+  #meta-client-label { align-self: center; }
   .meta-client {
     position: relative; min-width: 0; height: 20px; overflow: hidden;
     transition: height 420ms cubic-bezier(.16, 1, .3, 1);
   }
-  .meta-client > #meta-design {
+  .meta-client > #meta-url {
     position: absolute; inset: 0; display: flex; align-items: center;
     opacity: 1; visibility: visible; transform: translateY(0);
     transition: opacity 320ms ease, transform 420ms cubic-bezier(.16, 1, .3, 1), visibility 420ms;
@@ -286,7 +286,7 @@ body.footer-up-visible .footer-up { opacity: 1; visibility: visible; pointer-eve
     transition: opacity 320ms ease, visibility 420ms;
   }
   .mobile-client-slider::-webkit-scrollbar { display: none; }
-  .details-column.client-slider-visible .meta-client > #meta-design {
+  .details-column.client-slider-visible .meta-client > #meta-url {
     opacity: 0; visibility: hidden; transform: translateY(-3px);
   }
   .details-column.client-slider-visible .meta-client { height: 46px; }
