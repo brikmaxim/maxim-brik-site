@@ -397,11 +397,17 @@ function scheduleWheelScroll() {
 
 function updateProjectMeta(index) {
   const [title, year, design, url, images] = projects[index];
+  const disableMobileLink = mobileQuery.matches && title === "R&D";
   metaYear.textContent = year;
   metaDesignLabel.textContent = "Designed";
   metaDesign.textContent = design;
   metaUrl.textContent = title;
-  metaUrl.href = url || "#";
+  if (disableMobileLink) {
+    metaUrl.removeAttribute("href");
+  } else {
+    metaUrl.href = url || "#";
+  }
+  metaUrl.classList.toggle("has-link", Boolean(url) && !disableMobileLink);
 }
 
 mobileQuery.addEventListener("change", () => {
@@ -411,12 +417,17 @@ mobileQuery.addEventListener("change", () => {
 });
 
 async function animateProjectDetails(index, token) {
-  const closed = await animateDetailsText(false, token);
+  const animatedNodes = getChangedDetailsValueNodes(index);
+  if (!animatedNodes.length) {
+    updateProjectMeta(index);
+    return;
+  }
+  const closed = await animateDetailsText(false, token, animatedNodes);
   if (!closed || token !== detailsTransitionToken) return;
   updateProjectMeta(index);
   detailsColumn.style.visibility = "visible";
   detailsColumn.style.height = "";
-  const opened = await animateDetailsText(true, token);
+  const opened = await animateDetailsText(true, token, animatedNodes);
   if (!opened || token !== detailsTransitionToken) return;
   detailsColumn.style.height = "";
   detailsColumn.style.visibility = "visible";
@@ -433,10 +444,11 @@ function setActiveProject(index, { animate = true } = {}) {
     detailsTransitionToken += 1;
     detailsColumn.style.height = "";
     detailsColumn.style.visibility = detailsColumn.hidden ? "" : "visible";
-    const detailsContent = detailsColumn.querySelector("dl");
-    detailsContent.style.opacity = "";
-    detailsContent.style.filter = "";
-    detailsContent.style.transform = "";
+    getDetailsValueNodes().forEach((node) => {
+      node.style.opacity = "";
+      node.style.filter = "";
+      node.style.transform = "";
+    });
     updateProjectMeta(index);
     return;
   }
@@ -960,13 +972,14 @@ let transitionToken = 0;
 
 const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
-async function animateDetailsText(opening, token) {
-  const detailsContent = detailsColumn.querySelector("dl");
+async function animateDetailsText(opening, token, detailsContent = getDetailsValueNodes()) {
   detailsColumn.style.visibility = "visible";
   detailsColumn.style.height = "";
-  detailsContent.getAnimations().forEach((animation) => animation.cancel());
-  detailsContent.style.willChange = "opacity, filter, transform";
-  const animation = detailsContent.animate(
+  detailsContent.forEach((node) => {
+    node.getAnimations().forEach((animation) => animation.cancel());
+    node.style.willChange = "opacity, filter, transform";
+  });
+  const animations = detailsContent.map((node) => node.animate(
     opening
       ? [
         { opacity: 0, filter: "blur(12px)", transform: "translate3d(0, 4px, 0)" },
@@ -981,15 +994,30 @@ async function animateDetailsText(opening, token) {
       easing: "cubic-bezier(.16, 1, .3, 1)",
       fill: "both",
     },
-  );
-  await animation.finished.catch(() => {});
+  ));
+  await Promise.all(animations.map((animation) => animation.finished.catch(() => {})));
   if (token !== detailsTransitionToken) return false;
-  animation.cancel();
-  detailsContent.style.opacity = opening ? "" : "0";
-  detailsContent.style.filter = opening ? "" : "blur(12px)";
-  detailsContent.style.transform = opening ? "" : "translate3d(0, -4px, 0)";
-  detailsContent.style.willChange = "";
+  animations.forEach((animation) => animation.cancel());
+  detailsContent.forEach((node) => {
+    node.style.opacity = opening ? "" : "0";
+    node.style.filter = opening ? "" : "blur(12px)";
+    node.style.transform = opening ? "" : "translate3d(0, -4px, 0)";
+    node.style.willChange = "";
+  });
   return true;
+}
+
+function getDetailsValueNodes() {
+  return [metaYear, metaUrl, metaDesign];
+}
+
+function getChangedDetailsValueNodes(index) {
+  const [title, year, design] = projects[index];
+  return [
+    [metaYear, year],
+    [metaUrl, title],
+    [metaDesign, design],
+  ].filter(([node, nextText]) => node.textContent !== String(nextText)).map(([node]) => node);
 }
 
 async function animateColumns(columns, opening, token) {
