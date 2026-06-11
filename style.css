@@ -302,13 +302,16 @@ body.footer-up-visible .footer-up { opacity: 1; visibility: visible; pointer-eve
   .details-column.client-slider-visible .meta-client > #meta-url {
     opacity: 0; visibility: hidden; transform: translateY(-3px);
   }
-  .details-column.client-slider-visible #meta-client-label { align-self: center; }
+  .details-column.client-slider-visible #meta-client-label {
+    align-self: stretch; display: flex; align-items: center; line-height: 20px;
+  }
   .details-column.client-slider-visible dl { grid-template-rows: minmax(0, auto) 46px minmax(0, auto); }
   .details-column.client-slider-visible .mobile-client-slider {
     opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(-50%);
   }
   .client-slider-button {
     position: absolute; top: 50%; left: 0; width: 100%; min-height: 20px; padding: 0; border: 0; outline: 0; background: transparent; color: var(--panel-text); opacity: 0.22; text-align: left;
+    line-height: 20px;
     white-space: nowrap;
     transform: translate3d(0, calc((var(--project-index) - var(--client-picker-index)) * 21px - 50%), 0);
     will-change: transform, opacity;
