@@ -230,7 +230,7 @@ body.glass-theme .visual-tags {
   transition: opacity 320ms ease, visibility 320ms ease;
 }
 body.footer-up-visible .footer-up { opacity: 1; visibility: visible; pointer-events: auto; }
-.help-toggle { display: inline-flex; gap: 4px; align-items: center; justify-self: end; margin-left: 0; padding: 0; border: 0; background: transparent; }
+.help-toggle { display: inline-flex; gap: 4px; align-items: center; justify-self: center; margin-left: 0; padding: 0; border: 0; background: transparent; }
 .help-toggle img { display: block; width: auto; height: 0.86em; max-height: 0.86em; object-fit: contain; filter: var(--icon-filter); transform: translateY(-2px); }
 .disclaimer-modal {
   position: fixed; z-index: 900; inset: 0; display: grid; padding: 10px; place-items: center;
@@ -250,7 +250,7 @@ body.footer-up-visible .footer-up { opacity: 1; visibility: visible; pointer-eve
 .disclaimer-content { display: grid; width: 100%; row-gap: 10px; }
 .disclaimer-content p { text-align: left; line-height: 1.55; }
 .disclaimer-panel a { color: var(--muted); overflow-wrap: anywhere; }
-.disclaimer-close { flex: 0 0 auto; color: var(--muted); }
+.disclaimer-close { flex: 0 0 auto; color: var(--muted); font: inherit; font-size: 0.805em; line-height: inherit; }
 
 @media (max-width: 700px) {
   .auth-gate {
