@@ -230,8 +230,8 @@ body.glass-theme .visual-tags {
   transition: opacity 320ms ease, visibility 320ms ease;
 }
 body.footer-up-visible .footer-up { opacity: 1; visibility: visible; pointer-events: auto; }
-.help-toggle { display: inline-flex; gap: 4px; align-items: center; justify-self: center; margin-left: 0; padding: 0; border: 0; background: transparent; }
-.help-toggle img { display: block; width: auto; height: 0.86em; max-height: 0.86em; object-fit: contain; filter: var(--icon-filter); transform: translateY(-2px); }
+.help-toggle { display: inline-flex; gap: 4px; align-items: center; justify-self: end; align-self: center; margin-left: 0; padding: 0; border: 0; background: transparent; }
+.help-toggle img { display: block; width: auto; height: 0.86em; max-height: 0.86em; object-fit: contain; filter: var(--icon-filter); transform: none; }
 .disclaimer-modal {
   position: fixed; z-index: 900; inset: 0; display: grid; padding: 10px; place-items: center;
   background: transparent; backdrop-filter: blur(20px) saturate(0.75); -webkit-backdrop-filter: blur(20px) saturate(0.75);
