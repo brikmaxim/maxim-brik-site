@@ -440,20 +440,17 @@ function setActiveProject(index, { animate = true } = {}) {
   document.querySelectorAll(".project-button").forEach((button) => button.classList.toggle("active", Number(button.dataset.project) === index));
   document.querySelectorAll(".client-slider-button").forEach((button) => button.classList.toggle("active", Number(button.dataset.project) === index));
   centerActiveClient(animate);
-  const workIsVisible = !detailsColumn.hidden && workTab.classList.contains("active");
-  if (mobileQuery.matches || !animate || !workIsVisible || !metaYear.textContent) {
-    detailsTransitionToken += 1;
-    detailsColumn.style.height = "";
-    detailsColumn.style.visibility = detailsColumn.hidden ? "" : "visible";
-    getDetailsValueNodes().forEach((node) => {
-      node.style.opacity = "";
-      node.style.filter = "";
-      node.style.transform = "";
-    });
-    updateProjectMeta(index);
-    return;
-  }
-  animateProjectDetails(index, ++detailsTransitionToken);
+  detailsTransitionToken += 1;
+  detailsColumn.style.height = "";
+  detailsColumn.style.visibility = detailsColumn.hidden ? "" : "visible";
+  getDetailsValueNodes().forEach((node) => {
+    node.getAnimations().forEach((animation) => animation.cancel());
+    node.style.opacity = "";
+    node.style.filter = "";
+    node.style.transform = "";
+    node.style.willChange = "";
+  });
+  updateProjectMeta(index);
 }
 
 function scrollToProject(index) {

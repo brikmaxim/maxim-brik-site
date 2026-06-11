@@ -108,7 +108,7 @@ dl {
 }
 dt, dd { min-height: 1.547em; margin: 0 0 2px; font-weight: 400; line-height: inherit; }
 dt { font-size: 0.805em; opacity: 0.6; }
-dd a { color: var(--muted); overflow-wrap: anywhere; text-decoration: none; text-underline-offset: 0.12em; }
+dd a { color: inherit; overflow-wrap: anywhere; text-decoration: none; text-underline-offset: 0.12em; }
 dd a.has-link { text-decoration: underline; }
 dd a.is-disabled-link { cursor: default; pointer-events: none; }
 
@@ -280,7 +280,7 @@ body.footer-up-visible .footer-up { opacity: 1; visibility: visible; pointer-eve
   .team-pfp-column { padding-top: 0; }
   .team-pfp { width: 80%; margin: -4px auto 0; }
   .project-button, .team-button { padding-top: 0; padding-bottom: 0; }
-  #meta-client-label { align-self: baseline; }
+  #meta-client-label { align-self: stretch; display: flex; align-items: center; line-height: 20px; }
   .meta-client {
     position: relative; min-width: 0; height: 100%; overflow: hidden;
   }
