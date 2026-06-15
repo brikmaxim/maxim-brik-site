@@ -483,15 +483,15 @@ function getContentFormat(src, fallback) {
 function getContentWidth(width, format, isVideo) {
   if (mobileQuery.matches) {
     const limits = isVideo
-      ? { portrait: [34, 68], square: [46, 82], widescreen: [76, 96], landscape: [64, 92], vertical: [38, 66] }
-      : { portrait: [28, 48], square: [38, 62], widescreen: [48, 88], landscape: [44, 82], vertical: [32, 58] };
+      ? { portrait: [68, 96], square: [92, 96], widescreen: [96, 96], landscape: [96, 96], vertical: [76, 96] }
+      : { portrait: [56, 96], square: [76, 96], widescreen: [96, 96], landscape: [88, 96], vertical: [64, 96] };
     const [min, max] = limits[format] || [width, width];
     return clamp(width, min, max);
   }
 
   const limits = isVideo
-    ? { portrait: [52, 68], square: [62, 82], widescreen: [76, 96] }
-    : { portrait: [16, 44], square: [24, 62], widescreen: [42, 88] };
+    ? { portrait: [96, 100], square: [100, 100], widescreen: [100, 100] }
+    : { portrait: [32, 64], square: [48, 76], widescreen: [84, 96] };
   const [min, max] = limits[format] || [width, width];
   return clamp(width, min, max);
 }
