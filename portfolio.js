@@ -798,7 +798,7 @@ async function renderGallery() {
     for (let compositionIndex = 0; compositionIndex < compositionCount; compositionIndex += 1) {
       const compositionElement = document.createElement("div");
       compositionElement.className = "project-composition";
-      const compositionHeight = mobileQuery.matches ? randomBetween(random, 980, 1180) : randomBetween(random, 1760, 1980);
+      const compositionHeight = mobileQuery.matches ? randomBetween(random, 1275, 1535) : randomBetween(random, 1760, 1980);
       compositionElement.style.setProperty("--composition-height", `${Math.round(compositionHeight)}px`);
       const composition = createProceduralLayout(random);
       const colors = shuffle([...colorLayers], random);
