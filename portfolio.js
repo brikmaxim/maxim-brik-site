@@ -297,21 +297,27 @@ function createFormatBlock(format, width, x, y) {
   return { format, x, y, w: width, ratio: formatRatios[format] };
 }
 
-function createProceduralLayout(random) {
+function createProceduralLayout(random, continuous = false) {
   const heroWidth = randomBetween(random, 80, 96);
-  const hero = createFormatBlock("widescreen", heroWidth, randomBetween(random, 0, 100 - heroWidth), 0);
+  const hero = createFormatBlock("widescreen", heroWidth, randomBetween(random, 0, 100 - heroWidth), continuous ? randomBetween(random, 0, 5) : 0);
   const squareWidth = randomBetween(random, 32, 43);
-  const square = createFormatBlock("square", squareWidth, attachToEdge(hero, squareWidth, random), 18);
+  const square = createFormatBlock("square", squareWidth, attachToEdge(hero, squareWidth, random), continuous ? randomBetween(random, 13, 27) : 18);
   const landscapeWidth = randomBetween(random, 62, 82);
-  const landscape = createFormatBlock("landscape", landscapeWidth, randomBetween(random, 0, 100 - landscapeWidth), 38);
+  const landscape = createFormatBlock("landscape", landscapeWidth, randomBetween(random, 0, 100 - landscapeWidth), continuous ? randomBetween(random, 30, 46) : 38);
   const verticalWidth = randomBetween(random, 27, 36);
-  const vertical = createFormatBlock("vertical", verticalWidth, attachToEdge(landscape, verticalWidth, random), 57);
+  const vertical = createFormatBlock("vertical", verticalWidth, attachToEdge(landscape, verticalWidth, random), continuous ? randomBetween(random, 47, 64) : 57);
   const miniWidth = randomBetween(random, 11, 15);
-  const mini = createFormatBlock("portrait", miniWidth, randomBetween(random, 0, 100 - miniWidth), 69);
+  const mini = createFormatBlock("portrait", miniWidth, randomBetween(random, 0, 100 - miniWidth), continuous ? randomBetween(random, 61, 78) : 69);
   const finalWidth = randomBetween(random, 67, 86);
-  const finalBlock = createFormatBlock("widescreen", finalWidth, randomBetween(random, 0, 100 - finalWidth), 78);
+  const finalBlock = createFormatBlock("widescreen", finalWidth, randomBetween(random, 0, 100 - finalWidth), continuous ? randomBetween(random, 75, 88) : 78);
 
-  return [hero, square, landscape, vertical, mini, finalBlock];
+  const layout = [hero, square, landscape, vertical, mini, finalBlock];
+  if (continuous && random() > 0.5) {
+    layout.forEach((block) => {
+      block.x = 100 - block.x - block.w;
+    });
+  }
+  return layout;
 }
 
 function updateParallax() {
@@ -800,7 +806,10 @@ async function renderGallery() {
       compositionElement.className = "project-composition";
       const compositionHeight = mobileQuery.matches ? randomBetween(random, 980, 1180) : randomBetween(random, 1760, 1980);
       compositionElement.style.setProperty("--composition-height", `${Math.round(compositionHeight)}px`);
-      const composition = createProceduralLayout(random);
+      if (mobileQuery.matches && compositionIndex > 0) {
+        compositionElement.style.setProperty("--composition-overlap", `${Math.round(randomBetween(random, -320, -190))}px`);
+      }
+      const composition = createProceduralLayout(random, mobileQuery.matches);
       const colors = shuffle([...colorLayers], random);
       const slotsByArea = composition
         .map(({ w: width, ratio }, layerIndex) => ({ layerIndex, area: width * width / ratio }))

@@ -356,7 +356,7 @@ body.footer-up-visible .footer-up { opacity: 1; visibility: visible; pointer-eve
   }
   .visual-lightbox .visual-tags-text { transform: none !important; }
   .project-composition { --composition-scale: 0.86; }
-  .project-composition + .project-composition { margin-top: -56px; }
+  .project-composition + .project-composition { margin-top: var(--composition-overlap, -190px); }
   .project-group + .project-group { margin-top: clamp(180px, 28vh, 280px); }
   .site-footer { font-size: inherit; }
   .disclaimer-modal { padding: 10px; align-items: center; }
