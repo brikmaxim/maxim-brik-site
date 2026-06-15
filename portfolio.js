@@ -314,6 +314,23 @@ function createProceduralLayout(random) {
   return [hero, square, landscape, vertical, mini, finalBlock];
 }
 
+function createMobileProceduralLayout(random) {
+  const heroWidth = randomBetween(random, 72, 88);
+  const hero = createFormatBlock("widescreen", heroWidth, randomBetween(random, 0, 100 - heroWidth), 0);
+  const squareWidth = randomBetween(random, 34, 48);
+  const square = createFormatBlock("square", squareWidth, attachToEdge(hero, squareWidth, random), 20);
+  const landscapeWidth = randomBetween(random, 54, 74);
+  const landscape = createFormatBlock("landscape", landscapeWidth, randomBetween(random, 0, 100 - landscapeWidth), 37);
+  const verticalWidth = randomBetween(random, 28, 40);
+  const vertical = createFormatBlock("vertical", verticalWidth, attachToEdge(landscape, verticalWidth, random), 55);
+  const miniWidth = randomBetween(random, 21, 30);
+  const mini = createFormatBlock("portrait", miniWidth, randomBetween(random, 0, 100 - miniWidth), 69);
+  const finalWidth = randomBetween(random, 56, 76);
+  const finalBlock = createFormatBlock("widescreen", finalWidth, randomBetween(random, 0, 100 - finalWidth), 80);
+
+  return [hero, square, landscape, vertical, mini, finalBlock];
+}
+
 function updateParallax() {
   const viewportCenter = window.innerHeight / 2;
   const wheelMomentum = parallaxImpulse;
@@ -483,15 +500,15 @@ function getContentFormat(src, fallback) {
 function getContentWidth(width, format, isVideo) {
   if (mobileQuery.matches) {
     const limits = isVideo
-      ? { portrait: [68, 96], square: [92, 96], widescreen: [96, 96], landscape: [96, 96], vertical: [76, 96] }
-      : { portrait: [56, 96], square: [76, 96], widescreen: [96, 96], landscape: [88, 96], vertical: [64, 96] };
+      ? { portrait: [34, 52], square: [50, 68], widescreen: [68, 92], landscape: [60, 84], vertical: [40, 58] }
+      : { portrait: [28, 42], square: [42, 58], widescreen: [58, 84], landscape: [52, 76], vertical: [34, 52] };
     const [min, max] = limits[format] || [width, width];
     return clamp(width, min, max);
   }
 
   const limits = isVideo
-    ? { portrait: [96, 100], square: [100, 100], widescreen: [100, 100] }
-    : { portrait: [32, 64], square: [48, 76], widescreen: [84, 96] };
+    ? { portrait: [68, 84], square: [76, 90], widescreen: [88, 100] }
+    : { portrait: [24, 52], square: [36, 68], widescreen: [58, 94] };
   const [min, max] = limits[format] || [width, width];
   return clamp(width, min, max);
 }
@@ -798,9 +815,9 @@ async function renderGallery() {
     for (let compositionIndex = 0; compositionIndex < compositionCount; compositionIndex += 1) {
       const compositionElement = document.createElement("div");
       compositionElement.className = "project-composition";
-      const compositionHeight = mobileQuery.matches ? randomBetween(random, 980, 1180) : randomBetween(random, 1760, 1980);
+      const compositionHeight = mobileQuery.matches ? randomBetween(random, 1060, 1260) : randomBetween(random, 1760, 1980);
       compositionElement.style.setProperty("--composition-height", `${Math.round(compositionHeight)}px`);
-      const composition = createProceduralLayout(random);
+      const composition = mobileQuery.matches ? createMobileProceduralLayout(random) : createProceduralLayout(random);
       const colors = shuffle([...colorLayers], random);
       const slotsByArea = composition
         .map(({ w: width, ratio }, layerIndex) => ({ layerIndex, area: width * width / ratio }))
