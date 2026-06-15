@@ -22,6 +22,7 @@
     attribute vec3 aPosition;
     uniform float uPitch;
     uniform mat4 uProjection;
+    uniform vec2 uOffset;
     uniform float uPointSize;
     uniform float uRoll;
     uniform float uScale;
@@ -42,6 +43,7 @@
       );
       point = vec3(cr * point.x - sr * point.y, sr * point.x + cr * point.y, point.z);
       point = vec3(point.x, cp * point.y - sp * point.z, sp * point.y + cp * point.z);
+      point.xy += uOffset;
       point.z -= 8.6;
       gl_Position = uProjection * vec4(point, 1.0);
       gl_PointSize = uPointSize * (8.8 / -point.z);
@@ -66,6 +68,7 @@
   const projection = new Float32Array(16);
   const positionLocation = gl.getAttribLocation(program, "aPosition");
   const pitchLocation = gl.getUniformLocation(program, "uPitch");
+  const offsetLocation = gl.getUniformLocation(program, "uOffset");
   const pointSizeLocation = gl.getUniformLocation(program, "uPointSize");
   const projectionLocation = gl.getUniformLocation(program, "uProjection");
   const rollLocation = gl.getUniformLocation(program, "uRoll");
@@ -92,6 +95,11 @@
     alexey: 1,
     human: 1,
     maxim: 1.35,
+  };
+  const modelOffset = {
+    alexey: [-0.12, 0],
+    human: [0, 0],
+    maxim: [-0.18, 0.03],
   };
   const modelRoll = {
     alexey: 0,
@@ -172,6 +180,8 @@
     const pointColor = getPointColor();
     gl.uniform3f(colorLocation, pointColor[0], pointColor[1], pointColor[2]);
     gl.uniformMatrix4fv(projectionLocation, false, projection);
+    const offset = modelOffset[activeModel] || [0, 0];
+    gl.uniform2f(offsetLocation, offset[0], offset[1]);
     gl.uniform1f(pitchLocation, pointerPitch * modelPitchDirection[activeModel]);
     gl.uniform1f(rollLocation, modelRoll[activeModel]);
     gl.uniform1f(yawLocation, pointerYaw * modelYawDirection[activeModel] + modelYaw[activeModel]);

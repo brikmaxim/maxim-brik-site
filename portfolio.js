@@ -146,7 +146,8 @@ function detailsClientSliderVisible() {
 }
 
 function updateFooterUpVisibility() {
-  document.body.classList.toggle("footer-up-visible", mobileQuery.matches && workTab.classList.contains("active") && mobileWorkColumnsPassed);
+  const shouldShow = mobileQuery.matches && workTab.classList.contains("active") && mobileWorkColumnsPassed && window.scrollY > 80;
+  document.body.classList.toggle("footer-up-visible", shouldShow);
 }
 
 function beginClientSliderProxy(event) {
@@ -267,7 +268,7 @@ function updatePfpViewer(model) {
   if (!pfpViewerPromise) {
     pfpViewerPromise = new Promise((resolve) => {
       const script = document.createElement("script");
-      script.src = "./pfp-points.js?v=25";
+      script.src = "./pfp-points.js?v=26";
       script.addEventListener("load", resolve, { once: true });
       document.body.append(script);
     });
