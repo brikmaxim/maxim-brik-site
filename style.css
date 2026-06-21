@@ -150,6 +150,8 @@ dd a.is-disabled-link { cursor: default; pointer-events: none; }
 .visual-img .visual-box::before, .visual-video .visual-box::before { background: transparent; }
 .visual:hover { opacity: 1; }
 .visual:hover .visual-box { transform: scale(1.15); }
+.visual-edge-left .visual-box { transform-origin: left bottom; }
+.visual-edge-right .visual-box { transform-origin: right bottom; }
 .visual-media {
   position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 3px 3px 0 0;
   pointer-events: none; filter: blur(14px); transform: scale(1.055); opacity: 0.86;
@@ -188,6 +190,8 @@ dd a.is-disabled-link { cursor: default; pointer-events: none; }
 .visual-tags-shift-left .visual-tags { text-align: left; padding-right: 28px; }
 .visual-tags-shift-right .visual-tags { text-align: right; padding-left: 28px; }
 .visual-tags-shift-right .visual-tags-text { transform-origin: right center; }
+.visual-edge-left .visual-tags { transform-origin: left top; }
+.visual-edge-right .visual-tags { transform-origin: right top; }
 body.glass-theme .visual-tags {
   background: var(--panel); color: var(--panel-text);
   backdrop-filter: var(--panel-filter); -webkit-backdrop-filter: var(--panel-filter);

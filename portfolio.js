@@ -845,8 +845,9 @@ async function renderGallery() {
         const visualHeight = contentWidth / (src ? formatRatios[contentFormat] : ratio);
         const contentY = clamp(y, 0, Math.max(0, 100 - visualHeight - 2));
         const mediaElement = createMedia(src, title);
+        const edgeClass = contentX < 6 ? " visual-edge-left" : contentX + contentWidth > 94 ? " visual-edge-right" : "";
         visualButton.type = "button";
-        visualButton.className = `visual visual-${color}${mediaElement ? ` visual-${mediaElement.tagName.toLowerCase()}` : ""}`;
+        visualButton.className = `visual visual-${color}${edgeClass}${mediaElement ? ` visual-${mediaElement.tagName.toLowerCase()}` : ""}`;
         visualButton.setAttribute("aria-label", `${title} project media`);
         visualButton.addEventListener("click", handleVisualClick);
         visualButton.dataset.format = contentFormat;
