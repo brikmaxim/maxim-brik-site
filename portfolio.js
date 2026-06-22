@@ -508,8 +508,8 @@ function getContentWidth(width, format, isVideo) {
   }
 
   const limits = isVideo
-    ? { portrait: [68, 84], square: [76, 90], widescreen: [88, 100] }
-    : { portrait: [24, 52], square: [36, 68], widescreen: [58, 94] };
+    ? { portrait: [68, 78], square: [76, 78], widescreen: [68, 78], landscape: [60, 78] }
+    : { portrait: [24, 52], square: [36, 68], widescreen: [58, 78], landscape: [52, 78] };
   const [min, max] = limits[format] || [width, width];
   return clamp(width, min, max);
 }
@@ -757,12 +757,6 @@ function handleVisualClick(event) {
   else openExpandedVisual(visual);
 }
 
-function setHoveredVisual(visual) {
-  galleryColumn.classList.toggle("is-hovering", Boolean(visual));
-  gallery.querySelector(".visual.is-hovered")?.classList.remove("is-hovered");
-  visual?.classList.add("is-hovered");
-}
-
 function createMedia(src, title) {
   if (!src) return null;
   const isVideo = isVideoSource(src);
@@ -847,7 +841,8 @@ async function renderGallery() {
         const src = mediaByLayer[layerIndex];
         const contentFormat = src ? getContentFormat(src, format) : format;
         const contentWidth = src ? getContentWidth(width, contentFormat, isVideoSource(src)) : width;
-        const contentX = clamp(x + (width - contentWidth) / 2, 0, 100 - contentWidth);
+        const minContentX = mobileQuery.matches ? 0 : 22;
+        const contentX = clamp(x + (width - contentWidth) / 2, minContentX, 100 - contentWidth);
         const visualHeight = contentWidth / (src ? formatRatios[contentFormat] : ratio);
         const contentY = clamp(y, 0, Math.max(0, 100 - visualHeight - 2));
         const mediaElement = createMedia(src, title);
@@ -932,14 +927,6 @@ detailsColumn.addEventListener("touchmove", moveClientSliderProxy, { passive: fa
 detailsColumn.addEventListener("touchend", endClientSliderProxy, { passive: true });
 detailsColumn.addEventListener("touchcancel", endClientSliderProxy, { passive: true });
 gallery.addEventListener("click", handleVisualClick);
-gallery.addEventListener("pointerover", (event) => {
-  const visual = event.target.closest(".visual");
-  if (visual) setHoveredVisual(visual);
-});
-gallery.addEventListener("pointerout", (event) => {
-  if (event.relatedTarget?.closest?.(".visual")) return;
-  setHoveredVisual(null);
-});
 metaUrl.addEventListener("click", (event) => {
   if (metaUrl.classList.contains("is-disabled-link")) event.preventDefault();
 });

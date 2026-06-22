@@ -113,7 +113,6 @@ dd a.has-link { text-decoration: underline; }
 dd a.is-disabled-link { cursor: default; pointer-events: none; }
 
 .gallery-column { position: relative; z-index: 1; align-self: start; overflow: visible; border-radius: 3px; background: transparent; }
-.gallery-column:has(.visual:hover), .gallery-column.is-hovering { z-index: 20; }
 #gallery { display: block; }
 .project-group {
   position: relative; overflow: visible; border-radius: 3px;
@@ -149,8 +148,7 @@ dd a.is-disabled-link { cursor: default; pointer-events: none; }
 .visual-img, .visual-video,
 .visual-img .visual-box, .visual-video .visual-box,
 .visual-img .visual-box::before, .visual-video .visual-box::before { background: transparent; }
-.visual:hover, .visual.is-hovered { z-index: 80 !important; opacity: 1; }
-.visual.is-hovered .visual-box { transform: scale(1.15); }
+.visual:hover { opacity: 1; }
 .visual:hover .visual-box { transform: scale(1.15); }
 .visual-media {
   position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 3px 3px 0 0;
