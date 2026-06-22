@@ -757,6 +757,12 @@ function handleVisualClick(event) {
   else openExpandedVisual(visual);
 }
 
+function setHoveredVisual(visual) {
+  galleryColumn.classList.toggle("is-hovering", Boolean(visual));
+  gallery.querySelector(".visual.is-hovered")?.classList.remove("is-hovered");
+  visual?.classList.add("is-hovered");
+}
+
 function createMedia(src, title) {
   if (!src) return null;
   const isVideo = isVideoSource(src);
@@ -926,6 +932,14 @@ detailsColumn.addEventListener("touchmove", moveClientSliderProxy, { passive: fa
 detailsColumn.addEventListener("touchend", endClientSliderProxy, { passive: true });
 detailsColumn.addEventListener("touchcancel", endClientSliderProxy, { passive: true });
 gallery.addEventListener("click", handleVisualClick);
+gallery.addEventListener("pointerover", (event) => {
+  const visual = event.target.closest(".visual");
+  if (visual) setHoveredVisual(visual);
+});
+gallery.addEventListener("pointerout", (event) => {
+  if (event.relatedTarget?.closest?.(".visual")) return;
+  setHoveredVisual(null);
+});
 metaUrl.addEventListener("click", (event) => {
   if (metaUrl.classList.contains("is-disabled-link")) event.preventDefault();
 });
