@@ -213,7 +213,10 @@ body.glass-theme .visual-tags {
 .services-list, .contacts-column ul { display: grid; row-gap: 1px; }
 .services-list { color: inherit; }
 .contacts-column ul { margin: 0; padding: 0; list-style: none; }
-.contacts-column a { color: var(--subtle); transition: color 240ms ease; }
+.contacts-column a {
+  color: var(--subtle); text-decoration: underline; text-decoration-thickness: 0.06em; text-underline-offset: 0.14em;
+  transition: color 240ms ease;
+}
 
 .site-footer {
   position: fixed; z-index: 50; right: 10px; bottom: 6px; left: 10px;
