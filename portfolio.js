@@ -11,22 +11,120 @@ const projects = [
 ];
 
 const contentManifest = {
-  "angel333": ["001.jpg", "002.jpg", "003.jpg", "004.jpg", "005.jpg", "006.jpg", "007.jpg", "008.jpg"],
-  "kyng": ["001.jpg", "002.jpg", "003.jpg", "004.jpg", "005.jpg", "006.jpg", "007.mp4", "008.mp4", "009.jpg"],
-  "km20": ["001.png", "002.png", "003.png"],
-  "ndsp": ["001.jpg", "002.jpg", "003.jpg", "004.jpg", "005.jpg", "006.mp4", "007.jpg", "008.jpg"],
-  "omanko": ["001.mp4", "002.png", "003.png", "004.png", "005.jpg"],
-  "reckless-scholars": ["001.png", "002.jpg", "003.jpg", "004.jpg", "005.jpg"],
-  "rnd": [
-    "001.jpg", "002.png", "003.jpg", "004.png", "005.jpg", "006.jpg", "007.jpg", "008.jpg", "009.jpg", "010.jpg",
-    "011.mp4", "012.png", "013.png", "014.png", "015.mp4", "016.mp4", "017.mp4", "018.mp4", "019.mp4", "020.mp4",
-    "021.mp4", "022.mp4", "023.mp4", "024.mp4", "025.mp4", "026.mp4", "027.mp4", "028.jpg", "029.jpg", "030.jpg",
-    "031.jpg", "032.jpg", "033.jpg", "034.jpg", "035.png", "036.png", "037.png", "038.jpg", "039.png", "040.png",
-    "041.mp4", "042.jpg", "043.png", "044.png", "045.jpg", "046.png", "047.jpg", "048.jpg", "049.jpg", "050.jpg",
-    "051.mp4", "052.jpg", "053.jpg", "054.jpg", "055.jpg", "056.mp4", "057.png", "058.png",
+  "angel333": [
+    "001_visualisation:design:development..jpg",
+    "002_visualisation:design:development.jpg",
+    "003_visualisation:design:development.jpg",
+    "004__direction:visualisation:design.jpg",
+    "005_direction:visualisation:design.jpg",
+    "006__direction:visualisation.jpg",
+    "007_visualisation:design:development..jpg",
+    "008_visualisation:design:development..jpg",
   ],
-  "sicko": ["001.png", "002.png", "003.png"],
-  "solutions": ["001.jpg", "002.png", "003.png", "004.png", "005.png", "006.png", "007.png", "008.jpg", "009.jpg"],
+  "km20": [
+    "001_visualisation:design:developmen.png",
+    "002_visualisation:design:developmen.png",
+    "003_visualisation:design:developmen.jpg",
+    "004_visualisation:design:development.jpg",
+  ],
+  "kyng": [
+    "001_visualisation:design:development..jpg",
+    "002_visualisation:design:development..jpg",
+    "005_visualisation:design:development..jpg",
+    "006_visualisation:design:development.jpg",
+    "007_visualisation:design.mp4",
+    "008_visualisation:design:development..mp4",
+    "009_research:design.jpg",
+    "010_visualisation:design:development.jpeg",
+    "011__visualisation:design:development.jpeg",
+    "012_research:visualisation:design:development.MP4",
+    "013_research:visualisation:design:development.jpg",
+  ],
+  "ndsp": [
+    "001_visualisation:design:development.jpg",
+    "002_visualisation:design:development..jpg",
+    "004_visualisation:design:development..jpg",
+    "005_visualisation:design:development.jpg",
+    "006_research:visualisation:design:development.mp4",
+    "007_visualization:development:design:.jpg.jpg",
+    "008_visualization:development:design:.jpg.jpg",
+  ],
+  "omanko": [
+    "001__visualization:development:production.mp4",
+    "002__visualization:development:production.png",
+    "003_visualization:development:production.jpg",
+    "004__visualization:development:production.jpg",
+    "005__visualization:development:production.jpg",
+  ],
+  "reckless-scholars": [
+    "001_visualization:development:design:.png.png",
+    "002_visualization:development:design:.jpg.jpg",
+    "003_visualization:development:design:.jpg.jpg",
+    "004_visualization:development:design:.jpg.jpg",
+    "005__visualization:development:design.jpg",
+  ],
+  "rnd": [
+    "002_004_research:direction:visualization.png",
+    "003_research:visualization.jpg",
+    "004_research:visualization.jpg",
+    "004_research:visualization.png",
+    "006_research:direction:visualization.jpg",
+    "007_020_research:direction:visualization.jpg",
+    "009_research:visualisation.jpg",
+    "010__research:visualization:development:design:production.jpg",
+    "011_direction:visualization..mp4",
+    "013_direction:visualization..png",
+    "014_visualization.png",
+    "015__direction:visualization.mp4",
+    "016__research:visualization:development:design:production.mp4",
+    "017__visualization.mp4",
+    "018__direction:visualization.mp4",
+    "019__visualization.mp4",
+    "020_research:direction:visualization.mp4",
+    "022_direction:visualization.mp4",
+    "023_research:direction:visualization.mp4",
+    "025_research:direction:visualization.mp4",
+    "025_visualization.mp4",
+    "026_direction:visualization.mp4",
+    "027_research:design:direction:visualization.mp4",
+    "028_research:direction:visualization.jpg",
+    "035_research:design.png",
+    "037_design.png",
+    "039_design.png",
+    "040_design:visualisation.png",
+    "041_research:visualisation.mp4",
+    "042_research:visualisation.jpg",
+    "043_research:visualisation.png",
+    "045_research:visualisation.jpg",
+    "047_research:visualisation:design:development:production.jpg",
+    "048_research:visualisation:design:development:production.jpg",
+    "049_research:visualisation.jpg",
+    "050_research:visualisation.jpg",
+    "051_research:visualisation.mp4",
+    "052_research:visualisation.jpg",
+    "053_research:visualisation.jpg",
+    "054_research:visualisation.jpg",
+    "055_research:visualisation.jpg",
+    "056_research:visualisation.mp4",
+    "057_design.png",
+    "058_research:design.png",
+  ],
+  "sicko": [
+    "001_visualisation:design:development.png",
+    "002_visualisation:design:development.png",
+    "003_visualisation:design:development.png",
+  ],
+  "solutions": [
+    "001_research:direction:visualization.jpg",
+    "002_research:direction:visualization.png",
+    "003_research:direction:visualization.png",
+    "004_research:direction:visualization.png",
+    "005_research:direction:visualization.png",
+    "006_research:direction:visualization.png",
+    "007_research:direction:visualization.png",
+    "008_research:direction:visualization:development.jpg",
+    "009_visualization:development.jpg",
+  ],
 };
 
 const contentTags = {
@@ -54,6 +152,8 @@ const contentTags = {
 
 const projectList = document.querySelector("#project-list");
 const mobileClientSlider = document.querySelector("#mobile-client-slider");
+const tabsNav = document.querySelector(".tabs");
+const teamList = document.querySelector(".team-list");
 const gallery = document.querySelector("#gallery");
 const introColumn = document.querySelector(".intro-column");
 const projectsColumn = document.querySelector(".projects-column");
@@ -93,6 +193,111 @@ let expandedOverlay = null;
 let expandedBackdrop = null;
 let expandedVisualAnimating = false;
 let expandedVisualPendingClose = false;
+let activeGalleryTag = "";
+let navIndicatorFrame = 0;
+
+const filterableContentTags = ["research", "visualisation", "design", "development", "production"];
+const contentTagAliases = {
+  visualization: "visualisation",
+  visualisation: "visualisation",
+  developmen: "development",
+};
+const filterableContentTagSet = new Set(filterableContentTags);
+
+function normalizeContentTag(tag) {
+  const cleaned = String(tag || "").toLowerCase().replace(/[^a-z]/g, "");
+  const normalized = contentTagAliases[cleaned] || cleaned;
+  return filterableContentTagSet.has(normalized) ? normalized : "";
+}
+
+function getFilenameTags(filename) {
+  const tags = String(filename || "")
+    .replace(/\.[^.]+$/, "")
+    .split(/[_:]/)
+    .map(normalizeContentTag)
+    .filter(Boolean);
+  return [...new Set(tags)];
+}
+
+function renderVisualTagLinks(target, tags) {
+  target.replaceChildren();
+  tags.forEach((tag, index) => {
+    if (index) target.append(document.createTextNode(" / "));
+    const tagElement = document.createElement("span");
+    tagElement.className = "visual-tag";
+    tagElement.dataset.galleryTag = tag;
+    tagElement.setAttribute("role", "button");
+    tagElement.tabIndex = 0;
+    tagElement.textContent = tag;
+    tagElement.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      openTagGallery(tag);
+    });
+    tagElement.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      event.stopPropagation();
+      openTagGallery(tag);
+    });
+    target.append(tagElement);
+  });
+}
+
+function getProjectDisplayTitle(title, index) {
+  return index === 0 && activeGalleryTag ? `${title} (${activeGalleryTag})` : title;
+}
+
+function updateProjectLabels() {
+  document.querySelectorAll(".project-button").forEach((button) => {
+    const index = Number(button.dataset.project);
+    button.textContent = getProjectDisplayTitle(projects[index]?.[0] || "", index);
+  });
+  document.querySelectorAll(".client-slider-button").forEach((button) => {
+    const index = Number(button.dataset.project);
+    button.textContent = getProjectDisplayTitle(projects[index]?.[0] || "", index);
+  });
+}
+
+function installMovingIndicator(container) {
+  if (!container || container.querySelector(":scope > .nav-indicator")) return;
+  const indicator = document.createElement("span");
+  indicator.className = "nav-indicator";
+  indicator.setAttribute("aria-hidden", "true");
+  container.append(indicator);
+  container.classList.add("has-moving-indicator");
+}
+
+function updateMovingIndicator(container, activeSelector) {
+  if (!container) return;
+  const indicator = container.querySelector(":scope > .nav-indicator");
+  const activeItem = container.querySelector(activeSelector);
+  if (!indicator || !activeItem) {
+    container?.style.setProperty("--indicator-opacity", "0");
+    return;
+  }
+  const containerRect = container.getBoundingClientRect();
+  const itemRect = activeItem.getBoundingClientRect();
+  container.style.setProperty("--indicator-y", `${(itemRect.top - containerRect.top + itemRect.height / 2).toFixed(2)}px`);
+  container.style.setProperty("--indicator-opacity", "1");
+}
+
+function updateNavIndicators() {
+  navIndicatorFrame = 0;
+  updateMovingIndicator(tabsNav, ".tab.active");
+  updateMovingIndicator(projectList, ".project-button.active");
+  updateMovingIndicator(teamList, ".team-button.active");
+}
+
+function scheduleNavIndicators() {
+  if (navIndicatorFrame) return;
+  navIndicatorFrame = requestAnimationFrame(updateNavIndicators);
+}
+
+function scheduleNavIndicatorsAfterLayout() {
+  scheduleNavIndicators();
+  window.setTimeout(scheduleNavIndicators, 680);
+}
 
 function getCookieValue(name) {
   return document.cookie.split("; ").reduce((value, item) => {
@@ -419,7 +624,7 @@ function updateProjectMeta(index) {
   metaYear.textContent = year;
   metaDesignLabel.textContent = "Designed";
   metaDesign.textContent = design;
-  metaUrl.textContent = title;
+  metaUrl.textContent = getProjectDisplayTitle(title, index);
   if (disableMobileLink) {
     metaUrl.removeAttribute("href");
   } else {
@@ -453,10 +658,16 @@ async function animateProjectDetails(index, token) {
 }
 
 function setActiveProject(index, { animate = true } = {}) {
-  if (activeProject === index) return;
+  if (activeProject === index) {
+    updateProjectLabels();
+    updateProjectMeta(index);
+    scheduleNavIndicators();
+    return;
+  }
   activeProject = index;
   document.querySelectorAll(".project-button").forEach((button) => button.classList.toggle("active", Number(button.dataset.project) === index));
   document.querySelectorAll(".client-slider-button").forEach((button) => button.classList.toggle("active", Number(button.dataset.project) === index));
+  scheduleNavIndicators();
   centerActiveClient(animate);
   detailsTransitionToken += 1;
   detailsColumn.style.height = "";
@@ -476,6 +687,10 @@ function scrollToProject(index) {
   suppressScrollSync = true;
   setActiveProject(index);
   const group = document.querySelector(`.project-group[data-project="${index}"]`);
+  if (!group) {
+    suppressScrollSync = false;
+    return;
+  }
   const targetTop = group.getBoundingClientRect().top + window.scrollY - 8;
   window.scrollTo({ top: targetTop, behavior: "instant" });
   requestAnimationFrame(() => {
@@ -483,11 +698,23 @@ function scrollToProject(index) {
   });
 }
 
-function getContent(slug) {
+function getContentItems(slug) {
   return (contentManifest[slug] || []).map((filename) => {
     const folder = mobileQuery.matches ? "mobile-content" : "content";
-    return `assets/${folder}/${slug}/${filename}`;
+    return {
+      filename,
+      tags: getFilenameTags(filename),
+      src: `assets/${folder}/${slug}/${filename}`,
+    };
   });
+}
+
+function getAllContentItemsForTag(tag) {
+  return projects.flatMap(([title, , , , slug], projectIndex) => (
+    getContentItems(slug)
+      .filter((item) => item.tags.includes(tag))
+      .map((item) => ({ ...item, projectTitle: title, projectIndex }))
+  ));
 }
 
 function isVideoSource(src) {
@@ -531,7 +758,8 @@ function loadMediaElement(media) {
 
 function loadNearbyMedia() {
   nearbyMediaFrame = 0;
-  const margin = mobileQuery.matches ? 40 : 1000;
+  if (galleryColumn.hidden || !workTab.classList.contains("active")) return;
+  const margin = mobileQuery.matches ? 40 : 560;
   document.querySelectorAll(".visual-media:not([data-loaded-source])").forEach((media) => {
     const rect = media.getBoundingClientRect();
     if (rect.bottom >= -margin && rect.top <= window.innerHeight + margin) loadMediaElement(media);
@@ -549,22 +777,56 @@ const lazyMediaObserver = new IntersectionObserver((entries) => {
     lazyMediaObserver.unobserve(target);
     loadMediaElement(target);
   });
-}, { rootMargin: mobileQuery.matches ? "40px 0px" : "900px 0px" });
+}, { rootMargin: mobileQuery.matches ? "40px 0px" : "520px 0px" });
 
 function rectsOverlap(a, b) {
   return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
 }
 
+function getRectOverlap(a, b) {
+  const width = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+  const height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+  return { width, height, area: width * height };
+}
+
+function rectsOverlapTooMuch(a, b) {
+  const overlap = getRectOverlap(a, b);
+  if (!overlap.area) return false;
+  const minArea = Math.min(a.width * a.height, b.width * b.height);
+  const minHeight = Math.min(a.height, b.height);
+  const minWidth = Math.min(a.width, b.width);
+  const tagBandA = { ...a, top: a.bottom - 24 };
+  const tagBandB = { ...b, top: b.bottom - 24 };
+  const tagBandOverlapA = getRectOverlap(tagBandA, b);
+  const tagBandOverlapB = getRectOverlap(tagBandB, a);
+  const tagBandCovered = tagBandOverlapA.width > Math.min(160, a.width * 0.42) || tagBandOverlapB.width > Math.min(160, b.width * 0.42);
+  return (
+    tagBandCovered ||
+    overlap.area / minArea > 0.16 ||
+    (overlap.height / minHeight > 0.34 && overlap.width / minWidth > 0.22)
+  );
+}
+
+function resolveVisualTop(rect, placedRects) {
+  const allowedVerticalOverlap = Math.min(92, rect.height * 0.2);
+  const relatedRects = placedRects.filter((placed) => {
+    const horizontalOverlap = Math.max(0, Math.min(rect.right, placed.right) - Math.max(rect.left, placed.left));
+    const horizontalRatio = horizontalOverlap / Math.min(rect.width, placed.width);
+    return horizontalRatio > 0.18;
+  });
+  const nearest = relatedRects.reduce((current, placed) => (
+    !current || placed.bottom > current.bottom ? placed : current
+  ), null);
+  let top = nearest ? Math.min(rect.top, nearest.bottom - allowedVerticalOverlap) : rect.top;
+  relatedRects.forEach((placed) => {
+    top = Math.max(top, placed.bottom - allowedVerticalOverlap);
+  });
+  return top;
+}
+
 function placeVisualTags() {
   document.querySelectorAll(".visual-tags-shift-left, .visual-tags-shift-right").forEach((visual) => {
     visual.classList.remove("visual-tags-shift-left", "visual-tags-shift-right");
-  });
-  document.querySelectorAll(".visual-tags").forEach((tag) => {
-    const tags = tag.dataset.tags?.split("|").filter(Boolean) || [];
-    if (!tags.length) return;
-    const width = tag.getBoundingClientRect().width;
-    const count = width < 74 ? 1 : width < 132 ? 2 : 3;
-    tag.querySelector(".visual-tags-text").textContent = tags.slice(0, count).join("/ ");
   });
   document.querySelectorAll(".project-composition").forEach((composition) => {
     const visuals = [...composition.querySelectorAll(".visual")].map((visual) => ({
@@ -709,7 +971,8 @@ function openExpandedVisual(visual) {
   overlay.className = "visual-lightbox";
   overlay.setAttribute("aria-label", "Close fullscreen media");
   overlay.append(cloneVisualForOverlay(visual));
-  overlay.append(visual.querySelector(".visual-tags").cloneNode(true));
+  const overlayTags = visual.querySelector(".visual-tags")?.cloneNode(true);
+  if (overlayTags) overlay.append(overlayTags);
   const requestClose = (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -741,11 +1004,39 @@ function openExpandedVisual(visual) {
   }, 540);
 }
 
+function getVisualTagFromPoint(visual, x, y) {
+  if (!visual || !Number.isFinite(x) || !Number.isFinite(y)) return "";
+  const tagNodes = [...visual.querySelectorAll(".visual-tag[data-gallery-tag]")];
+  const directHit = tagNodes.find((tag) => {
+    const rect = tag.getBoundingClientRect();
+    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+  });
+  if (directHit) return directHit.dataset.galleryTag || "";
+  const tagLabel = visual.querySelector(".visual-tags");
+  const labelRect = tagLabel?.getBoundingClientRect();
+  if (!labelRect || x < labelRect.left || x > labelRect.right || y < labelRect.top || y > labelRect.bottom) return "";
+  return tagNodes[0]?.dataset.galleryTag || "";
+}
+
 function handleVisualClick(event) {
-  if (!mobileQuery.matches) return;
+  const directTag = event.target.closest(".visual-tag[data-gallery-tag]");
+  if (directTag) {
+    event.preventDefault();
+    event.stopPropagation();
+    openTagGallery(directTag.dataset.galleryTag);
+    return;
+  }
   const visual = event.currentTarget.classList?.contains("visual")
     ? event.currentTarget
     : event.target.closest(".visual");
+  const pointedTag = getVisualTagFromPoint(visual, event.clientX, event.clientY);
+  if (pointedTag) {
+    event.preventDefault();
+    event.stopPropagation();
+    openTagGallery(pointedTag);
+    return;
+  }
+  if (!mobileQuery.matches) return;
   if (!visual) return;
   event.preventDefault();
   event.stopPropagation();
@@ -755,6 +1046,43 @@ function handleVisualClick(event) {
   }
   if (visual === expandedVisual) closeExpandedVisual(true);
   else openExpandedVisual(visual);
+}
+
+async function openTagGallery(tag) {
+  const normalizedTag = normalizeContentTag(tag);
+  if (!normalizedTag) return;
+  activeGalleryTag = normalizedTag;
+  updateProjectLabels();
+  gallerySeed = createGallerySeed();
+  videoObserver.disconnect();
+  lazyMediaObserver.disconnect();
+  visibleVideos.clear();
+  suppressScrollSync = true;
+  gallery.replaceChildren();
+  await renderGallery();
+  requestAnimationFrame(() => {
+    scheduleVisualTags();
+    scrollToProject(0);
+  });
+}
+
+function handleGalleryClick(event) {
+  const tag = event.target.closest(".visual-tag[data-gallery-tag]");
+  if (!tag) {
+    handleVisualClick(event);
+    return;
+  }
+  event.preventDefault();
+  event.stopPropagation();
+  openTagGallery(tag.dataset.galleryTag);
+}
+
+function handleGalleryKeydown(event) {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  const tag = event.target.closest(".visual-tag[data-gallery-tag]");
+  if (!tag) return;
+  event.preventDefault();
+  openTagGallery(tag.dataset.galleryTag);
 }
 
 function createMedia(src, title) {
@@ -806,18 +1134,28 @@ function createMedia(src, title) {
 async function renderGallery() {
   closeExpandedVisual(false);
   gallery.dataset.seed = gallerySeed;
-  projects.forEach(([title, , , url, slug], index) => {
+  gallery.dataset.activeTag = activeGalleryTag;
+  updateProjectLabels();
+  const galleryProjects = activeGalleryTag
+    ? [[getProjectDisplayTitle(projects[0][0], 0), 0, getAllContentItemsForTag(activeGalleryTag)]]
+    : projects.map(([title, , , , slug], index) => [title, index, getContentItems(slug)]);
+
+  galleryProjects.forEach(([title, index, projectMedia]) => {
     const random = seededRandom(gallerySeed ^ Math.imul(index + 1, 0x9e3779b1));
+    const media = shuffle(projectMedia, random);
+    if (!media.length) return;
     const group = document.createElement("section");
     group.className = "project-group";
     group.dataset.project = index;
-    const media = shuffle(getContent(slug), random);
     const compositionCount = Math.max(1, Math.ceil(media.length / colorLayers.length));
     for (let compositionIndex = 0; compositionIndex < compositionCount; compositionIndex += 1) {
       const compositionElement = document.createElement("div");
       compositionElement.className = "project-composition";
-      const compositionHeight = mobileQuery.matches ? randomBetween(random, 1060, 1260) : randomBetween(random, 1760, 1980);
+      const compositionHeight = mobileQuery.matches ? randomBetween(random, 980, 1140) : randomBetween(random, 1760, 1980);
       compositionElement.style.setProperty("--composition-height", `${Math.round(compositionHeight)}px`);
+      const compositionWidth = Math.max(1, galleryColumn.getBoundingClientRect().width || gallery.getBoundingClientRect().width || window.innerWidth);
+      const placedVisualRects = [];
+      let compositionMaxBottom = compositionHeight;
       const composition = mobileQuery.matches ? createMobileProceduralLayout(random) : createProceduralLayout(random);
       const colors = shuffle([...colorLayers], random);
       const slotsByArea = composition
@@ -831,32 +1169,55 @@ async function renderGallery() {
       const mediaByLayer = [];
       media
         .slice(compositionIndex * colorLayers.length, (compositionIndex + 1) * colorLayers.length)
-        .sort((left, right) => Number(isVideoSource(right)) - Number(isVideoSource(left)))
+        .sort((left, right) => Number(isVideoSource(right.src)) - Number(isVideoSource(left.src)))
         .forEach((src, mediaIndex) => {
           mediaByLayer[slotsByArea[mediaIndex].layerIndex] = src;
         });
       colors.forEach((color, layerIndex) => {
-        const visualButton = document.createElement("button");
         const { format, x, y, w: width, ratio } = composition[layerIndex];
-        const src = mediaByLayer[layerIndex];
+        const item = mediaByLayer[layerIndex];
+        const src = item?.src;
+        if (!src) return;
+        const visualButton = document.createElement("button");
         const contentFormat = src ? getContentFormat(src, format) : format;
         const contentWidth = src ? getContentWidth(width, contentFormat, isVideoSource(src)) : width;
         const minContentX = mobileQuery.matches ? 0 : 22;
         const contentX = clamp(x + (width - contentWidth) / 2, minContentX, 100 - contentWidth);
-        const visualHeight = contentWidth / (src ? formatRatios[contentFormat] : ratio);
-        const contentY = clamp(y, 0, Math.max(0, 100 - visualHeight - 2));
-        const mediaElement = createMedia(src, title);
+        const visualRatio = src ? formatRatios[contentFormat] : ratio;
+        const contentWidthPx = compositionWidth * contentWidth / 100;
+        const tagReservePx = mobileQuery.matches ? 46 : 24;
+        const visualHeightPx = contentWidthPx / visualRatio + tagReservePx;
+        const layoutYPx = resolveVisualTop({
+          left: compositionWidth * contentX / 100,
+          top: compositionHeight * y / 100,
+          right: compositionWidth * (contentX + contentWidth) / 100,
+          bottom: compositionHeight * y / 100 + visualHeightPx,
+          width: contentWidthPx,
+          height: visualHeightPx,
+        }, placedVisualRects);
+        const verticalDensity = mobileQuery.matches ? 1.03 : 0.84;
+        const contentYPx = layoutYPx * verticalDensity;
+        placedVisualRects.push({
+          left: compositionWidth * contentX / 100,
+          top: contentYPx,
+          right: compositionWidth * (contentX + contentWidth) / 100,
+          bottom: contentYPx + visualHeightPx,
+          width: contentWidthPx,
+          height: visualHeightPx,
+        });
+        compositionMaxBottom = Math.max(compositionMaxBottom, contentYPx + visualHeightPx + 28);
+        const mediaElement = createMedia(src, item.projectTitle || title);
         visualButton.type = "button";
         visualButton.className = `visual visual-${color}${mediaElement ? ` visual-${mediaElement.tagName.toLowerCase()}` : ""}`;
-        visualButton.setAttribute("aria-label", `${title} project media`);
+        visualButton.setAttribute("aria-label", `${item.projectTitle || title} project media`);
         visualButton.addEventListener("click", handleVisualClick);
         visualButton.dataset.format = contentFormat;
         const parallaxDirection = layerIndex % 2 === 0 ? 1 : -1;
         visualButton.dataset.parallax = (parallaxDirection * randomBetween(random, 0.055, 0.115)).toFixed(4);
         visualButton.style.setProperty("--x", `${contentX.toFixed(2)}%`);
-        visualButton.style.setProperty("--y", `${contentY.toFixed(2)}%`);
+        visualButton.style.setProperty("--y", `${contentYPx.toFixed(0)}px`);
         visualButton.style.setProperty("--w", `${contentWidth.toFixed(2)}%`);
-        visualButton.style.setProperty("--ratio", src ? formatRatios[contentFormat] : ratio);
+        visualButton.style.setProperty("--ratio", visualRatio);
         visualButton.style.setProperty("--z", depths[layerIndex]);
         visualButton.style.setProperty("--delay", `${Math.round(randomBetween(random, 0, 420))}ms`);
         const visualBox = document.createElement("span");
@@ -870,18 +1231,20 @@ async function renderGallery() {
           }
         }
         visualButton.append(visualBox);
-        const tagLabel = document.createElement("span");
-        tagLabel.className = "visual-tags";
-        const filename = src?.split("/").pop();
-        const tags = contentTags[slug]?.[filename] || [title.toLowerCase(), contentFormat, isVideoSource(src) ? "motion" : "image"];
-        tagLabel.dataset.tags = tags.join("|");
-        const tagText = document.createElement("span");
-        tagText.className = "visual-tags-text";
-        tagText.textContent = tagLabel.dataset.tags.split("|").join("/ ");
-        tagLabel.append(tagText);
-        visualButton.append(tagLabel);
+        const tags = item?.tags || [];
+        if (tags.length) {
+          const tagLabel = document.createElement("span");
+          tagLabel.className = "visual-tags";
+          tagLabel.dataset.tags = tags.join("|");
+          const tagText = document.createElement("span");
+          tagText.className = "visual-tags-text";
+          renderVisualTagLinks(tagText, tags);
+          tagLabel.append(tagText);
+          visualButton.append(tagLabel);
+        }
         compositionElement.append(visualButton);
       });
+      compositionElement.style.setProperty("--composition-height", `${Math.ceil(compositionMaxBottom)}px`);
       group.append(compositionElement);
     }
     gallery.append(group);
@@ -901,8 +1264,11 @@ projects.forEach(([title], index) => {
   button.type = "button";
   button.className = "project-button";
   button.dataset.project = index;
-  button.textContent = title;
-  button.addEventListener("click", () => scrollToProject(index));
+  button.textContent = getProjectDisplayTitle(title, index);
+  button.addEventListener("click", () => {
+    if (activeGalleryTag) recomposeGallery(index, { clearTag: true });
+    else scrollToProject(index);
+  });
   projectList.append(button);
 
   const clientButton = document.createElement("button");
@@ -910,11 +1276,12 @@ projects.forEach(([title], index) => {
   clientButton.className = "client-slider-button";
   clientButton.dataset.project = index;
   clientButton.style.setProperty("--project-index", index);
-  clientButton.textContent = title;
+  clientButton.textContent = getProjectDisplayTitle(title, index);
   clientButton.addEventListener("click", () => {
     clientPickerIndex = index;
     mobileClientSlider.style.setProperty("--client-picker-index", clientPickerIndex);
-    scrollToProject(index);
+    if (activeGalleryTag) recomposeGallery(index, { clearTag: true });
+    else scrollToProject(index);
   });
   mobileClientSlider.append(clientButton);
 });
@@ -926,7 +1293,8 @@ detailsColumn.addEventListener("touchstart", beginClientSliderProxy, { passive: 
 detailsColumn.addEventListener("touchmove", moveClientSliderProxy, { passive: false });
 detailsColumn.addEventListener("touchend", endClientSliderProxy, { passive: true });
 detailsColumn.addEventListener("touchcancel", endClientSliderProxy, { passive: true });
-gallery.addEventListener("click", handleVisualClick);
+gallery.addEventListener("click", handleGalleryClick);
+gallery.addEventListener("keydown", handleGalleryKeydown);
 metaUrl.addEventListener("click", (event) => {
   if (metaUrl.classList.contains("is-disabled-link")) event.preventDefault();
 });
@@ -954,6 +1322,7 @@ document.querySelectorAll(".team-button").forEach((button) => {
   button.addEventListener("click", async () => {
     if (button.classList.contains("active")) return;
     document.querySelectorAll(".team-button").forEach((item) => item.classList.toggle("active", item === button));
+    scheduleNavIndicators();
     const token = ++transitionToken;
     const profileColumns = [teamAboutColumn, teamPfpColumn];
     const closed = await animateColumns(profileColumns, false, token);
@@ -1156,13 +1525,17 @@ document.querySelectorAll(".tab").forEach((tab) => {
     detailsColumn.style.visibility = detailsColumn.hidden ? "" : "visible";
     const token = ++transitionToken;
     document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item === tab));
+    scheduleNavIndicatorsAfterLayout();
     updateFooterUpVisibility();
     location.hash = targetSection;
     if (!await switchSection(targetSection, token)) return;
+    scheduleNavIndicatorsAfterLayout();
     if (targetSection === "work") requestAnimationFrame(() => {
       setGalleryPlayback(true);
       scheduleParallax();
+      scheduleNearbyMedia();
       scheduleMobileWorkColumns();
+      scheduleNavIndicatorsAfterLayout();
       suppressScrollSync = false;
     });
     else if (targetSection === "team") requestAnimationFrame(() => {
@@ -1177,22 +1550,25 @@ document.querySelectorAll(".tab").forEach((tab) => {
   });
 });
 
-async function recomposeGallery() {
-  const currentProject = Math.max(activeProject, 0);
+async function recomposeGallery(currentProject = Math.max(activeProject, 0), { clearTag = false } = {}) {
+  if (clearTag) activeGalleryTag = "";
+  updateProjectLabels();
   gallerySeed = createGallerySeed();
   videoObserver.disconnect();
   lazyMediaObserver.disconnect();
+  visibleVideos.clear();
   suppressScrollSync = true;
   gallery.replaceChildren();
   await renderGallery();
   requestAnimationFrame(() => {
     scheduleVisualTags();
-    scrollToProject(currentProject);
+    const hasProject = projectGroups.some((group) => Number(group.dataset.project) === currentProject);
+    scrollToProject(hasProject ? currentProject : Number(projectGroups[0]?.dataset.project || 0));
   });
 }
 
 helpToggle.innerHTML = '<img src="./assets/web_recomp.svg?v=1" alt="RECOMP" />';
-helpToggle.addEventListener("click", recomposeGallery);
+helpToggle.addEventListener("click", () => recomposeGallery());
 function setDisclaimerOpen(open) {
   disclaimerModal.classList.toggle("is-open", open);
   disclaimerModal.setAttribute("aria-hidden", String(!open));
@@ -1241,9 +1617,11 @@ function showSectionFromHash() {
 function initializeSite() {
   if (siteInitialized) return;
   siteInitialized = true;
+  [tabsNav, projectList, teamList].forEach(installMovingIndicator);
   renderGallery();
   setActiveProject(0, { animate: false });
   showSectionFromHash();
+  scheduleNavIndicators();
   scheduleMobileWorkColumns();
   warmPfpViewer();
 }
@@ -1273,6 +1651,7 @@ window.addEventListener("scroll", () => {
 
 window.addEventListener("resize", scheduleVisualTags);
 window.addEventListener("resize", scheduleNearbyMedia);
+window.addEventListener("resize", scheduleNavIndicators);
 window.addEventListener("touchmove", () => {
   if (mobileQuery.matches && expandedOverlay) closeExpandedVisual(true);
 }, { passive: true });
