@@ -391,10 +391,8 @@ function updateFooterUpVisibility() {
 function updateMobileWorkMenuPhase() {
   const menuPhase = mobileQuery.matches && workTab.classList.contains("active") && !document.querySelector(".showcase-open") && !detailsColumn.classList.contains("client-slider-visible");
   const projectPhase = mobileQuery.matches && workTab.classList.contains("active") && !document.querySelector(".showcase-open") && detailsColumn.classList.contains("client-slider-visible");
-  const stagePhase = workTab.classList.contains("active") && !document.querySelector(".showcase-open") && !expandedOverlay && projectGroups.length;
   document.body.classList.toggle("mobile-work-menu-phase", menuPhase);
   document.body.classList.toggle("mobile-work-project-phase", projectPhase);
-  document.body.classList.toggle("work-stage-active", stagePhase);
 }
 
 function primeMobileWorkMenuPhase() {
@@ -548,17 +546,7 @@ let mobileColumnsFrame = 0;
 let wheelScrollFrame = 0;
 let wheelScrollTarget = window.scrollY;
 let suppressScrollSync = false;
-let mobileWorkStepTouchY = 0;
-let mobileWorkStepTouchLastY = 0;
-let mobileWorkStepTouchActive = false;
 let mobileWorkStepRelease = 0;
-let workStagePosition = -1;
-let workStageTarget = -1;
-let workStageFrame = 0;
-let workStageSnapTimer = 0;
-let workStageActiveIndex = 0;
-let workStageGestureBase = null;
-let workStageGestureLocked = false;
 let detailsTransitionToken = 0;
 let gallerySeed = createGallerySeed();
 const colorLayers = ["lime", "blue", "white", "lime", "blue", "white"];
@@ -579,6 +567,14 @@ let pfpViewerPromise = null;
 function scheduleIdleTask(callback) {
   if ("requestIdleCallback" in window) window.requestIdleCallback(callback, { timeout: 1800 });
   else window.setTimeout(callback, 900);
+}
+
+function updateViewportVars() {
+  const viewport = window.visualViewport;
+  const height = Math.ceil(viewport?.height || window.innerHeight || document.documentElement.clientHeight);
+  const width = Math.ceil(viewport?.width || window.innerWidth || document.documentElement.clientWidth);
+  document.documentElement.style.setProperty("--app-height", `${height}px`);
+  document.documentElement.style.setProperty("--app-width", `${width}px`);
 }
 
 function createGallerySeed() {
@@ -782,6 +778,12 @@ function animateWindowScrollTo(targetTop, duration = 640) {
 
 function updateWorkSnapState() {
   document.documentElement.classList.remove("work-snap-active", "work-mobile-snap-active");
+  const active = workTab.classList.contains("active")
+    && projectGroups.length
+    && !document.querySelector(".showcase-open")
+    && !expandedOverlay;
+  if (!active) return;
+  document.documentElement.classList.add(mobileQuery.matches ? "work-mobile-snap-active" : "work-snap-active");
 }
 
 function getNearestProjectIndex() {
@@ -893,144 +895,26 @@ function setActiveProject(index, { animate = true } = {}) {
   updateProjectMeta(index);
 }
 
-function getWorkStageMax() {
-  return Math.max(0, projectGroups.length - 1);
-}
-
-function getWorkStageInitialPosition() {
-  return mobileQuery.matches ? -1 : 0;
-}
-
-function syncWorkStageUi() {
-  if (!workTab.classList.contains("active") || !projectGroups.length || document.querySelector(".showcase-open")) return;
-  const max = getWorkStageMax();
-  const visualPosition = Math.max(0, workStagePosition);
-  const activeIndex = clamp(Math.round(visualPosition), 0, max);
-  const showClientSlider = !mobileQuery.matches || workStagePosition >= -0.5;
-
-  if (mobileQuery.matches) {
-    detailsColumn.classList.toggle("client-slider-visible", showClientSlider);
-    mobileWorkColumnsPassed = showClientSlider;
-    const pinnedTop = getMobileWorkStepTop(Math.max(0, activeIndex));
-    const menuProgress = clamp(workStagePosition + 1, 0, 1);
-    const targetScrollTop = Math.round(pinnedTop * menuProgress);
-    if (Math.abs(window.scrollY - targetScrollTop) > 1) {
-      window.scrollTo({ top: targetScrollTop, behavior: "instant" });
-    }
-  }
-
-  if (activeIndex !== activeProject) {
-    workStageActiveIndex = activeIndex;
-    setActiveProject(activeIndex, { animate: true });
-    if (showClientSlider && !clientSliderUserScrolling) centerActiveClient(true);
-  } else {
-    updateMobileWorkMenuPhase();
-  }
-
-  projectGroups.forEach((group) => {
-    const projectIndex = Number(group.dataset.project);
-    const offset = projectIndex - visualPosition;
-    group.style.setProperty("--work-slide-offset", offset);
-    group.style.setProperty("--mobile-slide-offset", offset);
-    group.classList.toggle("showcase-active", projectIndex === activeIndex);
-  });
-
-  updateFooterUpVisibility();
-}
-
-function stopWorkStageAnimation() {
-  if (workStageFrame) cancelAnimationFrame(workStageFrame);
-  workStageFrame = 0;
-}
-
-function animateWorkStage() {
-  workStageFrame = 0;
-  const distance = workStageTarget - workStagePosition;
-  if (Math.abs(distance) < 0.001) {
-    workStagePosition = workStageTarget;
-    syncWorkStageUi();
-    return;
-  }
-  workStagePosition += distance * 0.32;
-  syncWorkStageUi();
-  workStageFrame = requestAnimationFrame(animateWorkStage);
-}
-
-function setWorkStagePosition(position, { immediate = false } = {}) {
-  const min = mobileQuery.matches ? -1 : 0;
-  const max = getWorkStageMax();
-  workStageTarget = clamp(position, min, max);
-  if (immediate) {
-    stopWorkStageAnimation();
-    workStagePosition = workStageTarget;
-    workStageGestureLocked = false;
-    syncWorkStageUi();
-    return;
-  }
-  if (!workStageFrame) workStageFrame = requestAnimationFrame(animateWorkStage);
-}
-
-function snapWorkStagePosition() {
-  const min = mobileQuery.matches ? -1 : 0;
-  const max = getWorkStageMax();
-  const snapped = clamp(Math.round(workStageTarget), min, max);
-  setWorkStagePosition(snapped);
-  window.setTimeout(() => {
-    workStageGestureBase = null;
-    workStageGestureLocked = false;
-  }, 260);
-}
-
-function scheduleWorkStageSnap() {
-  clearTimeout(workStageSnapTimer);
-  workStageSnapTimer = window.setTimeout(snapWorkStagePosition, 70);
-}
-
-function nudgeWorkStage(delta) {
-  if (!workTab.classList.contains("active") || !projectGroups.length || document.querySelector(".showcase-open") || expandedOverlay) return false;
-  const divisor = Math.max(360, Math.min(760, window.innerHeight * 0.72));
-  const globalMin = mobileQuery.matches ? -1 : 0;
-  const globalMax = getWorkStageMax();
-  if (workStageGestureBase == null) {
-    workStageGestureBase = clamp(Math.round(workStageTarget), globalMin, globalMax);
-  }
-  const gestureMin = Math.max(globalMin, workStageGestureBase - 1);
-  const gestureMax = Math.min(globalMax, workStageGestureBase + 1);
-  if (workStageGestureLocked) return true;
-  const next = clamp(workStageTarget + delta / divisor, gestureMin, gestureMax);
-  const hitGestureEdge = (delta > 0 && next >= gestureMax) || (delta < 0 && next <= gestureMin);
-  if (hitGestureEdge && Math.round(next) !== Math.round(workStageGestureBase)) workStageGestureLocked = true;
-  setWorkStagePosition(next);
-  scheduleWorkStageSnap();
-  return true;
-}
-
 function scrollToProject(index) {
   showcaseSnapToken += 1;
   cancelWheelScroll();
   suppressScrollSync = true;
   setActiveProject(index);
   const mobileClosedShowcase = mobileQuery.matches && !document.querySelector(".showcase-open");
-  const projectSlider = workTab.classList.contains("active") && !document.querySelector(".showcase-open") && projectGroups.length;
-  const targetShowcase = projectGroups.find((group) => Number(group.dataset.project) === index);
   if (mobileClosedShowcase) {
     detailsColumn.classList.add("client-slider-visible");
     mobileWorkColumnsPassed = true;
     updateMobileWorkMenuPhase();
     updateWorkSnapState();
   }
-  if (projectSlider && targetShowcase) {
-    window.scrollTo({ top: mobileQuery.matches ? getMobileWorkStepTop(index) : 0, behavior: "instant" });
-    setWorkStagePosition(index);
-    window.setTimeout(() => { suppressScrollSync = false; }, 120);
-    return;
-  }
   const group = document.querySelector(`.project-group[data-project="${index}"]`);
   if (!group) {
     suppressScrollSync = false;
     return;
   }
-  const targetTop = mobileClosedShowcase ? getMobileWorkStepTop(index) : Math.round(group.getBoundingClientRect().top + window.scrollY);
+  const targetTop = mobileClosedShowcase
+    ? getMobileProjectTargetTop(index)
+    : Math.round(group.getBoundingClientRect().top + window.scrollY);
   window.scrollTo({ top: targetTop, behavior: "smooth" });
   requestAnimationFrame(() => {
     suppressScrollSync = false;
@@ -1047,7 +931,6 @@ function resetMobileWorkScroll() {
   const reset = () => {
     detailsColumn.classList.remove("client-slider-visible");
     mobileWorkColumnsPassed = false;
-    setWorkStagePosition(-1, { immediate: true });
     updateMobileWorkMenuPhase();
     window.scrollTo({ top: 0, behavior: "instant" });
     updateWorkSnapState();
@@ -1068,7 +951,6 @@ function scrollToWorkMenuTop() {
   suppressScrollSync = true;
   detailsColumn.classList.remove("client-slider-visible");
   mobileWorkColumnsPassed = false;
-  setWorkStagePosition(-1, { immediate: true });
   updateMobileWorkMenuPhase();
   window.scrollTo({ top: 0, behavior: "instant" });
   requestAnimationFrame(() => {
@@ -1078,113 +960,6 @@ function scrollToWorkMenuTop() {
     updateWorkSnapState();
     updateMobileWorkMenuPhase();
   });
-}
-
-function mobileWorkStepEnabled() {
-  return mobileQuery.matches
-    && workTab.classList.contains("active")
-    && !document.querySelector(".showcase-open")
-    && !expandedOverlay
-    && projectGroups.length;
-}
-
-function workProjectSliderEnabled() {
-  return workTab.classList.contains("active")
-    && !document.querySelector(".showcase-open")
-    && !expandedOverlay
-    && projectGroups.length
-    && (!mobileQuery.matches || detailsColumn.classList.contains("client-slider-visible"));
-}
-
-function getWorkProjectStep() {
-  return clamp(activeProject < 0 ? 0 : activeProject, 0, projectGroups.length - 1);
-}
-
-function setWorkProjectStep(step) {
-  if (!workProjectSliderEnabled()) return false;
-  const targetStep = clamp(step, 0, projectGroups.length - 1);
-  clearTimeout(mobileWorkSnapTimer);
-  cancelWheelScroll();
-  suppressScrollSync = true;
-  detailsColumn.classList.add("client-slider-visible");
-  mobileWorkColumnsPassed = true;
-  updateMobileWorkMenuPhase();
-  if (mobileQuery.matches) {
-    window.scrollTo({ top: getMobileWorkStepTop(targetStep), behavior: "instant" });
-  }
-  setWorkStagePosition(targetStep);
-  window.setTimeout(() => { suppressScrollSync = false; }, 120);
-  return true;
-}
-
-function moveWorkProjectStep(direction) {
-  return setWorkProjectStep(getWorkProjectStep() + direction);
-}
-
-function getMobileWorkStep() {
-  if (!detailsColumn.classList.contains("client-slider-visible")) return -1;
-  return clamp(activeProject < 0 ? 0 : activeProject, 0, projectGroups.length - 1);
-}
-
-function getMobileWorkStepTop(step) {
-  if (step < 0) return 0;
-  const projectsBottom = projectsColumn.getBoundingClientRect().bottom + window.scrollY + 8;
-  const detailsTop = detailsColumn.getBoundingClientRect().top + window.scrollY - 8;
-  return Math.max(0, Math.round(Math.max(projectsBottom, detailsTop)));
-}
-
-function setMobileWorkStep(step, { smooth = true } = {}) {
-  if (!mobileWorkStepEnabled()) return false;
-  const targetStep = clamp(step, -1, projectGroups.length - 1);
-  clearTimeout(mobileWorkSnapTimer);
-  cancelWheelScroll();
-  suppressScrollSync = true;
-  const targetTop = getMobileWorkStepTop(targetStep);
-  window.scrollTo({ top: targetTop, behavior: "instant" });
-  setWorkStagePosition(targetStep, { immediate: !smooth });
-  window.setTimeout(() => { suppressScrollSync = false; }, 120);
-  return true;
-}
-
-function moveMobileWorkStep(direction) {
-  const currentStep = getMobileWorkStep();
-  if (currentStep === 0 && direction < 0) return setMobileWorkStep(-1);
-  if (currentStep >= 0) return moveWorkProjectStep(direction);
-  return setMobileWorkStep(currentStep + direction);
-}
-
-function beginMobileWorkStepTouch(event) {
-  if (!mobileWorkStepEnabled()) return;
-  const touch = event.touches?.[0];
-  if (!touch) return;
-  mobileWorkStepTouchY = touch.clientY;
-  mobileWorkStepTouchLastY = touch.clientY;
-  mobileWorkStepTouchActive = true;
-}
-
-function containMobileWorkStepTouch(event) {
-  if (!mobileWorkStepTouchActive || !mobileWorkStepEnabled()) return;
-  const touch = event.touches?.[0];
-  if (!touch) return;
-  const delta = mobileWorkStepTouchLastY - touch.clientY;
-  mobileWorkStepTouchLastY = touch.clientY;
-  if (Math.abs(mobileWorkStepTouchY - touch.clientY) > 4) {
-    event.preventDefault();
-    nudgeWorkStage(delta);
-  }
-}
-
-function endMobileWorkStepTouch(event) {
-  if (!mobileWorkStepTouchActive || !mobileWorkStepEnabled()) {
-    mobileWorkStepTouchActive = false;
-    return;
-  }
-  const touch = event.changedTouches?.[0];
-  mobileWorkStepTouchActive = false;
-  if (!touch) return;
-  const delta = mobileWorkStepTouchY - touch.clientY;
-  if (Math.abs(delta) < 18) snapWorkStagePosition();
-  else scheduleWorkStageSnap();
 }
 
 function getContentItems(slug) {
@@ -2139,10 +1914,6 @@ mobileClientSlider.addEventListener("scroll", handleClientSliderScroll, { passiv
 detailsColumn.addEventListener("touchstart", beginClientSliderProxy, { passive: true });
 detailsColumn.addEventListener("touchend", endClientSliderProxy, { passive: true });
 detailsColumn.addEventListener("touchcancel", endClientSliderProxy, { passive: true });
-window.addEventListener("touchstart", beginMobileWorkStepTouch, { passive: true });
-window.addEventListener("touchmove", containMobileWorkStepTouch, { passive: false });
-window.addEventListener("touchend", endMobileWorkStepTouch, { passive: true });
-window.addEventListener("touchcancel", () => { mobileWorkStepTouchActive = false; }, { passive: true });
 window.addEventListener("touchstart", beginOpenShowcaseTouch, { passive: true });
 window.addEventListener("touchmove", containOpenShowcaseTouch, { passive: false });
 gallery.addEventListener("click", handleGalleryClick);
@@ -2741,6 +2512,7 @@ function showSectionFromHash(instant = false) {
 function initializeSite() {
   if (siteInitialized) return;
   siteInitialized = true;
+  updateViewportVars();
   [tabsNav, projectList, teamList].forEach(installMovingIndicator);
   renderGallery();
   setActiveProject(0, { animate: false });
@@ -2753,6 +2525,7 @@ function initializeSite() {
 
 if (document.documentElement.classList.contains("is-authorized")) initializeSite();
 else window.addEventListener("site-authorized", initializeSite, { once: true });
+updateViewportVars();
 window.addEventListener("hashchange", () => {
   if (siteInitialized) showSectionFromHash();
 });
@@ -2769,10 +2542,6 @@ window.addEventListener("scroll", () => {
   if (!workTab.classList.contains("active")) return;
   if (!projectGroups.length) return;
   if (document.querySelector(".showcase-open")) return;
-  if (document.body.classList.contains("work-stage-active")) {
-    syncWorkStageUi();
-    return;
-  }
   if (mobileQuery.matches && !detailsColumn.classList.contains("client-slider-visible")) {
     if (activeProject !== 0) setActiveProject(0, { animate: false });
     clearTimeout(mobileWorkSnapTimer);
@@ -2789,6 +2558,8 @@ window.addEventListener("scroll", () => {
 });
 
 window.addEventListener("resize", scheduleVisualTags);
+window.addEventListener("resize", updateViewportVars);
+window.visualViewport?.addEventListener("resize", updateViewportVars);
 window.addEventListener("resize", scheduleNearbyMedia);
 window.addEventListener("resize", scheduleNavIndicators);
 window.addEventListener("touchmove", () => {
@@ -2817,30 +2588,10 @@ window.addEventListener("wheel", (event) => {
     gallery.querySelector(".showcase-group") &&
     !document.querySelector(".showcase-open")
   ) {
-    event.preventDefault();
-    const delta = Math.max(-480, Math.min(480, normalizeWheelDelta(event)));
-    if (Math.abs(delta) > 0.5) nudgeWorkStage(delta);
     return;
   }
-  if (mobileQuery.matches) {
-    if (mobileWorkStepEnabled()) {
-      event.preventDefault();
-      const delta = normalizeWheelDelta(event);
-      if (Math.abs(delta) > 10) moveMobileWorkStep(delta > 0 ? 1 : -1);
-    }
-    return;
-  }
+  if (mobileQuery.matches) return;
   const delta = Math.max(-480, Math.min(480, normalizeWheelDelta(event)));
-  if (
-    workTab.classList.contains("active") &&
-    projectGroups.length &&
-    gallery.querySelector(".showcase-group") &&
-    !document.querySelector(".showcase-open")
-  ) {
-    event.preventDefault();
-    if (Math.abs(delta) > 10) moveWorkProjectStep(delta > 0 ? 1 : -1);
-    return;
-  }
   event.preventDefault();
   const openShowcaseGroup = document.querySelector(".showcase-open");
   const bounds = openShowcaseGroup
