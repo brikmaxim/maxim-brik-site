@@ -199,6 +199,8 @@ let clientSliderProxyTouch = null;
 let mobileWorkColumnsPassed = false;
 let mobileWorkSnapTimer = 0;
 let clientPickerIndex = 0;
+let mobileDetailsSnapTop = 0;
+let mobileProgrammaticScrollTimer = 0;
 let expandedVisual = null;
 let expandedOverlay = null;
 let expandedBackdrop = null;
@@ -309,6 +311,7 @@ function updateMovingIndicator(container, activeSelector) {
   }
   const containerRect = container.getBoundingClientRect();
   const itemRect = activeItem.getBoundingClientRect();
+  if (!containerRect.width || !containerRect.height || !itemRect.width || !itemRect.height) return;
   container.style.setProperty("--indicator-y", `${(itemRect.top - containerRect.top + itemRect.height / 2).toFixed(2)}px`);
   container.style.setProperty("--indicator-opacity", "1");
 }
@@ -399,36 +402,19 @@ function primeMobileWorkMenuPhase() {
   if (!mobileQuery.matches) return;
   document.documentElement.classList.remove("work-mobile-snap-active", "work-snap-active");
   clearTimeout(mobileWorkSnapTimer);
+  clearTimeout(mobileWorkMenuSnapTimer);
+  clearTimeout(mobileProgrammaticScrollTimer);
+  document.documentElement.classList.remove("work-programmatic-scroll");
   detailsColumn.classList.remove("client-slider-visible");
   mobileWorkColumnsPassed = false;
+  mobileDetailsSnapTop = 0;
   document.body.classList.add("mobile-work-menu-phase");
   window.scrollTo({ top: 0, behavior: "instant" });
 }
 
 function snapMobileWorkToRnd() {
-  if (!mobileQuery.matches || !workTab.classList.contains("active")) return;
-  if (!detailsColumn.classList.contains("client-slider-visible")) return;
-  if (document.querySelector(".showcase-open")) return;
-  clearTimeout(mobileWorkSnapTimer);
-  mobileWorkSnapTimer = window.setTimeout(() => {
-    if (!mobileQuery.matches || !workTab.classList.contains("active")) return;
-    if (!detailsColumn.classList.contains("client-slider-visible")) return;
-    if (document.querySelector(".showcase-open")) return;
-    const firstGroup = projectGroups.find((item) => Number(item.dataset.project) === 0);
-    const groupTop = firstGroup ? firstGroup.getBoundingClientRect().top + window.scrollY : 0;
-    const detailsTop = detailsColumn.getBoundingClientRect().top + window.scrollY - 8;
-    const targetTop = Math.max(0, Math.min(Math.round(groupTop), Math.round(detailsTop)));
-    suppressScrollSync = true;
-    setActiveProject(0, { animate: false });
-    updateMobileWorkMenuPhase();
-    window.scrollTo({ top: targetTop, behavior: "instant" });
-    window.setTimeout(() => {
-      suppressScrollSync = false;
-      setActiveProject(0, { animate: false });
-      updateMobileWorkMenuPhase();
-      centerActiveClient(false);
-    }, 80);
-  }, 40);
+  // Kept as a compatibility stub: the old implementation used delayed
+  // instant scrolls and caused the mobile Work state to jump.
 }
 
 function getMobileProjectTargetTop(index) {
@@ -452,29 +438,8 @@ function getMostVisibleMobileProjectIndex() {
 }
 
 function snapMobileWorkToVisibleProject() {
-  if (!mobileQuery.matches || !workTab.classList.contains("active")) return;
-  if (!detailsColumn.classList.contains("client-slider-visible")) return;
-  if (document.querySelector(".showcase-open")) return;
-  clearTimeout(mobileWorkSnapTimer);
-  mobileWorkSnapTimer = window.setTimeout(() => {
-    if (!mobileQuery.matches || !workTab.classList.contains("active")) return;
-    if (!detailsColumn.classList.contains("client-slider-visible")) return;
-    if (document.querySelector(".showcase-open")) return;
-    const index = getMostVisibleMobileProjectIndex();
-    const targetTop = getMobileProjectTargetTop(index);
-    if (targetTop == null) return;
-    if (Math.abs(window.scrollY - targetTop) < 2) return;
-    suppressScrollSync = true;
-    setActiveProject(index, { animate: false });
-    updateMobileWorkMenuPhase();
-    window.scrollTo({ top: targetTop, behavior: "instant" });
-    window.setTimeout(() => {
-      suppressScrollSync = false;
-      setActiveProject(index, { animate: false });
-      updateMobileWorkMenuPhase();
-      centerActiveClient(false);
-    }, 80);
-  }, 150);
+  // Kept as a compatibility stub: project snapping is handled by native
+  // scroll-snap plus the scroll-state synchronizer below.
 }
 
 function beginClientSliderProxy(event) {
@@ -542,6 +507,7 @@ let parallaxRunning = false;
 let parallaxImpulse = 0;
 let showcaseSnapRelease = 0;
 let showcaseSnapToken = 0;
+let mobileWorkMenuSnapTimer = 0;
 let mobileColumnsFrame = 0;
 let wheelScrollFrame = 0;
 let wheelScrollTarget = window.scrollY;
@@ -777,13 +743,18 @@ function animateWindowScrollTo(targetTop, duration = 640) {
 }
 
 function updateWorkSnapState() {
-  document.documentElement.classList.remove("work-snap-active", "work-mobile-snap-active");
   const active = workTab.classList.contains("active")
     && projectGroups.length
     && !document.querySelector(".showcase-open")
     && !expandedOverlay;
-  if (!active) return;
-  document.documentElement.classList.add(mobileQuery.matches ? "work-mobile-snap-active" : "work-snap-active");
+  const wantedClass = active ? (mobileQuery.matches ? "work-mobile-snap-active" : "work-snap-active") : "";
+  const hasDesktop = document.documentElement.classList.contains("work-snap-active");
+  const hasMobile = document.documentElement.classList.contains("work-mobile-snap-active");
+  if ((wantedClass === "work-snap-active" && hasDesktop && !hasMobile)
+    || (wantedClass === "work-mobile-snap-active" && hasMobile && !hasDesktop)
+    || (!wantedClass && !hasDesktop && !hasMobile)) return;
+  document.documentElement.classList.toggle("work-snap-active", wantedClass === "work-snap-active");
+  document.documentElement.classList.toggle("work-mobile-snap-active", wantedClass === "work-mobile-snap-active");
 }
 
 function getNearestProjectIndex() {
@@ -808,6 +779,7 @@ function snapToShowcaseProject(direction) {
   showcaseSnapRelease = now + 780;
   const snapToken = ++showcaseSnapToken;
   cancelWheelScroll();
+  clearTimeout(mobileWorkMenuSnapTimer);
   suppressScrollSync = true;
   wheelScrollTarget = Math.round(targetGroup.getBoundingClientRect().top + window.scrollY);
   setActiveProject(nextIndex);
@@ -929,8 +901,10 @@ function scrollToProject(index) {
 function resetMobileWorkScroll() {
   if (!mobileQuery.matches || !workTab.classList.contains("active") || document.querySelector(".showcase-open")) return;
   const reset = () => {
+    document.documentElement.classList.remove("work-programmatic-scroll");
     detailsColumn.classList.remove("client-slider-visible");
     mobileWorkColumnsPassed = false;
+    mobileDetailsSnapTop = 0;
     updateMobileWorkMenuPhase();
     window.scrollTo({ top: 0, behavior: "instant" });
     updateWorkSnapState();
@@ -942,24 +916,97 @@ function resetMobileWorkScroll() {
   window.setTimeout(reset, 260);
 }
 
+function resetMobileWorkScrollAfterBrowserRestore() {
+  if (!mobileQuery.matches || location.hash !== "#work") return;
+  window.setTimeout(resetMobileWorkScroll, 0);
+  window.setTimeout(resetMobileWorkScroll, 160);
+  window.setTimeout(resetMobileWorkScroll, 520);
+  window.setTimeout(resetMobileWorkScroll, 920);
+}
+
 function scrollToWorkMenuTop() {
   if (!mobileQuery.matches || !workTab.classList.contains("active")) {
     window.scrollTo({ top: 0, behavior: "smooth" });
     return;
   }
   cancelWheelScroll();
+  clearTimeout(mobileWorkMenuSnapTimer);
+  clearTimeout(mobileProgrammaticScrollTimer);
   suppressScrollSync = true;
-  detailsColumn.classList.remove("client-slider-visible");
-  mobileWorkColumnsPassed = false;
-  updateMobileWorkMenuPhase();
-  window.scrollTo({ top: 0, behavior: "instant" });
-  requestAnimationFrame(() => {
-    window.scrollTo({ top: 0, behavior: "instant" });
+  document.documentElement.classList.add("work-programmatic-scroll");
+  animateWindowScrollTo(0, 260);
+  mobileProgrammaticScrollTimer = window.setTimeout(() => {
+    detailsColumn.classList.remove("client-slider-visible");
+    mobileWorkColumnsPassed = false;
+    mobileDetailsSnapTop = 0;
+    document.documentElement.classList.remove("work-programmatic-scroll");
     suppressScrollSync = false;
     updateFooterUpVisibility();
     updateWorkSnapState();
     updateMobileWorkMenuPhase();
-  });
+    setActiveProject(0, { animate: false });
+  }, 300);
+}
+
+function getMobileDetailsSnapTop() {
+  if (!mobileQuery.matches) return Math.max(0, Math.round(detailsColumn.getBoundingClientRect().top + window.scrollY - 8));
+  if (mobileDetailsSnapTop > 0) return mobileDetailsSnapTop;
+  const wasVisible = detailsColumn.classList.contains("client-slider-visible");
+  if (wasVisible) detailsColumn.classList.remove("client-slider-visible");
+  mobileDetailsSnapTop = Math.max(0, Math.round(detailsColumn.getBoundingClientRect().top + window.scrollY - 8));
+  if (wasVisible) detailsColumn.classList.add("client-slider-visible");
+  return mobileDetailsSnapTop;
+}
+
+function syncMobileWorkProjectPhaseFromScroll() {
+  if (!mobileQuery.matches || !workTab.classList.contains("active")) return;
+  if (document.querySelector(".showcase-open")) return;
+  const targetTop = getMobileDetailsSnapTop();
+  const sliderVisible = window.scrollY >= targetTop - 4;
+  if (detailsColumn.classList.contains("client-slider-visible") !== sliderVisible) {
+    detailsColumn.classList.toggle("client-slider-visible", sliderVisible);
+    mobileWorkColumnsPassed = sliderVisible;
+    updateMobileWorkMenuPhase();
+    updateFooterUpVisibility();
+    if (sliderVisible) centerActiveClient(false);
+  }
+  if (!sliderVisible && activeProject !== 0) setActiveProject(0, { animate: false });
+}
+
+function scheduleMobileWorkMenuSnap() {
+  if (!mobileQuery.matches || !workTab.classList.contains("active")) return;
+  if (document.querySelector(".showcase-open")) return;
+  if (suppressScrollSync) return;
+  clearTimeout(mobileWorkMenuSnapTimer);
+  mobileWorkMenuSnapTimer = window.setTimeout(() => {
+    if (!mobileQuery.matches || !workTab.classList.contains("active")) return;
+    if (document.querySelector(".showcase-open")) return;
+    const targetTop = getMobileDetailsSnapTop();
+    const threshold = Math.max(44, targetTop * 0.34);
+    if (detailsColumn.classList.contains("client-slider-visible")) {
+      if (window.scrollY >= targetTop - 24) return;
+      scrollToWorkMenuTop();
+      return;
+    }
+    if (window.scrollY <= threshold || window.scrollY >= targetTop - 1) return;
+    suppressScrollSync = true;
+    clearTimeout(mobileProgrammaticScrollTimer);
+    document.documentElement.classList.add("work-programmatic-scroll");
+    setActiveProject(0, { animate: false });
+    updateMobileWorkMenuPhase();
+    updateFooterUpVisibility();
+    animateWindowScrollTo(targetTop, 300);
+    mobileProgrammaticScrollTimer = window.setTimeout(() => {
+      detailsColumn.classList.add("client-slider-visible");
+      mobileWorkColumnsPassed = true;
+      document.documentElement.classList.remove("work-programmatic-scroll");
+      suppressScrollSync = false;
+      centerActiveClient(false);
+      updateMobileWorkMenuPhase();
+      updateWorkSnapState();
+      updateFooterUpVisibility();
+    }, 340);
+  }, 140);
 }
 
 function getContentItems(slug) {
@@ -1085,6 +1132,15 @@ function loadNearbyMedia() {
 function scheduleNearbyMedia() {
   if (nearbyMediaFrame) return;
   nearbyMediaFrame = requestAnimationFrame(loadNearbyMedia);
+}
+
+function scheduleWorkMediaWarmup() {
+  scheduleIdleTask(() => {
+    if (!workTab.classList.contains("active") || galleryColumn.hidden) return;
+    setGalleryPlayback(true);
+    scheduleParallax();
+    scheduleNearbyMedia();
+  });
 }
 
 const lazyMediaObserver = new IntersectionObserver((entries) => {
@@ -1923,6 +1979,7 @@ metaUrl.addEventListener("click", (event) => {
 });
 
 const projectsVisibilityObserver = new IntersectionObserver(([entry]) => {
+  if (mobileQuery.matches) return;
   if (suppressScrollSync) return;
   if (document.querySelector(".showcase-open")) return;
   const sliderVisible = mobileQuery.matches && entry.boundingClientRect.bottom <= 0;
@@ -1934,7 +1991,6 @@ const projectsVisibilityObserver = new IntersectionObserver(([entry]) => {
   updateFooterUpVisibility();
   if (enteredProjects) {
     setActiveProject(0, { animate: false });
-    snapMobileWorkToRnd();
   } else if (sliderVisible) {
     requestAnimationFrame(() => centerActiveClient(false));
   }
@@ -1968,6 +2024,7 @@ document.querySelectorAll(".team-button").forEach((button) => {
     const opened = await animateColumns(profileColumns, true, token);
     if (!opened || token !== transitionToken) return;
     resetColumns(profileColumns, true);
+    scheduleNavIndicators();
   });
 });
 
@@ -2046,7 +2103,7 @@ async function animateColumns(columns, opening, token) {
   const ordered = opening ? columns : [...columns].reverse();
   const animations = ordered.map(async (column, index) => {
     const keepFixedChildrenStable = opening && mobileQuery.matches && document.body.classList.contains("work-opening") && column === galleryColumn;
-    await wait(index * 120);
+    await wait(index * 70);
     if (token !== transitionToken) return false;
     column.getAnimations().forEach((animation) => animation.cancel());
     column.style.visibility = "visible";
@@ -2067,7 +2124,7 @@ async function animateColumns(columns, opening, token) {
       ? { opacity: 1, filter: "blur(0)", transform: "translate3d(0, 0, 0)" }
       : { opacity: 0, filter: "blur(18px)", transform: "translate3d(0, -6px, 0)" };
     const animation = column.animate([from, to], {
-      duration: opening ? 520 : 360,
+      duration: opening ? 340 : 240,
       easing: "cubic-bezier(.16, 1, .3, 1)",
       fill: "both",
     });
@@ -2122,19 +2179,14 @@ function setGalleryPlayback(active) {
 }
 
 async function switchSection(targetSection, token) {
-  document.body.classList.toggle("section-work", targetSection === "work");
   const openingWork = targetSection === "work" && mobileQuery.matches;
-  document.body.classList.toggle("work-opening", openingWork);
-  const finishOpening = () => document.body.classList.remove("work-opening");
   const newColumns = [...document.querySelectorAll(`.${targetSection}-only`)];
+  const animatedNewColumns = targetSection === "work" ? newColumns.filter((column) => column !== galleryColumn) : newColumns;
   const oldColumns = [...document.querySelectorAll(".work-only:not([hidden]), .about-only:not([hidden]), .team-only:not([hidden]), .message-only:not([hidden])")]
     .filter((column) => !newColumns.includes(column));
-  const closed = await animateColumns(oldColumns, false, token);
-  if (!closed || token !== transitionToken) {
-    finishOpening();
-    return false;
-  }
+
   oldColumns.forEach((column) => {
+    column.getAnimations().forEach((animation) => animation.cancel());
     column.hidden = true;
     column.style.clipPath = "";
     column.style.filter = "";
@@ -2144,27 +2196,76 @@ async function switchSection(targetSection, token) {
     column.style.visibility = "";
     column.style.willChange = "";
   });
+
+  if (oldColumns.includes(galleryColumn) || targetSection !== "work") {
+    setGalleryPlayback(false);
+    galleryColumn.hidden = true;
+    galleryColumn.style.clipPath = "";
+    galleryColumn.style.filter = "";
+    galleryColumn.style.height = "";
+    galleryColumn.style.opacity = "";
+    galleryColumn.style.transform = "";
+    galleryColumn.style.visibility = "";
+    galleryColumn.style.willChange = "";
+  }
+
+  document.body.classList.toggle("section-work", targetSection === "work");
+  document.body.classList.toggle("work-opening", openingWork);
+  if (targetSection !== "work") {
+    document.body.classList.remove("mobile-work-menu-phase");
+    document.body.classList.add("work-bg-disabled");
+    closeOpenShowcaseDrawer(false);
+    setGalleryPlayback(false);
+    closeExpandedVisual(false);
+  } else {
+    document.body.classList.remove("work-bg-disabled");
+    primeMobileWorkMenuPhase();
+    galleryColumn.hidden = false;
+    galleryColumn.style.clipPath = "";
+    galleryColumn.style.filter = "";
+    galleryColumn.style.height = "";
+    galleryColumn.style.opacity = "";
+    galleryColumn.style.transform = "";
+    galleryColumn.style.visibility = "visible";
+    galleryColumn.style.willChange = "";
+  }
   if (targetSection === "message") syncMessageTextareaBeforeShow();
-  newColumns.forEach((column) => {
-    const wasHidden = column.hidden;
+
+  animatedNewColumns.forEach((column) => {
+    column.getAnimations().forEach((animation) => animation.cancel());
     column.hidden = false;
-    if (!wasHidden) return;
     column.style.clipPath = "";
     column.style.height = "";
-    column.style.visibility = "hidden";
+    column.style.visibility = "visible";
     column.style.opacity = "0";
-    if (!(openingWork && column === galleryColumn)) {
-      column.style.filter = "blur(18px)";
-      column.style.transform = "translate3d(0, 8px, 0)";
-    }
+    column.style.filter = "blur(10px)";
+    column.style.transform = "translate3d(0, 4px, 0)";
+    column.style.willChange = "opacity, filter, transform";
+    requestAnimationFrame(() => {
+      if (token !== transitionToken || column.hidden) return;
+      const animation = column.animate([
+        { opacity: 0, filter: "blur(10px)", transform: "translate3d(0, 4px, 0)" },
+        { opacity: 1, filter: "blur(0)", transform: "translate3d(0, 0, 0)" },
+      ], {
+        duration: 260,
+        easing: "cubic-bezier(.16, 1, .3, 1)",
+        fill: "both",
+      });
+      animation.finished.then(() => {
+        if (token !== transitionToken || column.hidden) return;
+        column.style.opacity = "";
+        column.style.filter = "";
+        column.style.transform = "";
+        column.style.willChange = "";
+        animation.cancel();
+      }).catch(() => {});
+    });
   });
-  const opened = await animateColumns(newColumns, true, token);
-  if (!opened || token !== transitionToken) {
-    finishOpening();
-    return false;
-  }
-  resetColumns(newColumns, true);
-  finishOpening();
+
+  if (openingWork) window.setTimeout(() => {
+    if (token === transitionToken) document.body.classList.remove("work-opening");
+  }, 280);
+  else document.body.classList.remove("work-opening");
   return true;
 }
 
@@ -2172,38 +2273,25 @@ document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", async () => {
     const targetSection = tab.dataset.tab;
     if (tab.classList.contains("active")) return;
-    if (targetSection !== "work") {
-      document.body.classList.remove("mobile-work-menu-phase", "work-opening");
-      document.body.classList.add("work-bg-disabled");
-      closeOpenShowcaseDrawer(false);
-      setGalleryPlayback(false);
-      closeExpandedVisual(false);
-    } else {
-      document.body.classList.remove("work-bg-disabled");
-    }
     suppressScrollSync = true;
     detailsTransitionToken += 1;
     detailsColumn.style.height = "";
     detailsColumn.style.visibility = detailsColumn.hidden ? "" : "visible";
     const token = ++transitionToken;
-    document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item === tab));
-    if (targetSection === "work") primeMobileWorkMenuPhase();
-    updateWorkSnapState();
-    scheduleNavIndicatorsAfterLayout();
     updateFooterUpVisibility();
-    location.hash = targetSection;
     if (!await switchSection(targetSection, token)) return;
+    document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item === tab));
+    if (location.hash !== `#${targetSection}`) history.pushState(null, "", `#${targetSection}`);
+    updateWorkSnapState();
     scheduleNavIndicatorsAfterLayout();
     if (targetSection === "work") requestAnimationFrame(() => {
       resetMobileWorkScroll();
-      setGalleryPlayback(true);
-      scheduleParallax();
-      scheduleNearbyMedia();
       scheduleMobileWorkColumns();
       scheduleNavIndicatorsAfterLayout();
       suppressScrollSync = false;
       updateWorkSnapState();
       updateMobileWorkMenuPhase();
+      scheduleWorkMediaWarmup();
     });
     else if (targetSection === "team") requestAnimationFrame(() => {
       resetMobileWorkColumns();
@@ -2211,6 +2299,7 @@ document.querySelectorAll(".tab").forEach((tab) => {
       suppressScrollSync = false;
       updateWorkSnapState();
       updateMobileWorkMenuPhase();
+      scheduleNavIndicators();
     });
     else requestAnimationFrame(() => {
       resetMobileWorkColumns();
@@ -2529,10 +2618,13 @@ updateViewportVars();
 window.addEventListener("hashchange", () => {
   if (siteInitialized) showSectionFromHash();
 });
+window.addEventListener("load", resetMobileWorkScrollAfterBrowserRestore);
+window.addEventListener("pageshow", resetMobileWorkScrollAfterBrowserRestore);
 
 window.addEventListener("scroll", () => {
   if (mobileQuery.matches && expandedOverlay) closeExpandedVisual(true);
   if (clampShowcaseScroll()) return;
+  syncMobileWorkProjectPhaseFromScroll();
   updateMobileWorkMenuPhase();
   updateWorkSnapState();
   scheduleParallax();
@@ -2544,7 +2636,16 @@ window.addEventListener("scroll", () => {
   if (document.querySelector(".showcase-open")) return;
   if (mobileQuery.matches && !detailsColumn.classList.contains("client-slider-visible")) {
     if (activeProject !== 0) setActiveProject(0, { animate: false });
-    clearTimeout(mobileWorkSnapTimer);
+    scheduleMobileWorkMenuSnap();
+    return;
+  }
+  if (mobileQuery.matches) {
+    scheduleMobileWorkMenuSnap();
+    if (scrollFrame) return;
+    scrollFrame = requestAnimationFrame(() => {
+      scrollFrame = 0;
+      setActiveProject(getMostVisibleMobileProjectIndex(), { animate: false });
+    });
     return;
   }
   if (scrollFrame) return;
