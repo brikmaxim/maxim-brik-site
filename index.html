@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Maxim Brik — Art Direction and Multidisciplinary Design" />
     <title>Maxim Brik, Art Direction and Multidisciplinary Design</title>
-    <link rel="icon" type="image/svg+xml" href="./assets/web_icon.svg?v=1" />
+    <link rel="icon" type="image/svg+xml" href="./assets/web_icon.svg?v=3" />
     <script>
       try {
         const cookies = Object.fromEntries(
@@ -23,10 +23,10 @@
     </script>
     <style>
       .auth-gate { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; background: rgba(244, 244, 242, 0.18); color: #050505; backdrop-filter: blur(20px) saturate(1.05); -webkit-backdrop-filter: blur(20px) saturate(1.05); pointer-events: none; }
-      .auth-form { display: grid; width: min(340px, calc(100% - 20px)); padding: 5px 6px; border-radius: 3px; background: rgba(232, 232, 230, 0.82); text-align: center; pointer-events: auto; backdrop-filter: blur(18px) saturate(1.1); -webkit-backdrop-filter: blur(18px) saturate(1.1); }
+      .auth-form { display: grid; width: min(340px, calc(100% - 20px)); padding: 6px; border-radius: 3px; background: rgba(232, 232, 230, 0.82); text-align: center; pointer-events: auto; backdrop-filter: blur(18px) saturate(1.1); -webkit-backdrop-filter: blur(18px) saturate(1.1); }
       html.is-authorized .auth-gate { display: none; }
     </style>
-    <link rel="stylesheet" href="./style.css?v=233" />
+    <link rel="stylesheet" href="./style.css?v=384" />
   </head>
   <body class="glass-theme">
     <section class="auth-gate" aria-label="Password access">
@@ -54,12 +54,13 @@
           <button class="tab" type="button" data-tab="work">Work</button>
           <button class="tab active" type="button" data-tab="about">About</button>
           <button class="tab" type="button" data-tab="team">Team</button>
+          <button class="tab" type="button" data-tab="message">Message</button>
         </nav>
       </aside>
 
       <section class="column work-only projects-column" hidden>
-        <p class="label">Projects</p>
-        <nav id="project-list" aria-label="Projects"></nav>
+        <p class="label">Projects(Selected)</p>
+        <nav id="project-list" aria-label="Projects(Selected)"></nav>
       </section>
 
       <section class="column work-only details-column" hidden>
@@ -71,7 +72,7 @@
             <a id="meta-url" href="#"></a>
             <nav id="mobile-client-slider" class="mobile-client-slider" aria-label="Clients"></nav>
           </dd>
-          <dt id="meta-design-label">Designed</dt>
+          <dt id="meta-design-label">Categories</dt>
           <dd><span id="meta-design"></span></dd>
         </dl>
       </section>
@@ -131,6 +132,25 @@
           <span class="team-pfp-fallback" id="team-pfp-initials"></span>
         </div>
       </section>
+
+      <section class="column message-only message-text-column" hidden>
+        <label class="label message-label" for="message-text">Text</label>
+        <textarea class="message-textarea" id="message-text" rows="8" placeholder="Tell us about the project"></textarea>
+      </section>
+
+      <section class="column message-only message-controls-column" hidden>
+        <p class="label message-label">Budget</p>
+        <div class="budget-switch" role="radiogroup" aria-label="Budget">
+          <span class="budget-indicator" aria-hidden="true"></span>
+          <button class="budget-option active" type="button" role="radio" aria-checked="true" data-budget="$1k-$5k">$1k-$5k</button>
+          <button class="budget-option" type="button" role="radio" aria-checked="false" data-budget="$5-$10k">$5-$10k</button>
+          <button class="budget-option" type="button" role="radio" aria-checked="false" data-budget="$10k and more">$10k and more</button>
+        </div>
+        <div class="message-actions">
+          <button class="message-copy" type="button">Copy email</button>
+          <button class="message-continue" type="button">Continue</button>
+        </div>
+      </section>
     </main>
 
     <footer class="site-footer">
@@ -156,6 +176,6 @@
     </section>
 
     <script src="./auth.js?v=5"></script>
-    <script src="./portfolio.js?v=208"></script>
+    <script src="./portfolio.js?v=368"></script>
   </body>
 </html>

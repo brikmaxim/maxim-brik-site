@@ -8,6 +8,11 @@ const projects = [
   ["Solutions", "2022", "Maxim Brik", "https://www.nobody.solutions/", "solutions"],
   ["KM 20", "2021", "Maxim Brik", "https://www.km20.ru/", "km20"],
   ["Bogema Leningrad", "2020", "Maxim Brik", "https://bogema.market/collection/all", ""],
+  ["YAM'S", "2026", "Maxim Brik", "", ""],
+  ["9Mice", "2026", "Maxim Brik", "", ""],
+  ["Erik Musin", "2026", "Maxim Brik", "", ""],
+  ["Sicko", "2026", "Maxim Brik", "", ""],
+  ["Nasty Noah", "2026", "Maxim Brik", "", ""],
 ];
 
 const contentManifest = {
@@ -154,6 +159,10 @@ const projectList = document.querySelector("#project-list");
 const mobileClientSlider = document.querySelector("#mobile-client-slider");
 const tabsNav = document.querySelector(".tabs");
 const teamList = document.querySelector(".team-list");
+const messageTextarea = document.querySelector("#message-text");
+const messageContinue = document.querySelector(".message-continue");
+const messageCopy = document.querySelector(".message-copy");
+const budgetSwitch = document.querySelector(".budget-switch");
 const gallery = document.querySelector("#gallery");
 const introColumn = document.querySelector(".intro-column");
 const projectsColumn = document.querySelector(".projects-column");
@@ -167,6 +176,7 @@ const disclaimerToggle = document.querySelector(".disclaimer-toggle");
 const disclaimerModal = document.querySelector(".disclaimer-modal");
 const disclaimerClose = document.querySelector(".disclaimer-close");
 const footerUp = document.querySelector(".footer-up");
+const siteFooter = document.querySelector(".site-footer");
 const galleryColumn = document.querySelector(".gallery-column");
 const teamAboutColumn = document.querySelector(".team-about-column");
 const teamRole = document.querySelector("#team-role");
@@ -187,6 +197,7 @@ let clientSliderUserScrolling = false;
 let clientSliderProgrammatic = false;
 let clientSliderProxyTouch = null;
 let mobileWorkColumnsPassed = false;
+let mobileWorkSnapTimer = 0;
 let clientPickerIndex = 0;
 let expandedVisual = null;
 let expandedOverlay = null;
@@ -195,14 +206,34 @@ let expandedVisualAnimating = false;
 let expandedVisualPendingClose = false;
 let activeGalleryTag = "";
 let navIndicatorFrame = 0;
+let selectedBudget = "$1k-$5k";
+let lastValidMessageValue = "";
+let lastValidMessageSelectionStart = 0;
+let lastValidMessageSelectionEnd = 0;
+let messageTextareaInteracted = false;
+let showcaseInfoOverlay = null;
+const mediaGridFormatCache = new Map();
 
-const filterableContentTags = ["research", "visualisation", "design", "development", "production"];
+const filterableContentTags = ["research", "direction", "visualisation", "design", "development", "production"];
 const contentTagAliases = {
   visualization: "visualisation",
   visualisation: "visualisation",
   developmen: "development",
 };
 const filterableContentTagSet = new Set(filterableContentTags);
+const projectHeroFiles = {
+  rnd: "022_direction:visualization.mp4",
+  ndsp: "006_research:visualisation:design:development.mp4",
+  angel333: "005_direction:visualisation:design.jpg",
+  kyng: "010_visualisation:design:development.jpeg",
+  "reckless-scholars": "004_visualization:development:design:.jpg.jpg",
+  omanko: "001__visualization:development:production.mp4",
+  solutions: "001_research:direction:visualization.jpg",
+  km20: "001_visualisation:design:developmen.png",
+};
+let showcaseStates = new Map();
+let openShowcaseTouchY = 0;
+let showcaseReturnState = null;
 
 function normalizeContentTag(tag) {
   const cleaned = String(tag || "").toLowerCase().replace(/[^a-z]/g, "");
@@ -351,8 +382,101 @@ function detailsClientSliderVisible() {
 }
 
 function updateFooterUpVisibility() {
-  const shouldShow = mobileQuery.matches && workTab.classList.contains("active") && mobileWorkColumnsPassed && window.scrollY > 80;
+  const showcaseOpen = Boolean(document.querySelector(".showcase-open"));
+  const shouldShow = showcaseOpen || (mobileQuery.matches && workTab.classList.contains("active") && mobileWorkColumnsPassed && window.scrollY > 80);
+  footerUp.textContent = showcaseOpen ? "Back" : "Up";
   document.body.classList.toggle("footer-up-visible", shouldShow);
+}
+
+function updateMobileWorkMenuPhase() {
+  const menuPhase = mobileQuery.matches && workTab.classList.contains("active") && !document.querySelector(".showcase-open") && !detailsColumn.classList.contains("client-slider-visible");
+  const projectPhase = mobileQuery.matches && workTab.classList.contains("active") && !document.querySelector(".showcase-open") && detailsColumn.classList.contains("client-slider-visible");
+  const stagePhase = workTab.classList.contains("active") && !document.querySelector(".showcase-open") && !expandedOverlay && projectGroups.length;
+  document.body.classList.toggle("mobile-work-menu-phase", menuPhase);
+  document.body.classList.toggle("mobile-work-project-phase", projectPhase);
+  document.body.classList.toggle("work-stage-active", stagePhase);
+}
+
+function primeMobileWorkMenuPhase() {
+  if (!mobileQuery.matches) return;
+  document.documentElement.classList.remove("work-mobile-snap-active", "work-snap-active");
+  clearTimeout(mobileWorkSnapTimer);
+  detailsColumn.classList.remove("client-slider-visible");
+  mobileWorkColumnsPassed = false;
+  document.body.classList.add("mobile-work-menu-phase");
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+function snapMobileWorkToRnd() {
+  if (!mobileQuery.matches || !workTab.classList.contains("active")) return;
+  if (!detailsColumn.classList.contains("client-slider-visible")) return;
+  if (document.querySelector(".showcase-open")) return;
+  clearTimeout(mobileWorkSnapTimer);
+  mobileWorkSnapTimer = window.setTimeout(() => {
+    if (!mobileQuery.matches || !workTab.classList.contains("active")) return;
+    if (!detailsColumn.classList.contains("client-slider-visible")) return;
+    if (document.querySelector(".showcase-open")) return;
+    const firstGroup = projectGroups.find((item) => Number(item.dataset.project) === 0);
+    const groupTop = firstGroup ? firstGroup.getBoundingClientRect().top + window.scrollY : 0;
+    const detailsTop = detailsColumn.getBoundingClientRect().top + window.scrollY - 8;
+    const targetTop = Math.max(0, Math.min(Math.round(groupTop), Math.round(detailsTop)));
+    suppressScrollSync = true;
+    setActiveProject(0, { animate: false });
+    updateMobileWorkMenuPhase();
+    window.scrollTo({ top: targetTop, behavior: "instant" });
+    window.setTimeout(() => {
+      suppressScrollSync = false;
+      setActiveProject(0, { animate: false });
+      updateMobileWorkMenuPhase();
+      centerActiveClient(false);
+    }, 80);
+  }, 40);
+}
+
+function getMobileProjectTargetTop(index) {
+  const group = projectGroups.find((item) => Number(item.dataset.project) === index);
+  if (!group) return null;
+  const groupTop = group.getBoundingClientRect().top + window.scrollY;
+  if (index !== 0) return Math.max(0, Math.round(groupTop));
+  const detailsTop = detailsColumn.getBoundingClientRect().top + window.scrollY - 8;
+  return Math.max(0, Math.min(Math.round(groupTop), Math.round(detailsTop)));
+}
+
+function getMostVisibleMobileProjectIndex() {
+  if (!projectGroups.length) return 0;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+  const best = projectGroups.reduce((current, group) => {
+    const rect = group.getBoundingClientRect();
+    const visible = Math.max(0, Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0));
+    return visible > current.visible ? { group, visible } : current;
+  }, { group: projectGroups[0], visible: -1 });
+  return Number(best.group.dataset.project || 0);
+}
+
+function snapMobileWorkToVisibleProject() {
+  if (!mobileQuery.matches || !workTab.classList.contains("active")) return;
+  if (!detailsColumn.classList.contains("client-slider-visible")) return;
+  if (document.querySelector(".showcase-open")) return;
+  clearTimeout(mobileWorkSnapTimer);
+  mobileWorkSnapTimer = window.setTimeout(() => {
+    if (!mobileQuery.matches || !workTab.classList.contains("active")) return;
+    if (!detailsColumn.classList.contains("client-slider-visible")) return;
+    if (document.querySelector(".showcase-open")) return;
+    const index = getMostVisibleMobileProjectIndex();
+    const targetTop = getMobileProjectTargetTop(index);
+    if (targetTop == null) return;
+    if (Math.abs(window.scrollY - targetTop) < 2) return;
+    suppressScrollSync = true;
+    setActiveProject(index, { animate: false });
+    updateMobileWorkMenuPhase();
+    window.scrollTo({ top: targetTop, behavior: "instant" });
+    window.setTimeout(() => {
+      suppressScrollSync = false;
+      setActiveProject(index, { animate: false });
+      updateMobileWorkMenuPhase();
+      centerActiveClient(false);
+    }, 80);
+  }, 150);
 }
 
 function beginClientSliderProxy(event) {
@@ -373,10 +497,11 @@ function moveClientSliderProxy(event) {
   if (!touch) return;
   event.preventDefault();
   const itemStep = 34;
-  const nextIndex = clamp(Math.round(clientSliderProxyTouch.index + (clientSliderProxyTouch.y - touch.clientY) / itemStep), 0, projects.length - 1);
+  const visualIndex = clamp(clientSliderProxyTouch.index + (clientSliderProxyTouch.y - touch.clientY) / itemStep, 0, projects.length - 1);
+  const nextIndex = clamp(Math.round(visualIndex), 0, projects.length - 1);
+  mobileClientSlider.style.setProperty("--client-picker-index", visualIndex);
   if (nextIndex === clientPickerIndex) return;
   clientPickerIndex = nextIndex;
-  mobileClientSlider.style.setProperty("--client-picker-index", clientPickerIndex);
   document.querySelectorAll(".client-slider-button").forEach((button) => {
     button.classList.toggle("active", Number(button.dataset.project) === clientPickerIndex);
   });
@@ -417,10 +542,23 @@ let scrollFrame = 0;
 let parallaxFrame = 0;
 let parallaxRunning = false;
 let parallaxImpulse = 0;
+let showcaseSnapRelease = 0;
+let showcaseSnapToken = 0;
 let mobileColumnsFrame = 0;
 let wheelScrollFrame = 0;
 let wheelScrollTarget = window.scrollY;
 let suppressScrollSync = false;
+let mobileWorkStepTouchY = 0;
+let mobileWorkStepTouchLastY = 0;
+let mobileWorkStepTouchActive = false;
+let mobileWorkStepRelease = 0;
+let workStagePosition = -1;
+let workStageTarget = -1;
+let workStageFrame = 0;
+let workStageSnapTimer = 0;
+let workStageActiveIndex = 0;
+let workStageGestureBase = null;
+let workStageGestureLocked = false;
 let detailsTransitionToken = 0;
 let gallerySeed = createGallerySeed();
 const colorLayers = ["lime", "blue", "white", "lime", "blue", "white"];
@@ -562,6 +700,7 @@ function updateParallax() {
 }
 
 function scheduleParallax() {
+  if (!parallaxCompositions.length) return;
   if (parallaxRunning) return;
   parallaxRunning = true;
   const animate = () => {
@@ -608,22 +747,84 @@ function scheduleWheelScroll() {
   const animate = () => {
     wheelScrollFrame = 0;
     const distance = wheelScrollTarget - window.scrollY;
-    if (Math.abs(distance) < 0.5) {
+    if (Math.abs(distance) < 0.25) {
       window.scrollTo(0, wheelScrollTarget);
       return;
     }
-    window.scrollTo(0, window.scrollY + distance * 0.16);
+    window.scrollTo(0, window.scrollY + distance * 0.2);
     wheelScrollFrame = requestAnimationFrame(animate);
   };
   wheelScrollFrame = requestAnimationFrame(animate);
+}
+
+function animateWindowScrollTo(targetTop, duration = 640) {
+  cancelWheelScroll();
+  const startTop = window.scrollY;
+  const distance = targetTop - startTop;
+  if (Math.abs(distance) < 1) {
+    window.scrollTo({ top: targetTop, behavior: "instant" });
+    return;
+  }
+  const startedAt = performance.now();
+  const ease = (t) => 1 - Math.pow(1 - t, 3);
+  const animate = (now) => {
+    const progress = Math.min(1, (now - startedAt) / duration);
+    window.scrollTo({ top: startTop + distance * ease(progress), behavior: "instant" });
+    if (progress < 1) {
+      wheelScrollFrame = requestAnimationFrame(animate);
+      return;
+    }
+    wheelScrollFrame = 0;
+    window.scrollTo({ top: targetTop, behavior: "instant" });
+  };
+  wheelScrollFrame = requestAnimationFrame(animate);
+}
+
+function updateWorkSnapState() {
+  document.documentElement.classList.remove("work-snap-active", "work-mobile-snap-active");
+}
+
+function getNearestProjectIndex() {
+  if (!projectGroups.length) return 0;
+  const marker = window.scrollY + window.innerHeight * 0.5;
+  const nearest = projectGroups.reduce((current, group) => {
+    const currentDistance = Math.abs(current.offsetTop - marker);
+    const groupDistance = Math.abs(group.offsetTop - marker);
+    return groupDistance < currentDistance ? group : current;
+  }, projectGroups[0]);
+  return Number(nearest.dataset.project || 0);
+}
+
+function snapToShowcaseProject(direction) {
+  const now = performance.now();
+  if (now < showcaseSnapRelease) return true;
+  const currentIndex = activeProject >= 0 ? activeProject : getNearestProjectIndex();
+  const nextIndex = clamp(currentIndex + direction, 0, projectGroups.length - 1);
+  const targetGroup = projectGroups.find((group) => Number(group.dataset.project) === nextIndex);
+  if (!targetGroup) return false;
+  if (nextIndex === currentIndex) return true;
+  showcaseSnapRelease = now + 780;
+  const snapToken = ++showcaseSnapToken;
+  cancelWheelScroll();
+  suppressScrollSync = true;
+  wheelScrollTarget = Math.round(targetGroup.getBoundingClientRect().top + window.scrollY);
+  setActiveProject(nextIndex);
+  scheduleWheelScroll();
+  window.setTimeout(() => {
+    if (snapToken !== showcaseSnapToken) return;
+    window.scrollTo(0, wheelScrollTarget);
+    suppressScrollSync = false;
+    setActiveProject(nextIndex);
+  }, 860);
+  return true;
 }
 
 function updateProjectMeta(index) {
   const [title, year, design, url, images] = projects[index];
   const disableMobileLink = mobileQuery.matches && title === "R&D";
   metaYear.textContent = year;
-  metaDesignLabel.textContent = "Designed";
-  metaDesign.textContent = design;
+  metaDesignLabel.textContent = "Categories";
+  metaDesign.textContent = "CGI, AI";
   metaUrl.textContent = getProjectDisplayTitle(title, index);
   if (disableMobileLink) {
     metaUrl.removeAttribute("href");
@@ -636,6 +837,8 @@ function updateProjectMeta(index) {
 
 mobileQuery.addEventListener("change", () => {
   closeExpandedVisual(false);
+  updateMobileWorkMenuPhase();
+  updateWorkSnapState();
   if (activeProject >= 0) updateProjectMeta(activeProject);
   updateFooterUpVisibility();
 });
@@ -661,12 +864,20 @@ function setActiveProject(index, { animate = true } = {}) {
   if (activeProject === index) {
     updateProjectLabels();
     updateProjectMeta(index);
+    updateMobileWorkMenuPhase();
     scheduleNavIndicators();
     return;
   }
   activeProject = index;
   document.querySelectorAll(".project-button").forEach((button) => button.classList.toggle("active", Number(button.dataset.project) === index));
   document.querySelectorAll(".client-slider-button").forEach((button) => button.classList.toggle("active", Number(button.dataset.project) === index));
+  document.querySelectorAll(".showcase-group").forEach((group) => {
+    const projectIndex = Number(group.dataset.project);
+    group.classList.toggle("showcase-active", projectIndex === index);
+    group.style.setProperty("--mobile-slide-offset", projectIndex - index);
+    group.style.setProperty("--work-slide-offset", projectIndex - index);
+  });
+  updateMobileWorkMenuPhase();
   scheduleNavIndicators();
   centerActiveClient(animate);
   detailsTransitionToken += 1;
@@ -682,20 +893,298 @@ function setActiveProject(index, { animate = true } = {}) {
   updateProjectMeta(index);
 }
 
+function getWorkStageMax() {
+  return Math.max(0, projectGroups.length - 1);
+}
+
+function getWorkStageInitialPosition() {
+  return mobileQuery.matches ? -1 : 0;
+}
+
+function syncWorkStageUi() {
+  if (!workTab.classList.contains("active") || !projectGroups.length || document.querySelector(".showcase-open")) return;
+  const max = getWorkStageMax();
+  const visualPosition = Math.max(0, workStagePosition);
+  const activeIndex = clamp(Math.round(visualPosition), 0, max);
+  const showClientSlider = !mobileQuery.matches || workStagePosition >= -0.5;
+
+  if (mobileQuery.matches) {
+    detailsColumn.classList.toggle("client-slider-visible", showClientSlider);
+    mobileWorkColumnsPassed = showClientSlider;
+    const pinnedTop = getMobileWorkStepTop(Math.max(0, activeIndex));
+    const menuProgress = clamp(workStagePosition + 1, 0, 1);
+    const targetScrollTop = Math.round(pinnedTop * menuProgress);
+    if (Math.abs(window.scrollY - targetScrollTop) > 1) {
+      window.scrollTo({ top: targetScrollTop, behavior: "instant" });
+    }
+  }
+
+  if (activeIndex !== activeProject) {
+    workStageActiveIndex = activeIndex;
+    setActiveProject(activeIndex, { animate: true });
+    if (showClientSlider && !clientSliderUserScrolling) centerActiveClient(true);
+  } else {
+    updateMobileWorkMenuPhase();
+  }
+
+  projectGroups.forEach((group) => {
+    const projectIndex = Number(group.dataset.project);
+    const offset = projectIndex - visualPosition;
+    group.style.setProperty("--work-slide-offset", offset);
+    group.style.setProperty("--mobile-slide-offset", offset);
+    group.classList.toggle("showcase-active", projectIndex === activeIndex);
+  });
+
+  updateFooterUpVisibility();
+}
+
+function stopWorkStageAnimation() {
+  if (workStageFrame) cancelAnimationFrame(workStageFrame);
+  workStageFrame = 0;
+}
+
+function animateWorkStage() {
+  workStageFrame = 0;
+  const distance = workStageTarget - workStagePosition;
+  if (Math.abs(distance) < 0.001) {
+    workStagePosition = workStageTarget;
+    syncWorkStageUi();
+    return;
+  }
+  workStagePosition += distance * 0.32;
+  syncWorkStageUi();
+  workStageFrame = requestAnimationFrame(animateWorkStage);
+}
+
+function setWorkStagePosition(position, { immediate = false } = {}) {
+  const min = mobileQuery.matches ? -1 : 0;
+  const max = getWorkStageMax();
+  workStageTarget = clamp(position, min, max);
+  if (immediate) {
+    stopWorkStageAnimation();
+    workStagePosition = workStageTarget;
+    workStageGestureLocked = false;
+    syncWorkStageUi();
+    return;
+  }
+  if (!workStageFrame) workStageFrame = requestAnimationFrame(animateWorkStage);
+}
+
+function snapWorkStagePosition() {
+  const min = mobileQuery.matches ? -1 : 0;
+  const max = getWorkStageMax();
+  const snapped = clamp(Math.round(workStageTarget), min, max);
+  setWorkStagePosition(snapped);
+  window.setTimeout(() => {
+    workStageGestureBase = null;
+    workStageGestureLocked = false;
+  }, 260);
+}
+
+function scheduleWorkStageSnap() {
+  clearTimeout(workStageSnapTimer);
+  workStageSnapTimer = window.setTimeout(snapWorkStagePosition, 70);
+}
+
+function nudgeWorkStage(delta) {
+  if (!workTab.classList.contains("active") || !projectGroups.length || document.querySelector(".showcase-open") || expandedOverlay) return false;
+  const divisor = Math.max(360, Math.min(760, window.innerHeight * 0.72));
+  const globalMin = mobileQuery.matches ? -1 : 0;
+  const globalMax = getWorkStageMax();
+  if (workStageGestureBase == null) {
+    workStageGestureBase = clamp(Math.round(workStageTarget), globalMin, globalMax);
+  }
+  const gestureMin = Math.max(globalMin, workStageGestureBase - 1);
+  const gestureMax = Math.min(globalMax, workStageGestureBase + 1);
+  if (workStageGestureLocked) return true;
+  const next = clamp(workStageTarget + delta / divisor, gestureMin, gestureMax);
+  const hitGestureEdge = (delta > 0 && next >= gestureMax) || (delta < 0 && next <= gestureMin);
+  if (hitGestureEdge && Math.round(next) !== Math.round(workStageGestureBase)) workStageGestureLocked = true;
+  setWorkStagePosition(next);
+  scheduleWorkStageSnap();
+  return true;
+}
+
 function scrollToProject(index) {
+  showcaseSnapToken += 1;
   cancelWheelScroll();
   suppressScrollSync = true;
   setActiveProject(index);
+  const mobileClosedShowcase = mobileQuery.matches && !document.querySelector(".showcase-open");
+  const projectSlider = workTab.classList.contains("active") && !document.querySelector(".showcase-open") && projectGroups.length;
+  const targetShowcase = projectGroups.find((group) => Number(group.dataset.project) === index);
+  if (mobileClosedShowcase) {
+    detailsColumn.classList.add("client-slider-visible");
+    mobileWorkColumnsPassed = true;
+    updateMobileWorkMenuPhase();
+    updateWorkSnapState();
+  }
+  if (projectSlider && targetShowcase) {
+    window.scrollTo({ top: mobileQuery.matches ? getMobileWorkStepTop(index) : 0, behavior: "instant" });
+    setWorkStagePosition(index);
+    window.setTimeout(() => { suppressScrollSync = false; }, 120);
+    return;
+  }
   const group = document.querySelector(`.project-group[data-project="${index}"]`);
   if (!group) {
     suppressScrollSync = false;
     return;
   }
-  const targetTop = group.getBoundingClientRect().top + window.scrollY - 8;
-  window.scrollTo({ top: targetTop, behavior: "instant" });
+  const targetTop = mobileClosedShowcase ? getMobileWorkStepTop(index) : Math.round(group.getBoundingClientRect().top + window.scrollY);
+  window.scrollTo({ top: targetTop, behavior: "smooth" });
   requestAnimationFrame(() => {
     suppressScrollSync = false;
+    if (mobileClosedShowcase) {
+      updateMobileWorkMenuPhase();
+      updateWorkSnapState();
+      updateFooterUpVisibility();
+    }
   });
+}
+
+function resetMobileWorkScroll() {
+  if (!mobileQuery.matches || !workTab.classList.contains("active") || document.querySelector(".showcase-open")) return;
+  const reset = () => {
+    detailsColumn.classList.remove("client-slider-visible");
+    mobileWorkColumnsPassed = false;
+    setWorkStagePosition(-1, { immediate: true });
+    updateMobileWorkMenuPhase();
+    window.scrollTo({ top: 0, behavior: "instant" });
+    updateWorkSnapState();
+    updateFooterUpVisibility();
+  };
+  reset();
+  requestAnimationFrame(reset);
+  window.setTimeout(reset, 80);
+  window.setTimeout(reset, 260);
+}
+
+function scrollToWorkMenuTop() {
+  if (!mobileQuery.matches || !workTab.classList.contains("active")) {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+  cancelWheelScroll();
+  suppressScrollSync = true;
+  detailsColumn.classList.remove("client-slider-visible");
+  mobileWorkColumnsPassed = false;
+  setWorkStagePosition(-1, { immediate: true });
+  updateMobileWorkMenuPhase();
+  window.scrollTo({ top: 0, behavior: "instant" });
+  requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+    suppressScrollSync = false;
+    updateFooterUpVisibility();
+    updateWorkSnapState();
+    updateMobileWorkMenuPhase();
+  });
+}
+
+function mobileWorkStepEnabled() {
+  return mobileQuery.matches
+    && workTab.classList.contains("active")
+    && !document.querySelector(".showcase-open")
+    && !expandedOverlay
+    && projectGroups.length;
+}
+
+function workProjectSliderEnabled() {
+  return workTab.classList.contains("active")
+    && !document.querySelector(".showcase-open")
+    && !expandedOverlay
+    && projectGroups.length
+    && (!mobileQuery.matches || detailsColumn.classList.contains("client-slider-visible"));
+}
+
+function getWorkProjectStep() {
+  return clamp(activeProject < 0 ? 0 : activeProject, 0, projectGroups.length - 1);
+}
+
+function setWorkProjectStep(step) {
+  if (!workProjectSliderEnabled()) return false;
+  const targetStep = clamp(step, 0, projectGroups.length - 1);
+  clearTimeout(mobileWorkSnapTimer);
+  cancelWheelScroll();
+  suppressScrollSync = true;
+  detailsColumn.classList.add("client-slider-visible");
+  mobileWorkColumnsPassed = true;
+  updateMobileWorkMenuPhase();
+  if (mobileQuery.matches) {
+    window.scrollTo({ top: getMobileWorkStepTop(targetStep), behavior: "instant" });
+  }
+  setWorkStagePosition(targetStep);
+  window.setTimeout(() => { suppressScrollSync = false; }, 120);
+  return true;
+}
+
+function moveWorkProjectStep(direction) {
+  return setWorkProjectStep(getWorkProjectStep() + direction);
+}
+
+function getMobileWorkStep() {
+  if (!detailsColumn.classList.contains("client-slider-visible")) return -1;
+  return clamp(activeProject < 0 ? 0 : activeProject, 0, projectGroups.length - 1);
+}
+
+function getMobileWorkStepTop(step) {
+  if (step < 0) return 0;
+  const projectsBottom = projectsColumn.getBoundingClientRect().bottom + window.scrollY + 8;
+  const detailsTop = detailsColumn.getBoundingClientRect().top + window.scrollY - 8;
+  return Math.max(0, Math.round(Math.max(projectsBottom, detailsTop)));
+}
+
+function setMobileWorkStep(step, { smooth = true } = {}) {
+  if (!mobileWorkStepEnabled()) return false;
+  const targetStep = clamp(step, -1, projectGroups.length - 1);
+  clearTimeout(mobileWorkSnapTimer);
+  cancelWheelScroll();
+  suppressScrollSync = true;
+  const targetTop = getMobileWorkStepTop(targetStep);
+  window.scrollTo({ top: targetTop, behavior: "instant" });
+  setWorkStagePosition(targetStep, { immediate: !smooth });
+  window.setTimeout(() => { suppressScrollSync = false; }, 120);
+  return true;
+}
+
+function moveMobileWorkStep(direction) {
+  const currentStep = getMobileWorkStep();
+  if (currentStep === 0 && direction < 0) return setMobileWorkStep(-1);
+  if (currentStep >= 0) return moveWorkProjectStep(direction);
+  return setMobileWorkStep(currentStep + direction);
+}
+
+function beginMobileWorkStepTouch(event) {
+  if (!mobileWorkStepEnabled()) return;
+  const touch = event.touches?.[0];
+  if (!touch) return;
+  mobileWorkStepTouchY = touch.clientY;
+  mobileWorkStepTouchLastY = touch.clientY;
+  mobileWorkStepTouchActive = true;
+}
+
+function containMobileWorkStepTouch(event) {
+  if (!mobileWorkStepTouchActive || !mobileWorkStepEnabled()) return;
+  const touch = event.touches?.[0];
+  if (!touch) return;
+  const delta = mobileWorkStepTouchLastY - touch.clientY;
+  mobileWorkStepTouchLastY = touch.clientY;
+  if (Math.abs(mobileWorkStepTouchY - touch.clientY) > 4) {
+    event.preventDefault();
+    nudgeWorkStage(delta);
+  }
+}
+
+function endMobileWorkStepTouch(event) {
+  if (!mobileWorkStepTouchActive || !mobileWorkStepEnabled()) {
+    mobileWorkStepTouchActive = false;
+    return;
+  }
+  const touch = event.changedTouches?.[0];
+  mobileWorkStepTouchActive = false;
+  if (!touch) return;
+  const delta = mobileWorkStepTouchY - touch.clientY;
+  if (Math.abs(delta) < 18) snapWorkStagePosition();
+  else scheduleWorkStageSnap();
 }
 
 function getContentItems(slug) {
@@ -723,6 +1212,58 @@ function isVideoSource(src) {
 
 function getContentFormat(src, fallback) {
   return fallback;
+}
+
+function getMediaGridFormatFromRatio(width, height) {
+  if (!(width > 0) || !(height > 0)) return "";
+  return width / height > 1.08 ? "horizontal" : "vertical";
+}
+
+function normalizeMediaFormatKey(src) {
+  return String(src || "").replace("assets/mobile-content/", "assets/content/");
+}
+
+function cacheMediaGridFormat(src, width, height) {
+  const format = getMediaGridFormatFromRatio(width, height);
+  if (!format) return "";
+  mediaGridFormatCache.set(normalizeMediaFormatKey(src), format);
+  return format;
+}
+
+function getShowcaseTileFormat(item) {
+  return mediaGridFormatCache.get(normalizeMediaFormatKey(item?.src)) || "";
+}
+
+function detectShowcaseItemFormat(item, onReady) {
+  if (!item?.src || getShowcaseTileFormat(item) || item.formatDetectionPending) return;
+  item.formatDetectionPending = true;
+  const finish = (width, height) => {
+    item.formatDetectionPending = false;
+    const detected = cacheMediaGridFormat(item.src, width, height);
+    if (detected) onReady?.();
+  };
+  const fail = () => {
+    item.formatDetectionPending = false;
+    if (item.src.includes("assets/mobile-content/")) {
+      detectShowcaseItemFormat({ ...item, src: item.src.replace("assets/mobile-content/", "assets/content/") }, onReady);
+    }
+  };
+  if (isVideoSource(item.src)) {
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.muted = true;
+    video.playsInline = true;
+    video.addEventListener("loadedmetadata", () => finish(video.videoWidth, video.videoHeight), { once: true });
+    video.addEventListener("error", fail, { once: true });
+    video.src = item.src;
+    video.load();
+    return;
+  }
+  const image = new Image();
+  image.decoding = "async";
+  image.addEventListener("load", () => finish(image.naturalWidth, image.naturalHeight), { once: true });
+  image.addEventListener("error", fail, { once: true });
+  image.src = item.src;
 }
 
 function getContentWidth(width, format, isVideo) {
@@ -924,7 +1465,10 @@ function cloneVisualForOverlay(visual) {
 function storeMediaRatio(media) {
   const width = media.tagName === "VIDEO" ? media.videoWidth : media.naturalWidth;
   const height = media.tagName === "VIDEO" ? media.videoHeight : media.naturalHeight;
-  if (width > 0 && height > 0) media.dataset.mediaRatio = (width / height).toFixed(6);
+  if (width > 0 && height > 0) {
+    media.dataset.mediaRatio = (width / height).toFixed(6);
+    cacheMediaGridFormat(media.dataset.src || media.currentSrc || media.src, width, height);
+  }
 }
 
 function getVisualMediaRatio(visual) {
@@ -1051,9 +1595,8 @@ function handleVisualClick(event) {
 async function openTagGallery(tag) {
   const normalizedTag = normalizeContentTag(tag);
   if (!normalizedTag) return;
-  activeGalleryTag = normalizedTag;
+  activeGalleryTag = "";
   updateProjectLabels();
-  gallerySeed = createGallerySeed();
   videoObserver.disconnect();
   lazyMediaObserver.disconnect();
   visibleVideos.clear();
@@ -1061,7 +1604,6 @@ async function openTagGallery(tag) {
   gallery.replaceChildren();
   await renderGallery();
   requestAnimationFrame(() => {
-    scheduleVisualTags();
     scrollToProject(0);
   });
 }
@@ -1131,16 +1673,318 @@ function createMedia(src, title) {
   return media;
 }
 
+function orderProjectMedia(slug, items) {
+  const heroFile = projectHeroFiles[slug];
+  if (!heroFile) return items;
+  const heroIndex = items.findIndex((item) => item.filename === heroFile);
+  if (heroIndex < 0) return items;
+  const ordered = [...items];
+  const [hero] = ordered.splice(heroIndex, 1);
+  return [hero, ...ordered];
+}
+
+function getShowcaseTagText(item) {
+  return (item?.tags || []).join(" / ");
+}
+
+function createShowcaseMedia(item, title) {
+  const media = createMedia(item?.src, title);
+  if (!media) return null;
+  media.classList.add("showcase-media");
+  return media;
+}
+
+function loadShowcaseMedia(root) {
+  root.querySelectorAll(".showcase-media:not([data-loaded-source])").forEach(loadMediaElement);
+}
+
+function getShowcaseInfoOverlay() {
+  if (showcaseInfoOverlay) return showcaseInfoOverlay;
+  showcaseInfoOverlay = document.createElement("div");
+  showcaseInfoOverlay.className = "showcase-info-stack showcase-info-overlay";
+  showcaseInfoOverlay.setAttribute("aria-hidden", "true");
+  showcaseInfoOverlay.innerHTML = `
+    <section class="showcase-info-panel">
+      <p class="label">Info</p>
+      <p class="showcase-info-description">Lead Raura’s visual language, tone, and storytelling to ensure a cohesive and distinctive brand identity. Raura explores our relationship with the sun through a device that delivers personalized wellness insights. From conceptual development to producing and directing final visuals.</p>
+    </section>
+    <section class="showcase-info-panel showcase-credits-panel">
+      <dl class="showcase-credits-list">
+        <dt>Creative Direction:</dt>
+        <dd>Maxim Brik, Alexey Molchanov</dd>
+        <dt>Visual Production:</dt>
+        <dd>Maxim Brik, Alexey Molchanov</dd>
+      </dl>
+    </section>
+  `;
+  document.body.append(showcaseInfoOverlay);
+  return showcaseInfoOverlay;
+}
+
+function updateShowcaseInfoOverlay(state) {
+  getShowcaseInfoOverlay();
+}
+
+function setShowcaseInfoOverlayOpen(open, state) {
+  const overlay = getShowcaseInfoOverlay();
+  const canOpen = Boolean(open && state && workTab.classList.contains("active") && document.querySelector(".showcase-open"));
+  if (canOpen) updateShowcaseInfoOverlay(state);
+  overlay.classList.toggle("is-open", canOpen);
+  overlay.setAttribute("aria-hidden", String(!canOpen));
+}
+
+function stopShowcaseGridRotation(state) {
+  if (!state?.gridTimer) return;
+  window.clearInterval(state.gridTimer);
+  state.gridTimer = 0;
+}
+
+function closeOpenShowcaseDrawer(restoreReturn = true) {
+  const openGroup = document.querySelector(".showcase-open");
+  if (!openGroup) return false;
+  const openState = showcaseStates.get(Number(openGroup.dataset.project));
+  const returnState = restoreReturn ? showcaseReturnState : null;
+  stopShowcaseGridRotation(openState);
+  openGroup.classList.remove("showcase-open");
+  openGroup.querySelector(".showcase-drawer")?.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("showcase-focus");
+  setShowcaseInfoOverlayOpen(false, null);
+  showcaseReturnState = null;
+  if (returnState) {
+    cancelWheelScroll();
+    suppressScrollSync = true;
+    detailsColumn.classList.toggle("client-slider-visible", returnState.sliderVisible);
+    mobileWorkColumnsPassed = returnState.mobileColumnsPassed;
+    window.scrollTo({ top: returnState.scrollY, behavior: "instant" });
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: returnState.scrollY, behavior: "instant" });
+      suppressScrollSync = false;
+      setActiveProject(returnState.projectIndex);
+      updateMobileWorkMenuPhase();
+      updateWorkSnapState();
+      updateFooterUpVisibility();
+    });
+  }
+  updateWorkSnapState();
+  updateMobileWorkMenuPhase();
+  updateFooterUpVisibility();
+  return true;
+}
+
+function getShowcaseScrollBounds(group) {
+  const min = Math.max(0, Math.round(group.getBoundingClientRect().top + window.scrollY));
+  const max = Math.max(min, Math.round(min + group.scrollHeight - window.innerHeight));
+  return { min, max };
+}
+
+function clampShowcaseScroll() {
+  const openGroup = document.querySelector(".showcase-open");
+  if (!openGroup) return false;
+  const bounds = getShowcaseScrollBounds(openGroup);
+  const clamped = Math.max(bounds.min, Math.min(bounds.max, window.scrollY));
+  if (Math.abs(clamped - window.scrollY) < 0.5) return false;
+  window.scrollTo({ top: clamped, behavior: "instant" });
+  wheelScrollTarget = clamped;
+  return true;
+}
+
+function beginOpenShowcaseTouch(event) {
+  if (!mobileQuery.matches || !document.querySelector(".showcase-open")) return;
+  openShowcaseTouchY = event.touches?.[0]?.clientY || 0;
+}
+
+function containOpenShowcaseTouch(event) {
+  if (!mobileQuery.matches) return;
+  const openGroup = document.querySelector(".showcase-open");
+  if (!openGroup) return;
+  const touchY = event.touches?.[0]?.clientY || openShowcaseTouchY;
+  const deltaY = touchY - openShowcaseTouchY;
+  openShowcaseTouchY = touchY;
+  const bounds = getShowcaseScrollBounds(openGroup);
+  const atTop = window.scrollY <= bounds.min + 1;
+  const atBottom = window.scrollY >= bounds.max - 1;
+  if ((atTop && deltaY > 0) || (atBottom && deltaY < 0)) {
+    event.preventDefault();
+    const target = atTop ? bounds.min : bounds.max;
+    window.scrollTo({ top: target, behavior: "instant" });
+    wheelScrollTarget = target;
+  }
+}
+
+function setShowcaseItem(group, state, nextIndex, direction = 1) {
+  if (!state.items.length || state.animating) return;
+  const wrappedIndex = (nextIndex + state.items.length) % state.items.length;
+  if (wrappedIndex === state.index && group.querySelector(".showcase-media")) return;
+  const instant = !group.querySelector(".showcase-media");
+  state.animating = true;
+  state.index = wrappedIndex;
+  group.style.setProperty("--showcase-direction", direction >= 0 ? "1" : "-1");
+  if (!instant) group.classList.add("showcase-switching");
+  window.setTimeout(() => {
+    const item = state.items[state.index];
+    const mediaSlot = group.querySelector(".showcase-media-slot");
+    const media = createShowcaseMedia(item, state.title);
+    mediaSlot.replaceChildren();
+    if (media) mediaSlot.append(media);
+    if (group.classList.contains("showcase-open")) updateShowcaseInfoOverlay(state);
+    loadShowcaseMedia(group);
+    requestAnimationFrame(() => {
+      group.classList.remove("showcase-switching");
+      window.setTimeout(() => {
+        state.animating = false;
+      }, instant ? 0 : 360);
+    });
+  }, instant ? 0 : 170);
+}
+
+function toggleShowcaseDrawer(group, state, forceOpen) {
+  const open = typeof forceOpen === "boolean" ? forceOpen : !group.classList.contains("showcase-open");
+  const projectIndex = Number(group.dataset.project || 0);
+  if (open && !group.classList.contains("showcase-open")) {
+    showcaseReturnState = {
+      scrollY: window.scrollY,
+      projectIndex,
+      mobileColumnsPassed: mobileWorkColumnsPassed,
+      sliderVisible: detailsColumn.classList.contains("client-slider-visible"),
+    };
+  }
+  document.querySelectorAll(".showcase-open").forEach((openGroup) => {
+    if (openGroup !== group) {
+      const openState = showcaseStates.get(Number(openGroup.dataset.project));
+      stopShowcaseGridRotation(openState);
+      openGroup.classList.remove("showcase-open");
+      openGroup.querySelector(".showcase-drawer")?.setAttribute("aria-hidden", "true");
+    }
+  });
+  group.classList.toggle("showcase-open", open);
+  document.body.classList.toggle("showcase-focus", open);
+  updateWorkSnapState();
+  setShowcaseInfoOverlayOpen(open, open ? state : null);
+  updateMobileWorkMenuPhase();
+  updateFooterUpVisibility();
+  group.querySelector(".showcase-drawer")?.setAttribute("aria-hidden", String(!open));
+  if (!open) {
+    stopShowcaseGridRotation(state);
+    document.body.classList.remove("showcase-focus");
+    return;
+  }
+  setActiveProject(projectIndex);
+  scrollToProject(projectIndex);
+  requestAnimationFrame(clampShowcaseScroll);
+  buildShowcaseGrid(group, state);
+  stopShowcaseGridRotation(state);
+  state.gridTimer = window.setInterval(() => buildShowcaseGrid(group, state), 5000);
+  loadShowcaseMedia(group);
+}
+
+function buildShowcaseGrid(group, state) {
+  const grid = group.querySelector(".showcase-grid");
+  if (!grid) return;
+  const layoutRandom = seededRandom(createGallerySeed());
+  const ordered = shuffle([...state.items], layoutRandom).slice(0, Math.min(12, state.items.length));
+  grid.replaceChildren();
+  const createGridCell = (item, format) => {
+    const cell = document.createElement("button");
+    cell.type = "button";
+    cell.className = `showcase-grid-item showcase-grid-item-${format}`;
+    const media = createShowcaseMedia(item, state.title);
+    if (media) cell.append(media);
+    cell.addEventListener("click", (event) => {
+      event.stopPropagation();
+      toggleShowcaseDrawer(group, state, false);
+      setShowcaseItem(group, state, state.items.indexOf(item), state.items.indexOf(item) > state.index ? 1 : -1);
+    });
+    return cell;
+  };
+
+  let refreshFrame = 0;
+  const requestGridRefresh = () => {
+    if (!group.classList.contains("showcase-open") || refreshFrame) return;
+    refreshFrame = requestAnimationFrame(() => {
+      refreshFrame = 0;
+      if (group.classList.contains("showcase-open")) buildShowcaseGrid(group, state);
+    });
+  };
+  ordered.forEach((item) => detectShowcaseItemFormat(item, requestGridRefresh));
+
+  const takeByFormat = (format) => {
+    const itemIndex = ordered.findIndex((item) => getShowcaseTileFormat(item) === format);
+    if (itemIndex < 0) return null;
+    const [item] = ordered.splice(itemIndex, 1);
+    return item;
+  };
+
+  while (ordered.length) {
+    const row = document.createElement("div");
+    const horizontalCount = ordered.filter((item) => getShowcaseTileFormat(item) === "horizontal").length;
+    const verticalCount = ordered.filter((item) => getShowcaseTileFormat(item) !== "horizontal").length;
+    const makeHorizontal = horizontalCount > 0 && (verticalCount < 2 || layoutRandom() > 0.5);
+    if (makeHorizontal) {
+      row.className = "showcase-grid-row showcase-grid-row-horizontal";
+      row.append(createGridCell(takeByFormat("horizontal"), "horizontal"));
+    } else {
+      row.className = "showcase-grid-row showcase-grid-row-vertical";
+      for (let columnIndex = 0; columnIndex < 2 && ordered.length; columnIndex += 1) {
+        const verticalItem = takeByFormat("vertical") || ordered.shift();
+        row.append(createGridCell(verticalItem, "vertical"));
+      }
+    }
+    grid.append(row);
+  }
+  loadShowcaseMedia(group);
+}
+
+function createShowcaseGroup(title, index, slug, items) {
+  const orderedItems = orderProjectMedia(slug, items);
+  if (!orderedItems.length) return null;
+  const group = document.createElement("section");
+  group.className = "project-group showcase-group";
+  group.dataset.project = index;
+  const state = {
+    title,
+    slug,
+    items: orderedItems,
+    index: 0,
+    animating: false,
+  };
+  showcaseStates.set(index, state);
+
+  group.innerHTML = `
+    <div class="showcase-main" role="button" tabindex="0" aria-label="${title} content window">
+      <span class="showcase-media-slot"></span>
+    </div>
+    <div class="showcase-drawer" aria-hidden="true">
+      <div class="showcase-grid"></div>
+    </div>
+  `;
+
+  const main = group.querySelector(".showcase-main");
+  main.addEventListener("click", () => toggleShowcaseDrawer(group, state));
+  main.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    toggleShowcaseDrawer(group, state);
+  });
+  setShowcaseItem(group, state, 0, 1);
+  return group;
+}
+
 async function renderGallery() {
   closeExpandedVisual(false);
   gallery.dataset.seed = gallerySeed;
   gallery.dataset.activeTag = activeGalleryTag;
   updateProjectLabels();
+  showcaseStates = new Map();
   const galleryProjects = activeGalleryTag
     ? [[getProjectDisplayTitle(projects[0][0], 0), 0, getAllContentItemsForTag(activeGalleryTag)]]
     : projects.map(([title, , , , slug], index) => [title, index, getContentItems(slug)]);
 
   galleryProjects.forEach(([title, index, projectMedia]) => {
+    if (!activeGalleryTag) {
+      const showcaseGroup = createShowcaseGroup(title, index, projects[index]?.[4] || "", projectMedia);
+      if (showcaseGroup) gallery.append(showcaseGroup);
+      return;
+    }
     const random = seededRandom(gallerySeed ^ Math.imul(index + 1, 0x9e3779b1));
     const media = shuffle(projectMedia, random);
     if (!media.length) return;
@@ -1250,6 +2094,7 @@ async function renderGallery() {
     gallery.append(group);
   });
   projectGroups = [...gallery.querySelectorAll(".project-group")];
+  updateWorkSnapState();
   parallaxCompositions = [...gallery.querySelectorAll(".project-composition")].map((composition) => ({
     composition,
     visuals: [...composition.querySelectorAll(".visual")],
@@ -1257,6 +2102,7 @@ async function renderGallery() {
   scheduleParallax();
   scheduleVisualTags();
   scheduleNearbyMedia();
+  resetMobileWorkScroll();
 }
 
 projects.forEach(([title], index) => {
@@ -1266,6 +2112,7 @@ projects.forEach(([title], index) => {
   button.dataset.project = index;
   button.textContent = getProjectDisplayTitle(title, index);
   button.addEventListener("click", () => {
+    closeOpenShowcaseDrawer(false);
     if (activeGalleryTag) recomposeGallery(index, { clearTag: true });
     else scrollToProject(index);
   });
@@ -1290,9 +2137,14 @@ mobileClientSlider.addEventListener("touchstart", beginClientSliderScroll, { pas
 mobileClientSlider.addEventListener("pointerdown", beginClientSliderScroll);
 mobileClientSlider.addEventListener("scroll", handleClientSliderScroll, { passive: true });
 detailsColumn.addEventListener("touchstart", beginClientSliderProxy, { passive: true });
-detailsColumn.addEventListener("touchmove", moveClientSliderProxy, { passive: false });
 detailsColumn.addEventListener("touchend", endClientSliderProxy, { passive: true });
 detailsColumn.addEventListener("touchcancel", endClientSliderProxy, { passive: true });
+window.addEventListener("touchstart", beginMobileWorkStepTouch, { passive: true });
+window.addEventListener("touchmove", containMobileWorkStepTouch, { passive: false });
+window.addEventListener("touchend", endMobileWorkStepTouch, { passive: true });
+window.addEventListener("touchcancel", () => { mobileWorkStepTouchActive = false; }, { passive: true });
+window.addEventListener("touchstart", beginOpenShowcaseTouch, { passive: true });
+window.addEventListener("touchmove", containOpenShowcaseTouch, { passive: false });
 gallery.addEventListener("click", handleGalleryClick);
 gallery.addEventListener("keydown", handleGalleryKeydown);
 metaUrl.addEventListener("click", (event) => {
@@ -1300,11 +2152,21 @@ metaUrl.addEventListener("click", (event) => {
 });
 
 const projectsVisibilityObserver = new IntersectionObserver(([entry]) => {
+  if (suppressScrollSync) return;
+  if (document.querySelector(".showcase-open")) return;
   const sliderVisible = mobileQuery.matches && entry.boundingClientRect.bottom <= 0;
+  const enteredProjects = sliderVisible && !mobileWorkColumnsPassed;
   mobileWorkColumnsPassed = sliderVisible;
   detailsColumn.classList.toggle("client-slider-visible", sliderVisible);
+  updateMobileWorkMenuPhase();
+  updateWorkSnapState();
   updateFooterUpVisibility();
-  if (sliderVisible) requestAnimationFrame(() => centerActiveClient(false));
+  if (enteredProjects) {
+    setActiveProject(0, { animate: false });
+    snapMobileWorkToRnd();
+  } else if (sliderVisible) {
+    requestAnimationFrame(() => centerActiveClient(false));
+  }
 }, { threshold: 0 });
 projectsVisibilityObserver.observe(projectsColumn);
 
@@ -1397,35 +2259,40 @@ async function animateDetailsText(opening, token, detailsContent = getDetailsVal
 }
 
 function getDetailsValueNodes() {
-  return [metaYear, metaUrl, metaDesign];
+  return [metaUrl, metaDesign, metaYear];
 }
 
 function getChangedDetailsValueNodes(index) {
   const [title, year, design] = projects[index];
   return [
-    [metaYear, year],
     [metaUrl, title],
-    [metaDesign, design],
+    [metaDesign, "CGI, AI"],
+    [metaYear, year],
   ].filter(([node, nextText]) => node.textContent !== String(nextText)).map(([node]) => node);
 }
 
 async function animateColumns(columns, opening, token) {
   const ordered = opening ? columns : [...columns].reverse();
   const animations = ordered.map(async (column, index) => {
+    const keepFixedChildrenStable = opening && mobileQuery.matches && document.body.classList.contains("work-opening") && column === galleryColumn;
     await wait(index * 120);
     if (token !== transitionToken) return false;
     column.getAnimations().forEach((animation) => animation.cancel());
     column.style.visibility = "visible";
     column.style.clipPath = "";
     column.style.height = "";
-    column.style.willChange = "opacity, filter, transform";
+    column.style.willChange = keepFixedChildrenStable ? "opacity" : "opacity, filter, transform";
     if (opening) column.hidden = false;
     await new Promise((resolve) => requestAnimationFrame(resolve));
     if (token !== transitionToken) return false;
-    const from = opening
+    const from = keepFixedChildrenStable
+      ? { opacity: 0 }
+      : opening
       ? { opacity: 0, filter: "blur(18px)", transform: "translate3d(0, 8px, 0)" }
       : { opacity: getComputedStyle(column).opacity || 1, filter: "blur(0)", transform: "translate3d(0, 0, 0)" };
-    const to = opening
+    const to = keepFixedChildrenStable
+      ? { opacity: 1 }
+      : opening
       ? { opacity: 1, filter: "blur(0)", transform: "translate3d(0, 0, 0)" }
       : { opacity: 0, filter: "blur(18px)", transform: "translate3d(0, -6px, 0)" };
     const animation = column.animate([from, to], {
@@ -1438,8 +2305,10 @@ async function animateColumns(columns, opening, token) {
     animation.cancel();
     if (opening) {
       column.style.opacity = "";
-      column.style.filter = "";
-      column.style.transform = "";
+      if (!keepFixedChildrenStable) {
+        column.style.filter = "";
+        column.style.transform = "";
+      }
     }
     else {
       column.style.opacity = "0";
@@ -1482,11 +2351,18 @@ function setGalleryPlayback(active) {
 }
 
 async function switchSection(targetSection, token) {
+  document.body.classList.toggle("section-work", targetSection === "work");
+  const openingWork = targetSection === "work" && mobileQuery.matches;
+  document.body.classList.toggle("work-opening", openingWork);
+  const finishOpening = () => document.body.classList.remove("work-opening");
   const newColumns = [...document.querySelectorAll(`.${targetSection}-only`)];
-  const oldColumns = [...document.querySelectorAll(".work-only:not([hidden]), .about-only:not([hidden]), .team-only:not([hidden])")]
+  const oldColumns = [...document.querySelectorAll(".work-only:not([hidden]), .about-only:not([hidden]), .team-only:not([hidden]), .message-only:not([hidden])")]
     .filter((column) => !newColumns.includes(column));
   const closed = await animateColumns(oldColumns, false, token);
-  if (!closed || token !== transitionToken) return false;
+  if (!closed || token !== transitionToken) {
+    finishOpening();
+    return false;
+  }
   oldColumns.forEach((column) => {
     column.hidden = true;
     column.style.clipPath = "";
@@ -1497,6 +2373,7 @@ async function switchSection(targetSection, token) {
     column.style.visibility = "";
     column.style.willChange = "";
   });
+  if (targetSection === "message") syncMessageTextareaBeforeShow();
   newColumns.forEach((column) => {
     const wasHidden = column.hidden;
     column.hidden = false;
@@ -1505,12 +2382,18 @@ async function switchSection(targetSection, token) {
     column.style.height = "";
     column.style.visibility = "hidden";
     column.style.opacity = "0";
-    column.style.filter = "blur(18px)";
-    column.style.transform = "translate3d(0, 8px, 0)";
+    if (!(openingWork && column === galleryColumn)) {
+      column.style.filter = "blur(18px)";
+      column.style.transform = "translate3d(0, 8px, 0)";
+    }
   });
   const opened = await animateColumns(newColumns, true, token);
-  if (!opened || token !== transitionToken) return false;
+  if (!opened || token !== transitionToken) {
+    finishOpening();
+    return false;
+  }
   resetColumns(newColumns, true);
+  finishOpening();
   return true;
 }
 
@@ -1518,37 +2401,197 @@ document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", async () => {
     const targetSection = tab.dataset.tab;
     if (tab.classList.contains("active")) return;
-    if (targetSection !== "work") setGalleryPlayback(false);
+    if (targetSection !== "work") {
+      document.body.classList.remove("mobile-work-menu-phase", "work-opening");
+      document.body.classList.add("work-bg-disabled");
+      closeOpenShowcaseDrawer(false);
+      setGalleryPlayback(false);
+      closeExpandedVisual(false);
+    } else {
+      document.body.classList.remove("work-bg-disabled");
+    }
     suppressScrollSync = true;
     detailsTransitionToken += 1;
     detailsColumn.style.height = "";
     detailsColumn.style.visibility = detailsColumn.hidden ? "" : "visible";
     const token = ++transitionToken;
     document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item === tab));
+    if (targetSection === "work") primeMobileWorkMenuPhase();
+    updateWorkSnapState();
     scheduleNavIndicatorsAfterLayout();
     updateFooterUpVisibility();
     location.hash = targetSection;
     if (!await switchSection(targetSection, token)) return;
     scheduleNavIndicatorsAfterLayout();
     if (targetSection === "work") requestAnimationFrame(() => {
+      resetMobileWorkScroll();
       setGalleryPlayback(true);
       scheduleParallax();
       scheduleNearbyMedia();
       scheduleMobileWorkColumns();
       scheduleNavIndicatorsAfterLayout();
       suppressScrollSync = false;
+      updateWorkSnapState();
+      updateMobileWorkMenuPhase();
     });
     else if (targetSection === "team") requestAnimationFrame(() => {
       resetMobileWorkColumns();
       updateTeamMember(Number(document.querySelector(".team-button.active")?.dataset.team || 0));
       suppressScrollSync = false;
+      updateWorkSnapState();
+      updateMobileWorkMenuPhase();
     });
     else requestAnimationFrame(() => {
       resetMobileWorkColumns();
+      if (targetSection === "message") {
+        messageTextarea.focus({ preventScroll: true });
+        updateMessageCaret();
+        updateBudgetIndicator();
+      }
       suppressScrollSync = false;
+      updateWorkSnapState();
+      updateMobileWorkMenuPhase();
     });
   });
 });
+
+function getMessageTextareaBaseHeight() {
+  if (!messageTextarea || !introColumn || !messageTextarea.offsetParent) return 190;
+  const textRect = messageTextarea.getBoundingClientRect();
+  const textColumn = messageTextarea.closest(".message-text-column");
+  const columnStyles = textColumn ? getComputedStyle(textColumn) : null;
+  const columnBottomPadding = columnStyles ? parseFloat(columnStyles.paddingBottom) || 0 : 0;
+  const targetBottom = introColumn.getBoundingClientRect().bottom;
+  return Math.max(72, targetBottom - textRect.top - columnBottomPadding);
+}
+
+function getMessageTextareaMaxHeight() {
+  if (!messageTextarea || !messageTextarea.offsetParent) return Infinity;
+  const textRect = messageTextarea.getBoundingClientRect();
+  const textColumn = messageTextarea.closest(".message-text-column");
+  const columnStyles = textColumn ? getComputedStyle(textColumn) : null;
+  const columnBottomPadding = columnStyles ? parseFloat(columnStyles.paddingBottom) || 0 : 0;
+  const rootStyles = getComputedStyle(document.documentElement);
+  const footerGap = parseFloat(rootStyles.getPropertyValue("--gap")) || 5;
+  const footerRect = siteFooter?.getBoundingClientRect();
+  const targetBottom = footerRect ? footerRect.top - footerGap : window.innerHeight;
+  return Math.max(72, targetBottom - textRect.top - columnBottomPadding);
+}
+
+function updateMessageCaret() {
+  if (!messageTextarea) return;
+  const textColumn = messageTextarea.closest(".message-text-column");
+  if (!textColumn || textColumn.hidden) return;
+  const columnRect = textColumn.getBoundingClientRect();
+  const textareaRect = messageTextarea.getBoundingClientRect();
+  textColumn.style.setProperty("--message-caret-top", `${Math.round(textareaRect.top - columnRect.top + 4)}px`);
+  textColumn.style.setProperty("--message-caret-left", `${Math.round(textareaRect.left - columnRect.left)}px`);
+  textColumn.classList.toggle("message-caret-visible", !messageTextareaInteracted && messageTextarea.value.length === 0);
+}
+
+function hideMessageIntroCaret() {
+  messageTextareaInteracted = true;
+  updateMessageCaret();
+}
+
+function rememberMessageTextareaValue() {
+  if (!messageTextarea) return;
+  lastValidMessageValue = messageTextarea.value;
+  lastValidMessageSelectionStart = messageTextarea.selectionStart || 0;
+  lastValidMessageSelectionEnd = messageTextarea.selectionEnd || lastValidMessageSelectionStart;
+}
+
+function restoreMessageTextareaValue() {
+  if (!messageTextarea) return;
+  messageTextarea.value = lastValidMessageValue;
+  messageTextarea.setSelectionRange(lastValidMessageSelectionStart, lastValidMessageSelectionEnd);
+}
+
+function resizeMessageTextarea(focus = false) {
+  if (!messageTextarea) return;
+  const textColumn = messageTextarea.closest(".message-text-column");
+  const baseHeight = getMessageTextareaBaseHeight();
+  const maxHeight = Math.max(baseHeight, getMessageTextareaMaxHeight());
+  messageTextarea.style.setProperty("--message-textarea-min-height", `${baseHeight}px`);
+  messageTextarea.style.height = `${baseHeight}px`;
+  const contentHeight = messageTextarea.scrollHeight;
+  let nextHeight = Math.min(maxHeight, Math.max(baseHeight, contentHeight));
+  messageTextarea.style.setProperty("--message-textarea-height", `${nextHeight}px`);
+  messageTextarea.style.height = `${nextHeight}px`;
+  messageTextarea.style.overflowY = "hidden";
+  if (nextHeight <= baseHeight + 1 && textColumn && introColumn && messageTextarea.offsetParent) {
+    for (let i = 0; i < 2; i += 1) {
+      const targetBottom = introColumn.getBoundingClientRect().bottom;
+      const columnBottom = textColumn.getBoundingClientRect().bottom;
+      const bottomDelta = targetBottom - columnBottom;
+      if (Math.abs(bottomDelta) <= 0.75) break;
+      nextHeight = Math.min(maxHeight, Math.max(72, nextHeight + bottomDelta));
+      messageTextarea.style.setProperty("--message-textarea-height", `${nextHeight}px`);
+      messageTextarea.style.setProperty("--message-textarea-min-height", `${Math.min(baseHeight, nextHeight)}px`);
+      messageTextarea.style.height = `${nextHeight}px`;
+    }
+  }
+  updateMessageCaret();
+  if (focus) {
+    messageTextarea.focus({ preventScroll: true });
+    const end = messageTextarea.value.length;
+    messageTextarea.setSelectionRange(end, end);
+  }
+}
+
+function handleMessageTextareaInput() {
+  if (!messageTextarea) return;
+  resizeMessageTextarea(false);
+  const maxHeight = Math.max(getMessageTextareaBaseHeight(), getMessageTextareaMaxHeight());
+  if (messageTextarea.scrollHeight > maxHeight + 0.75) {
+    restoreMessageTextareaValue();
+    resizeMessageTextarea(false);
+    return;
+  }
+  rememberMessageTextareaValue();
+  updateMessageCaret();
+}
+
+function syncMessageTextareaBeforeShow() {
+  if (!messageTextarea) return;
+  const textColumn = messageTextarea.closest(".message-text-column");
+  if (!textColumn) return;
+  const wasHidden = textColumn.hidden;
+  if (wasHidden) {
+    textColumn.hidden = false;
+    textColumn.style.visibility = "hidden";
+    textColumn.style.opacity = "0";
+  }
+  resizeMessageTextarea(false);
+  if (wasHidden) {
+    textColumn.hidden = true;
+    textColumn.style.visibility = "";
+    textColumn.style.opacity = "";
+  }
+}
+
+function prepareMessageTextarea(focus = false) {
+  requestAnimationFrame(() => {
+    resizeMessageTextarea(focus);
+    updateBudgetIndicator();
+  });
+}
+messageTextarea.addEventListener("beforeinput", rememberMessageTextareaValue);
+messageTextarea.addEventListener("input", handleMessageTextareaInput);
+messageTextarea.addEventListener("pointerdown", hideMessageIntroCaret);
+messageTextarea.addEventListener("focus", hideMessageIntroCaret);
+window.addEventListener("resize", () => {
+  if (!messageTextarea.closest(".message-only")?.hidden) prepareMessageTextarea(false);
+});
+
+function updateBudgetIndicator() {
+  if (!budgetSwitch || budgetSwitch.closest(".message-only")?.hidden) return;
+  const active = budgetSwitch.querySelector(".budget-option.active");
+  if (!active) return;
+  const switchRect = budgetSwitch.getBoundingClientRect();
+  const activeRect = active.getBoundingClientRect();
+  budgetSwitch.style.setProperty("--budget-indicator-y", `${activeRect.top - switchRect.top + activeRect.height / 2}px`);
+}
 
 async function recomposeGallery(currentProject = Math.max(activeProject, 0), { clearTag = false } = {}) {
   if (clearTag) activeGalleryTag = "";
@@ -1569,6 +2612,54 @@ async function recomposeGallery(currentProject = Math.max(activeProject, 0), { c
 
 helpToggle.innerHTML = '<img src="./assets/web_recomp.svg?v=1" alt="RECOMP" />';
 helpToggle.addEventListener("click", () => recomposeGallery());
+document.querySelectorAll(".budget-option").forEach((button) => {
+  button.addEventListener("click", () => {
+    selectedBudget = button.dataset.budget || button.textContent.trim();
+    document.querySelectorAll(".budget-option").forEach((option) => {
+      const active = option === button;
+      option.classList.toggle("active", active);
+      option.setAttribute("aria-checked", String(active));
+    });
+    updateBudgetIndicator();
+    resizeMessageTextarea(true);
+  });
+});
+messageContinue.addEventListener("click", () => {
+  const text = messageTextarea.value.trim();
+  const body = [`Budget: ${selectedBudget}`, "", text || "Tell us about the project"].join("\n");
+  const href = `mailto:brikmaximalexandrovich@gmail.com?subject=${encodeURIComponent("Project inquiry")}&body=${encodeURIComponent(body)}`;
+  window.location.href = href;
+});
+async function copyMessageEmail(email) {
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(email);
+      return true;
+    } catch {}
+  }
+  const field = document.createElement("textarea");
+  field.value = email;
+  field.setAttribute("readonly", "");
+  field.style.position = "fixed";
+  field.style.left = "-9999px";
+  field.style.top = "0";
+  document.body.appendChild(field);
+  field.select();
+  let copied = false;
+  try {
+    copied = document.execCommand("copy");
+  } catch {}
+  field.remove();
+  return copied;
+}
+messageCopy.addEventListener("click", async () => {
+  const email = "brikmaximalexandrovich@gmail.com";
+  const copied = await copyMessageEmail(email);
+  messageCopy.textContent = copied ? "Copied" : email;
+  window.setTimeout(() => {
+    messageCopy.textContent = "Copy email";
+  }, 1400);
+});
 function setDisclaimerOpen(open) {
   disclaimerModal.classList.toggle("is-open", open);
   disclaimerModal.setAttribute("aria-hidden", String(!open));
@@ -1579,11 +2670,13 @@ disclaimerModal.addEventListener("click", (event) => {
   if (event.target === disclaimerModal) setDisclaimerOpen(false);
 });
 footerUp.addEventListener("click", () => {
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  if (document.querySelector(".showcase-open") && closeOpenShowcaseDrawer()) return;
+  scrollToWorkMenuTop();
 });
 const themeOrder = ["glass", "dark"];
 const themeCookie = "maxim-brik-theme";
 let themeIndex = Math.max(0, themeOrder.indexOf(getCookieValue(themeCookie)));
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
 function applyTheme(theme) {
   document.body.classList.remove("light-theme");
@@ -1603,15 +2696,46 @@ window.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
   if (expandedOverlay) closeExpandedVisual(true);
   else if (disclaimerModal.classList.contains("is-open")) setDisclaimerOpen(false);
+  else if (closeOpenShowcaseDrawer()) {}
   else recomposeGallery();
 });
 
 let siteInitialized = false;
-function showSectionFromHash() {
-  const initialSection = location.hash.slice(1) || "about";
+function showSectionColumns(section) {
+  document.querySelectorAll(".work-only, .about-only, .team-only, .message-only").forEach((column) => {
+    const visible = column.classList.contains(`${section}-only`);
+    column.hidden = !visible;
+    column.style.clipPath = "";
+    column.style.filter = "";
+    column.style.height = "";
+    column.style.opacity = "";
+    column.style.transform = "";
+    column.style.visibility = "";
+    column.style.willChange = "";
+  });
+}
+
+function showSectionFromHash(instant = false) {
+  const initialSection = location.hash.slice(1) || "work";
+  document.body.classList.toggle("section-work", initialSection === "work");
   const initialTab = document.querySelector(`[data-tab="${initialSection}"]`);
-  if (initialTab && !initialTab.classList.contains("active")) initialTab.click();
-  else if (!location.hash) history.replaceState(null, "", "#about");
+  if (instant) {
+    document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item === initialTab));
+    showSectionColumns(initialSection);
+    document.body.classList.remove("work-opening");
+    document.body.classList.toggle("work-bg-disabled", initialSection !== "work");
+    if (initialSection === "work" && mobileQuery.matches && !document.querySelector(".showcase-open")) requestAnimationFrame(resetMobileWorkScroll);
+    if (!location.hash) history.replaceState(null, "", "#work");
+    updateWorkSnapState();
+    updateMobileWorkMenuPhase();
+  } else if (initialTab && !initialTab.classList.contains("active")) initialTab.click();
+  else {
+    showSectionColumns(initialSection);
+    document.body.classList.remove("work-opening");
+    document.body.classList.toggle("work-bg-disabled", initialSection !== "work");
+    if (initialSection === "work" && mobileQuery.matches && !document.querySelector(".showcase-open")) requestAnimationFrame(resetMobileWorkScroll);
+    if (!location.hash) history.replaceState(null, "", "#work");
+  }
 }
 
 function initializeSite() {
@@ -1620,9 +2744,10 @@ function initializeSite() {
   [tabsNav, projectList, teamList].forEach(installMovingIndicator);
   renderGallery();
   setActiveProject(0, { animate: false });
-  showSectionFromHash();
+  showSectionFromHash(true);
   scheduleNavIndicators();
   scheduleMobileWorkColumns();
+  resetMobileWorkScroll();
   warmPfpViewer();
 }
 
@@ -1634,17 +2759,31 @@ window.addEventListener("hashchange", () => {
 
 window.addEventListener("scroll", () => {
   if (mobileQuery.matches && expandedOverlay) closeExpandedVisual(true);
+  if (clampShowcaseScroll()) return;
+  updateMobileWorkMenuPhase();
+  updateWorkSnapState();
   scheduleParallax();
   scheduleVisibleVideos();
   scheduleNearbyMedia();
   if (suppressScrollSync) return;
   if (!workTab.classList.contains("active")) return;
   if (!projectGroups.length) return;
+  if (document.querySelector(".showcase-open")) return;
+  if (document.body.classList.contains("work-stage-active")) {
+    syncWorkStageUi();
+    return;
+  }
+  if (mobileQuery.matches && !detailsColumn.classList.contains("client-slider-visible")) {
+    if (activeProject !== 0) setActiveProject(0, { animate: false });
+    clearTimeout(mobileWorkSnapTimer);
+    return;
+  }
   if (scrollFrame) return;
   scrollFrame = requestAnimationFrame(() => {
     scrollFrame = 0;
-    const marker = window.scrollY + window.innerHeight * 0.35;
-    const active = projectGroups.reduce((current, group) => group.offsetTop <= marker ? group : current, projectGroups[0]);
+    const active = projectGroups.reduce((current, group) => (
+      Math.abs(group.getBoundingClientRect().top) < Math.abs(current.getBoundingClientRect().top) ? group : current
+    ), projectGroups[0]);
     setActiveProject(Number(active.dataset.project));
   });
 });
@@ -1658,11 +2797,57 @@ window.addEventListener("touchmove", () => {
 
 window.addEventListener("wheel", (event) => {
   if (mobileQuery.matches && expandedOverlay) closeExpandedVisual(true);
-  event.preventDefault();
+  const mobileOpenShowcaseGroup = mobileQuery.matches ? document.querySelector(".showcase-open") : null;
+  if (mobileOpenShowcaseGroup) {
+    const delta = normalizeWheelDelta(event);
+    const bounds = getShowcaseScrollBounds(mobileOpenShowcaseGroup);
+    const atTop = window.scrollY <= bounds.min + 1;
+    const atBottom = window.scrollY >= bounds.max - 1;
+    if ((atTop && delta < 0) || (atBottom && delta > 0)) {
+      event.preventDefault();
+      const target = atTop ? bounds.min : bounds.max;
+      window.scrollTo({ top: target, behavior: "instant" });
+      wheelScrollTarget = target;
+    }
+    return;
+  }
+  if (
+    workTab.classList.contains("active") &&
+    projectGroups.length &&
+    gallery.querySelector(".showcase-group") &&
+    !document.querySelector(".showcase-open")
+  ) {
+    event.preventDefault();
+    const delta = Math.max(-480, Math.min(480, normalizeWheelDelta(event)));
+    if (Math.abs(delta) > 0.5) nudgeWorkStage(delta);
+    return;
+  }
+  if (mobileQuery.matches) {
+    if (mobileWorkStepEnabled()) {
+      event.preventDefault();
+      const delta = normalizeWheelDelta(event);
+      if (Math.abs(delta) > 10) moveMobileWorkStep(delta > 0 ? 1 : -1);
+    }
+    return;
+  }
   const delta = Math.max(-480, Math.min(480, normalizeWheelDelta(event)));
-  const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+  if (
+    workTab.classList.contains("active") &&
+    projectGroups.length &&
+    gallery.querySelector(".showcase-group") &&
+    !document.querySelector(".showcase-open")
+  ) {
+    event.preventDefault();
+    if (Math.abs(delta) > 10) moveWorkProjectStep(delta > 0 ? 1 : -1);
+    return;
+  }
+  event.preventDefault();
+  const openShowcaseGroup = document.querySelector(".showcase-open");
+  const bounds = openShowcaseGroup
+    ? getShowcaseScrollBounds(openShowcaseGroup)
+    : { min: 0, max: document.documentElement.scrollHeight - window.innerHeight };
   if (!wheelScrollFrame) wheelScrollTarget = window.scrollY;
-  wheelScrollTarget = Math.max(0, Math.min(maxScroll, wheelScrollTarget + delta));
+  wheelScrollTarget = Math.max(bounds.min, Math.min(bounds.max, wheelScrollTarget + delta));
   parallaxImpulse = Math.max(-720, Math.min(720, parallaxImpulse + delta));
   scheduleWheelScroll();
   scheduleParallax();
