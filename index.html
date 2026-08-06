@@ -24,16 +24,17 @@
       }
     </script>
     <style>
-      .auth-gate { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; background: rgba(244, 244, 242, 0.18); color: #050505; backdrop-filter: blur(20px) saturate(1.05); -webkit-backdrop-filter: blur(20px) saturate(1.05); pointer-events: none; }
-      .auth-form { display: grid; width: min(340px, calc(100% - 20px)); padding: 6px; border-radius: 3px; background: rgba(232, 232, 230, 0.82); text-align: center; pointer-events: auto; backdrop-filter: blur(18px) saturate(1.1); -webkit-backdrop-filter: blur(18px) saturate(1.1); }
+      .auth-gate { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; background: rgba(244, 244, 242, 0.18); color: #050505; backdrop-filter: blur(50px); -webkit-backdrop-filter: blur(50px); pointer-events: none; }
+      .auth-form { display: grid; width: min(340px, calc(100% - 20px)); padding: 6px; border-radius: 3px; background: rgba(240, 240, 240, 0.5); text-align: center; pointer-events: auto; backdrop-filter: blur(50px); -webkit-backdrop-filter: blur(50px); }
       html.is-authorized .auth-gate { display: none; }
     </style>
-    <link rel="stylesheet" href="./style.css?v=394" />
+    <link rel="stylesheet" href="./style.css?v=409" />
   </head>
   <body class="glass-theme">
     <section class="auth-gate" aria-label="Password access">
       <form class="auth-form" id="auth-form">
         <p class="auth-title">Under construction</p>
+        <p class="auth-note">For now, please contact us at <a href="mailto:brikmaximalexandrovich@gmail.com">brikmaximalexandrovich@gmail.com</a>.</p>
         <label class="auth-label" for="auth-password">Password</label>
         <input class="auth-input" id="auth-password" name="password" type="password" autocomplete="current-password" required />
         <button class="auth-submit" type="submit">Enter</button>
@@ -58,6 +59,10 @@
           <button class="tab" type="button" data-tab="team">Team</button>
           <button class="tab" type="button" data-tab="message">Message</button>
         </nav>
+        <section class="work-only work-description-card" hidden>
+          <p class="label">Description</p>
+          <p id="work-project-description"></p>
+        </section>
       </aside>
 
       <section class="column work-only projects-column" hidden>
@@ -178,6 +183,6 @@
     </section>
 
     <script src="./auth.js?v=5"></script>
-    <script src="./portfolio.js?v=388"></script>
+    <script src="./portfolio.js?v=402"></script>
   </body>
 </html>

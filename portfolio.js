@@ -11,9 +11,22 @@ const projects = [
   ["YAM'S", "2026", "Maxim Brik", "", ""],
   ["9Mice", "2026", "Maxim Brik", "", ""],
   ["Erik Musin", "2026", "Maxim Brik", "", ""],
-  ["Sicko", "2026", "Maxim Brik", "", ""],
+  ["Sicko", "2026", "Maxim Brik", "https://sicko.jp/", "sicko"],
   ["Nasty Noah", "2026", "Maxim Brik", "", ""],
 ];
+
+const projectDescriptions = {
+  rnd: "Open research stream for experiments in CGI, AI motion, visual systems and speculative product language.",
+  ndsp: "Digital identity and visual direction for New Day Same Pain, built around sharp product storytelling and web presentation.",
+  angel333: "Visual development and art direction for ANGEL333 across digital assets, atmosphere and product-focused imagery.",
+  kyng: "Art direction, CGI and product visualisation for KYNG with an emphasis on object character and campaign material.",
+  "reckless-scholars": "Visual production and design research for Reckless Scholars, balancing raw cultural references with polished digital output.",
+  omanko: "Jewelry and object studies for OMANKO, focused on metallic surfaces, lock systems and modular product storytelling.",
+  sicko: "Visual direction and product-focused image system for Sicko, built around clean objects, bold material studies and digital presentation.",
+  solutions: "Industrial and product design research for Nobody Solutions, from form studies to presentation-ready visual systems.",
+  km20: "CGI product visualisation for KM20, translating retail identity into charms, objects and rendered campaign assets.",
+  default: "Selected visual research, art direction and production work from Maxim Brik studio.",
+};
 
 const contentManifest = {
   "angel333": [
@@ -178,6 +191,7 @@ const disclaimerClose = document.querySelector(".disclaimer-close");
 const footerUp = document.querySelector(".footer-up");
 const siteFooter = document.querySelector(".site-footer");
 const galleryColumn = document.querySelector(".gallery-column");
+const workProjectDescription = document.querySelector("#work-project-description");
 const teamAboutColumn = document.querySelector(".team-about-column");
 const teamRole = document.querySelector("#team-role");
 const teamDescription = document.querySelector("#team-description");
@@ -190,7 +204,6 @@ const mobileQuery = window.matchMedia("(max-width: 700px)");
 const visibleVideos = new Set();
 let videoPlaybackFrame = 0;
 let nearbyMediaFrame = 0;
-let parallaxCompositions = [];
 let projectGroups = [];
 let clientSliderSelectionTimer = 0;
 let clientSliderUserScrolling = false;
@@ -201,19 +214,13 @@ let mobileWorkSnapTimer = 0;
 let clientPickerIndex = 0;
 let mobileDetailsSnapTop = 0;
 let mobileProgrammaticScrollTimer = 0;
-let expandedVisual = null;
-let expandedOverlay = null;
-let expandedBackdrop = null;
-let expandedVisualAnimating = false;
-let expandedVisualPendingClose = false;
-let activeGalleryTag = "";
+let mobileRestoreResetTimers = [];
 let navIndicatorFrame = 0;
 let selectedBudget = "$1k-$5k";
 let lastValidMessageValue = "";
 let lastValidMessageSelectionStart = 0;
 let lastValidMessageSelectionEnd = 0;
 let messageTextareaInteracted = false;
-let showcaseInfoOverlay = null;
 const mediaGridFormatCache = new Map();
 
 const filterableContentTags = ["research", "direction", "visualisation", "design", "development", "production"];
@@ -223,6 +230,14 @@ const contentTagAliases = {
   developmen: "development",
 };
 const filterableContentTagSet = new Set(filterableContentTags);
+const contentTagDisplayNames = {
+  research: "Research",
+  direction: "Direction",
+  visualisation: "Visualisation",
+  design: "Design",
+  development: "Development",
+  production: "Production",
+};
 const projectHeroFiles = {
   rnd: "022_direction:visualization.mp4",
   ndsp: "006_research:visualisation:design:development.mp4",
@@ -252,33 +267,25 @@ function getFilenameTags(filename) {
   return [...new Set(tags)];
 }
 
-function renderVisualTagLinks(target, tags) {
-  target.replaceChildren();
-  tags.forEach((tag, index) => {
-    if (index) target.append(document.createTextNode(" / "));
-    const tagElement = document.createElement("span");
-    tagElement.className = "visual-tag";
-    tagElement.dataset.galleryTag = tag;
-    tagElement.setAttribute("role", "button");
-    tagElement.tabIndex = 0;
-    tagElement.textContent = tag;
-    tagElement.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      openTagGallery(tag);
-    });
-    tagElement.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      event.preventDefault();
-      event.stopPropagation();
-      openTagGallery(tag);
-    });
-    target.append(tagElement);
-  });
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;",
+  })[character]);
+}
+
+function getProjectCategories(items) {
+  const tags = [...new Set(items.flatMap((item) => item.tags || []))]
+    .filter(Boolean)
+    .slice(0, 4);
+  return tags.map((tag) => contentTagDisplayNames[tag] || tag).join(", ") || "Art Direction";
 }
 
 function getProjectDisplayTitle(title, index) {
-  return index === 0 && activeGalleryTag ? `${title} (${activeGalleryTag})` : title;
+  return title;
 }
 
 function updateProjectLabels() {
@@ -381,14 +388,12 @@ function handleClientSliderScroll() {
 }
 
 function detailsClientSliderVisible() {
-  return mobileQuery.matches && detailsColumn.classList.contains("client-slider-visible");
+  return false;
 }
 
 function updateFooterUpVisibility() {
-  const showcaseOpen = Boolean(document.querySelector(".showcase-open"));
-  const shouldShow = showcaseOpen || (mobileQuery.matches && workTab.classList.contains("active") && mobileWorkColumnsPassed && window.scrollY > 80);
-  footerUp.textContent = showcaseOpen ? "Back" : "Up";
-  document.body.classList.toggle("footer-up-visible", shouldShow);
+  footerUp.textContent = "Up";
+  document.body.classList.remove("footer-up-visible");
 }
 
 function updateMobileWorkMenuPhase() {
@@ -434,6 +439,24 @@ function getMostVisibleMobileProjectIndex() {
     const visible = Math.max(0, Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0));
     return visible > current.visible ? { group, visible } : current;
   }, { group: projectGroups[0], visible: -1 });
+  return Number(best.group.dataset.project || 0);
+}
+
+function getMostVisibleDesktopProjectIndex() {
+  if (!projectGroups.length) return 0;
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+  const best = projectGroups.reduce((current, group) => {
+    const target = group.querySelector(".showcase-main") || group;
+    const rect = target.getBoundingClientRect();
+    const visibleWidth = Math.max(0, Math.min(rect.right, viewportWidth) - Math.max(rect.left, 0));
+    const visibleHeight = Math.max(0, Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0));
+    const visibleArea = visibleWidth * visibleHeight;
+    const distanceFromFocus = Math.abs((rect.top + rect.bottom) / 2 - viewportHeight * 0.46);
+    if (visibleArea > current.visibleArea) return { group, visibleArea, distanceFromFocus };
+    if (visibleArea === current.visibleArea && distanceFromFocus < current.distanceFromFocus) return { group, visibleArea, distanceFromFocus };
+    return current;
+  }, { group: projectGroups[0], visibleArea: -1, distanceFromFocus: Infinity });
   return Number(best.group.dataset.project || 0);
 }
 
@@ -502,11 +525,6 @@ const videoObserver = new IntersectionObserver((entries) => {
 }, { rootMargin: mobileQuery.matches ? "0px" : "240px" });
 let activeProject = -1;
 let scrollFrame = 0;
-let parallaxFrame = 0;
-let parallaxRunning = false;
-let parallaxImpulse = 0;
-let showcaseSnapRelease = 0;
-let showcaseSnapToken = 0;
 let mobileWorkMenuSnapTimer = 0;
 let mobileColumnsFrame = 0;
 let wheelScrollFrame = 0;
@@ -515,14 +533,6 @@ let suppressScrollSync = false;
 let mobileWorkStepRelease = 0;
 let detailsTransitionToken = 0;
 let gallerySeed = createGallerySeed();
-const colorLayers = ["lime", "blue", "white", "lime", "blue", "white"];
-const formatRatios = {
-  portrait: 9 / 16,
-  landscape: 4 / 3,
-  vertical: 3 / 4,
-  widescreen: 16 / 9,
-  square: 1,
-};
 const teamMembers = [
   ["Alexey Molchanov", "2D/AI Motion Design", "Creates expressive motion systems and AI-assisted visual experiments for digital projects.", "alexey"],
   ["Rustam Gaifutdinov", "Web development frontend", "Builds responsive frontend experiences with close attention to interaction, performance and detail.", "human"],
@@ -589,90 +599,6 @@ function warmPfpViewer() {
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
-}
-
-function attachToEdge(base, width, random) {
-  const onRight = random() > 0.5;
-  const x = onRight
-    ? base.x + base.w - width * randomBetween(random, 0.26, 0.48)
-    : base.x - width * randomBetween(random, 0.52, 0.74);
-  return clamp(x, 0, 100 - width);
-}
-
-function createFormatBlock(format, width, x, y) {
-  return { format, x, y, w: width, ratio: formatRatios[format] };
-}
-
-function createProceduralLayout(random) {
-  const heroWidth = randomBetween(random, 80, 96);
-  const hero = createFormatBlock("widescreen", heroWidth, randomBetween(random, 0, 100 - heroWidth), 0);
-  const squareWidth = randomBetween(random, 32, 43);
-  const square = createFormatBlock("square", squareWidth, attachToEdge(hero, squareWidth, random), 18);
-  const landscapeWidth = randomBetween(random, 62, 82);
-  const landscape = createFormatBlock("landscape", landscapeWidth, randomBetween(random, 0, 100 - landscapeWidth), 38);
-  const verticalWidth = randomBetween(random, 27, 36);
-  const vertical = createFormatBlock("vertical", verticalWidth, attachToEdge(landscape, verticalWidth, random), 57);
-  const miniWidth = randomBetween(random, 11, 15);
-  const mini = createFormatBlock("portrait", miniWidth, randomBetween(random, 0, 100 - miniWidth), 69);
-  const finalWidth = randomBetween(random, 67, 86);
-  const finalBlock = createFormatBlock("widescreen", finalWidth, randomBetween(random, 0, 100 - finalWidth), 78);
-
-  return [hero, square, landscape, vertical, mini, finalBlock];
-}
-
-function createMobileProceduralLayout(random) {
-  const heroWidth = randomBetween(random, 72, 88);
-  const hero = createFormatBlock("widescreen", heroWidth, randomBetween(random, 0, 100 - heroWidth), 0);
-  const squareWidth = randomBetween(random, 34, 48);
-  const square = createFormatBlock("square", squareWidth, attachToEdge(hero, squareWidth, random), 20);
-  const landscapeWidth = randomBetween(random, 54, 74);
-  const landscape = createFormatBlock("landscape", landscapeWidth, randomBetween(random, 0, 100 - landscapeWidth), 37);
-  const verticalWidth = randomBetween(random, 28, 40);
-  const vertical = createFormatBlock("vertical", verticalWidth, attachToEdge(landscape, verticalWidth, random), 55);
-  const miniWidth = randomBetween(random, 21, 30);
-  const mini = createFormatBlock("portrait", miniWidth, randomBetween(random, 0, 100 - miniWidth), 69);
-  const finalWidth = randomBetween(random, 56, 76);
-  const finalBlock = createFormatBlock("widescreen", finalWidth, randomBetween(random, 0, 100 - finalWidth), 80);
-
-  return [hero, square, landscape, vertical, mini, finalBlock];
-}
-
-function updateParallax() {
-  const viewportCenter = window.innerHeight / 2;
-  const wheelMomentum = parallaxImpulse;
-  let moving = false;
-  parallaxCompositions.forEach(({ composition, visuals }) => {
-    const rect = composition.getBoundingClientRect();
-    if (rect.bottom < -window.innerHeight || rect.top > window.innerHeight * 2) return;
-    const distance = rect.top + rect.height / 2 - viewportCenter;
-    visuals.forEach((visual) => {
-      const speed = Number(visual.dataset.parallax || 0);
-      const target = Math.max(-260, Math.min(260, distance * speed + wheelMomentum * speed * 2.4));
-      const current = Number(visual.dataset.parallaxCurrent || 0);
-      const offset = current + (target - current) * 0.18;
-      if (Math.abs(target - offset) > 0.08) moving = true;
-      visual.dataset.parallaxCurrent = offset.toFixed(3);
-      visual.style.setProperty("--parallax-y", `${offset.toFixed(2)}px`);
-    });
-  });
-  parallaxImpulse *= 0.88;
-  if (Math.abs(parallaxImpulse) < 0.1) parallaxImpulse = 0;
-  if (parallaxImpulse) moving = true;
-  return moving;
-}
-
-function scheduleParallax() {
-  if (!parallaxCompositions.length) return;
-  if (parallaxRunning) return;
-  parallaxRunning = true;
-  const animate = () => {
-    parallaxFrame = 0;
-    if (updateParallax()) parallaxFrame = requestAnimationFrame(animate);
-    else parallaxRunning = false;
-  };
-  parallaxFrame = requestAnimationFrame(() => {
-    animate();
-  });
 }
 
 function resetMobileWorkColumns() {
@@ -743,54 +669,7 @@ function animateWindowScrollTo(targetTop, duration = 640) {
 }
 
 function updateWorkSnapState() {
-  const active = workTab.classList.contains("active")
-    && projectGroups.length
-    && !document.querySelector(".showcase-open")
-    && !expandedOverlay;
-  const wantedClass = active ? (mobileQuery.matches ? "work-mobile-snap-active" : "work-snap-active") : "";
-  const hasDesktop = document.documentElement.classList.contains("work-snap-active");
-  const hasMobile = document.documentElement.classList.contains("work-mobile-snap-active");
-  if ((wantedClass === "work-snap-active" && hasDesktop && !hasMobile)
-    || (wantedClass === "work-mobile-snap-active" && hasMobile && !hasDesktop)
-    || (!wantedClass && !hasDesktop && !hasMobile)) return;
-  document.documentElement.classList.toggle("work-snap-active", wantedClass === "work-snap-active");
-  document.documentElement.classList.toggle("work-mobile-snap-active", wantedClass === "work-mobile-snap-active");
-}
-
-function getNearestProjectIndex() {
-  if (!projectGroups.length) return 0;
-  const marker = window.scrollY + window.innerHeight * 0.5;
-  const nearest = projectGroups.reduce((current, group) => {
-    const currentDistance = Math.abs(current.offsetTop - marker);
-    const groupDistance = Math.abs(group.offsetTop - marker);
-    return groupDistance < currentDistance ? group : current;
-  }, projectGroups[0]);
-  return Number(nearest.dataset.project || 0);
-}
-
-function snapToShowcaseProject(direction) {
-  const now = performance.now();
-  if (now < showcaseSnapRelease) return true;
-  const currentIndex = activeProject >= 0 ? activeProject : getNearestProjectIndex();
-  const nextIndex = clamp(currentIndex + direction, 0, projectGroups.length - 1);
-  const targetGroup = projectGroups.find((group) => Number(group.dataset.project) === nextIndex);
-  if (!targetGroup) return false;
-  if (nextIndex === currentIndex) return true;
-  showcaseSnapRelease = now + 780;
-  const snapToken = ++showcaseSnapToken;
-  cancelWheelScroll();
-  clearTimeout(mobileWorkMenuSnapTimer);
-  suppressScrollSync = true;
-  wheelScrollTarget = Math.round(targetGroup.getBoundingClientRect().top + window.scrollY);
-  setActiveProject(nextIndex);
-  scheduleWheelScroll();
-  window.setTimeout(() => {
-    if (snapToken !== showcaseSnapToken) return;
-    window.scrollTo(0, wheelScrollTarget);
-    suppressScrollSync = false;
-    setActiveProject(nextIndex);
-  }, 860);
-  return true;
+  document.documentElement.classList.remove("work-snap-active", "work-mobile-snap-active");
 }
 
 function updateProjectMeta(index) {
@@ -807,6 +686,9 @@ function updateProjectMeta(index) {
   }
   metaUrl.classList.toggle("has-link", Boolean(url) && !disableMobileLink);
   metaUrl.classList.toggle("is-disabled-link", disableMobileLink);
+  if (workProjectDescription) {
+    workProjectDescription.textContent = projectDescriptions[images] || projectDescriptions.default;
+  }
 }
 
 mobileQuery.addEventListener("change", () => {
@@ -868,7 +750,6 @@ function setActiveProject(index, { animate = true } = {}) {
 }
 
 function scrollToProject(index) {
-  showcaseSnapToken += 1;
   cancelWheelScroll();
   suppressScrollSync = true;
   setActiveProject(index);
@@ -918,10 +799,13 @@ function resetMobileWorkScroll() {
 
 function resetMobileWorkScrollAfterBrowserRestore() {
   if (!mobileQuery.matches || location.hash !== "#work") return;
-  window.setTimeout(resetMobileWorkScroll, 0);
-  window.setTimeout(resetMobileWorkScroll, 160);
-  window.setTimeout(resetMobileWorkScroll, 520);
-  window.setTimeout(resetMobileWorkScroll, 920);
+  mobileRestoreResetTimers.forEach(clearTimeout);
+  mobileRestoreResetTimers = [0, 160].map((delay) => window.setTimeout(resetMobileWorkScroll, delay));
+}
+
+function cancelMobileWorkRestoreReset() {
+  mobileRestoreResetTimers.forEach(clearTimeout);
+  mobileRestoreResetTimers = [];
 }
 
 function scrollToWorkMenuTop() {
@@ -962,10 +846,14 @@ function syncMobileWorkProjectPhaseFromScroll() {
   if (!mobileQuery.matches || !workTab.classList.contains("active")) return;
   if (document.querySelector(".showcase-open")) return;
   const targetTop = getMobileDetailsSnapTop();
-  const sliderVisible = window.scrollY >= targetTop - 4;
+  const detailsTop = detailsColumn.getBoundingClientRect().top;
+  const sliderVisible = window.scrollY >= targetTop - 4 || detailsTop <= 10;
   if (detailsColumn.classList.contains("client-slider-visible") !== sliderVisible) {
     detailsColumn.classList.toggle("client-slider-visible", sliderVisible);
     mobileWorkColumnsPassed = sliderVisible;
+    if (sliderVisible && window.scrollY < targetTop - 1) {
+      window.scrollTo({ top: targetTop, behavior: "instant" });
+    }
     updateMobileWorkMenuPhase();
     updateFooterUpVisibility();
     if (sliderVisible) centerActiveClient(false);
@@ -976,37 +864,25 @@ function syncMobileWorkProjectPhaseFromScroll() {
 function scheduleMobileWorkMenuSnap() {
   if (!mobileQuery.matches || !workTab.classList.contains("active")) return;
   if (document.querySelector(".showcase-open")) return;
-  if (suppressScrollSync) return;
   clearTimeout(mobileWorkMenuSnapTimer);
   mobileWorkMenuSnapTimer = window.setTimeout(() => {
     if (!mobileQuery.matches || !workTab.classList.contains("active")) return;
     if (document.querySelector(".showcase-open")) return;
-    const targetTop = getMobileDetailsSnapTop();
-    const threshold = Math.max(44, targetTop * 0.34);
+    syncMobileWorkProjectPhaseFromScroll();
     if (detailsColumn.classList.contains("client-slider-visible")) {
-      if (window.scrollY >= targetTop - 24) return;
-      scrollToWorkMenuTop();
-      return;
+      const visibleProject = getMostVisibleMobileProjectIndex();
+      if (visibleProject !== activeProject) setActiveProject(visibleProject, { animate: false });
     }
-    if (window.scrollY <= threshold || window.scrollY >= targetTop - 1) return;
-    suppressScrollSync = true;
-    clearTimeout(mobileProgrammaticScrollTimer);
-    document.documentElement.classList.add("work-programmatic-scroll");
-    setActiveProject(0, { animate: false });
-    updateMobileWorkMenuPhase();
-    updateFooterUpVisibility();
-    animateWindowScrollTo(targetTop, 300);
-    mobileProgrammaticScrollTimer = window.setTimeout(() => {
-      detailsColumn.classList.add("client-slider-visible");
-      mobileWorkColumnsPassed = true;
-      document.documentElement.classList.remove("work-programmatic-scroll");
-      suppressScrollSync = false;
-      centerActiveClient(false);
-      updateMobileWorkMenuPhase();
-      updateWorkSnapState();
-      updateFooterUpVisibility();
-    }, 340);
-  }, 140);
+  }, 220);
+}
+
+function syncMobileWorkSettledState() {
+  if (!mobileQuery.matches || !workTab.classList.contains("active")) return;
+  if (document.querySelector(".showcase-open")) return;
+  syncMobileWorkProjectPhaseFromScroll();
+  if (!detailsColumn.classList.contains("client-slider-visible")) return;
+  const visibleProject = getMostVisibleMobileProjectIndex();
+  if (visibleProject !== activeProject) setActiveProject(visibleProject, { animate: false });
 }
 
 function getContentItems(slug) {
@@ -1020,20 +896,8 @@ function getContentItems(slug) {
   });
 }
 
-function getAllContentItemsForTag(tag) {
-  return projects.flatMap(([title, , , , slug], projectIndex) => (
-    getContentItems(slug)
-      .filter((item) => item.tags.includes(tag))
-      .map((item) => ({ ...item, projectTitle: title, projectIndex }))
-  ));
-}
-
 function isVideoSource(src) {
   return /\.(mp4|mov)$/i.test(src);
-}
-
-function getContentFormat(src, fallback) {
-  return fallback;
 }
 
 function getMediaGridFormatFromRatio(width, height) {
@@ -1088,22 +952,6 @@ function detectShowcaseItemFormat(item, onReady) {
   image.src = item.src;
 }
 
-function getContentWidth(width, format, isVideo) {
-  if (mobileQuery.matches) {
-    const limits = isVideo
-      ? { portrait: [34, 52], square: [50, 68], widescreen: [68, 92], landscape: [60, 84], vertical: [40, 58] }
-      : { portrait: [28, 42], square: [42, 58], widescreen: [58, 84], landscape: [52, 76], vertical: [34, 52] };
-    const [min, max] = limits[format] || [width, width];
-    return clamp(width, min, max);
-  }
-
-  const limits = isVideo
-    ? { portrait: [68, 78], square: [76, 78], widescreen: [68, 78], landscape: [60, 78] }
-    : { portrait: [24, 52], square: [36, 68], widescreen: [58, 78], landscape: [52, 78] };
-  const [min, max] = limits[format] || [width, width];
-  return clamp(width, min, max);
-}
-
 function loadMediaElement(media) {
   if (!media.dataset.src || media.dataset.loadedSource) return;
   media.dataset.loadedSource = "true";
@@ -1138,7 +986,6 @@ function scheduleWorkMediaWarmup() {
   scheduleIdleTask(() => {
     if (!workTab.classList.contains("active") || galleryColumn.hidden) return;
     setGalleryPlayback(true);
-    scheduleParallax();
     scheduleNearbyMedia();
   });
 }
@@ -1151,147 +998,7 @@ const lazyMediaObserver = new IntersectionObserver((entries) => {
   });
 }, { rootMargin: mobileQuery.matches ? "40px 0px" : "520px 0px" });
 
-function rectsOverlap(a, b) {
-  return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-}
-
-function getRectOverlap(a, b) {
-  const width = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
-  const height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
-  return { width, height, area: width * height };
-}
-
-function rectsOverlapTooMuch(a, b) {
-  const overlap = getRectOverlap(a, b);
-  if (!overlap.area) return false;
-  const minArea = Math.min(a.width * a.height, b.width * b.height);
-  const minHeight = Math.min(a.height, b.height);
-  const minWidth = Math.min(a.width, b.width);
-  const tagBandA = { ...a, top: a.bottom - 24 };
-  const tagBandB = { ...b, top: b.bottom - 24 };
-  const tagBandOverlapA = getRectOverlap(tagBandA, b);
-  const tagBandOverlapB = getRectOverlap(tagBandB, a);
-  const tagBandCovered = tagBandOverlapA.width > Math.min(160, a.width * 0.42) || tagBandOverlapB.width > Math.min(160, b.width * 0.42);
-  return (
-    tagBandCovered ||
-    overlap.area / minArea > 0.16 ||
-    (overlap.height / minHeight > 0.34 && overlap.width / minWidth > 0.22)
-  );
-}
-
-function resolveVisualTop(rect, placedRects) {
-  const allowedVerticalOverlap = Math.min(92, rect.height * 0.2);
-  const relatedRects = placedRects.filter((placed) => {
-    const horizontalOverlap = Math.max(0, Math.min(rect.right, placed.right) - Math.max(rect.left, placed.left));
-    const horizontalRatio = horizontalOverlap / Math.min(rect.width, placed.width);
-    return horizontalRatio > 0.18;
-  });
-  const nearest = relatedRects.reduce((current, placed) => (
-    !current || placed.bottom > current.bottom ? placed : current
-  ), null);
-  let top = nearest ? Math.min(rect.top, nearest.bottom - allowedVerticalOverlap) : rect.top;
-  relatedRects.forEach((placed) => {
-    top = Math.max(top, placed.bottom - allowedVerticalOverlap);
-  });
-  return top;
-}
-
-function placeVisualTags() {
-  document.querySelectorAll(".visual-tags-shift-left, .visual-tags-shift-right").forEach((visual) => {
-    visual.classList.remove("visual-tags-shift-left", "visual-tags-shift-right");
-  });
-  document.querySelectorAll(".project-composition").forEach((composition) => {
-    const visuals = [...composition.querySelectorAll(".visual")].map((visual) => ({
-      visual,
-      rect: visual.getBoundingClientRect(),
-      z: Number(getComputedStyle(visual).zIndex) || 0,
-    }));
-
-    visuals.forEach(({ visual, z }) => {
-      const tag = visual.querySelector(".visual-tags");
-      if (!tag) return;
-      const tagRect = tag.getBoundingClientRect();
-      const covers = visuals.filter((other) => (
-        other.visual !== visual && other.z > z && rectsOverlap(tagRect, other.rect)
-      ));
-      if (!covers.length) return;
-      const overlapCenter = covers.reduce((sum, other) => {
-        const left = Math.max(tagRect.left, other.rect.left);
-        const right = Math.min(tagRect.right, other.rect.right);
-        return sum + (left + right) / 2;
-      }, 0) / covers.length;
-      const tagCenter = (tagRect.left + tagRect.right) / 2;
-      visual.classList.add(overlapCenter > tagCenter ? "visual-tags-shift-left" : "visual-tags-shift-right");
-    });
-  });
-}
-
-function scheduleVisualTags() {
-  requestAnimationFrame(placeVisualTags);
-}
-
-function setOverlayRect(overlay, rect) {
-  overlay.style.setProperty("--overlay-x", `${rect.left}px`);
-  overlay.style.setProperty("--overlay-y", `${rect.top}px`);
-  overlay.style.setProperty("--overlay-w", `${rect.width}px`);
-  overlay.style.setProperty("--overlay-h", `${rect.height}px`);
-}
-
-function removeExpandedOverlay() {
-  expandedVisual?.classList.remove("visual-source-expanded");
-  expandedBackdrop?.remove();
-  expandedBackdrop = null;
-  expandedOverlay?.remove();
-  expandedOverlay = null;
-  expandedVisual = null;
-  expandedVisualAnimating = false;
-  expandedVisualPendingClose = false;
-}
-
-function closeExpandedVisual(animate = true) {
-  if (!expandedOverlay || !expandedVisual) return;
-  if (!animate) {
-    removeExpandedOverlay();
-    return;
-  }
-  if (expandedVisualAnimating) {
-    expandedVisualPendingClose = true;
-    return;
-  }
-  const sourceRect = expandedVisual.getBoundingClientRect();
-  const targetRect = {
-    left: sourceRect.left,
-    top: sourceRect.top,
-    width: sourceRect.width,
-    height: sourceRect.height,
-  };
-  expandedVisualAnimating = true;
-  setOverlayRect(expandedOverlay, expandedOverlay.getBoundingClientRect());
-  expandedVisual.classList.remove("visual-source-expanded");
-  expandedOverlay.classList.add("visual-lightbox-closing");
-  expandedBackdrop?.classList.remove("is-open");
-  requestAnimationFrame(() => setOverlayRect(expandedOverlay, targetRect));
-  window.setTimeout(removeExpandedOverlay, 540);
-}
-
-function cloneVisualForOverlay(visual) {
-  const box = visual.querySelector(".visual-box").cloneNode(true);
-  box.querySelectorAll(".video-cover").forEach((cover) => cover.remove());
-  box.querySelectorAll("img, video").forEach((media) => {
-    const source = media.currentSrc || media.src || media.dataset.src;
-    if (source) media.src = source;
-    media.classList.add("is-loaded");
-    if (media.tagName === "VIDEO") {
-      media.muted = true;
-      media.loop = true;
-      media.autoplay = true;
-      media.playsInline = true;
-      media.removeAttribute("controls");
-      media.play?.().catch(() => {});
-    }
-  });
-  return box;
-}
+function closeExpandedVisual() {}
 
 function storeMediaRatio(media) {
   const width = media.tagName === "VIDEO" ? media.videoWidth : media.naturalWidth;
@@ -1300,162 +1007,6 @@ function storeMediaRatio(media) {
     media.dataset.mediaRatio = (width / height).toFixed(6);
     cacheMediaGridFormat(media.dataset.src || media.currentSrc || media.src, width, height);
   }
-}
-
-function getVisualMediaRatio(visual) {
-  const media = visual.querySelector(".visual-media");
-  if (!media) return null;
-  storeMediaRatio(media);
-  const ratio = Number(media.dataset.mediaRatio);
-  return Number.isFinite(ratio) && ratio > 0 ? ratio : null;
-}
-
-function getFullscreenRect(visual, inset) {
-  const tagHeight = 18;
-  const ratio = getVisualMediaRatio(visual) || formatRatios[visual.dataset.format] || Number(visual.style.getPropertyValue("--ratio")) || 1;
-  const maxWidth = window.innerWidth - inset * 2;
-  const maxMediaHeight = window.innerHeight - inset * 2 - tagHeight;
-  let width = maxWidth;
-  let mediaHeight = width / ratio;
-  if (mediaHeight > maxMediaHeight) {
-    mediaHeight = maxMediaHeight;
-    width = mediaHeight * ratio;
-  }
-  const height = mediaHeight + tagHeight;
-  return {
-    left: (window.innerWidth - width) / 2,
-    top: (window.innerHeight - height) / 2,
-    width,
-    height,
-  };
-}
-
-function openExpandedVisual(visual) {
-  if (expandedVisualAnimating) return;
-  closeExpandedVisual(false);
-  expandedVisualAnimating = true;
-  const sourceRect = visual.getBoundingClientRect();
-  const inset = 8;
-  const targetRect = getFullscreenRect(visual, inset);
-  const overlay = document.createElement("button");
-  const backdrop = document.createElement("button");
-  backdrop.type = "button";
-  backdrop.className = "visual-lightbox-backdrop";
-  backdrop.setAttribute("aria-label", "Close fullscreen media");
-  overlay.type = "button";
-  overlay.className = "visual-lightbox";
-  overlay.setAttribute("aria-label", "Close fullscreen media");
-  overlay.append(cloneVisualForOverlay(visual));
-  const overlayTags = visual.querySelector(".visual-tags")?.cloneNode(true);
-  if (overlayTags) overlay.append(overlayTags);
-  const requestClose = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    closeExpandedVisual(true);
-  };
-  overlay.addEventListener("pointerdown", requestClose);
-  overlay.addEventListener("touchend", requestClose);
-  overlay.addEventListener("click", requestClose);
-  backdrop.addEventListener("pointerdown", requestClose);
-  backdrop.addEventListener("touchend", requestClose);
-  backdrop.addEventListener("click", requestClose);
-  document.body.append(backdrop);
-  document.body.append(overlay);
-  requestAnimationFrame(() => backdrop.classList.add("is-open"));
-  overlay.querySelectorAll("video").forEach((video) => video.play?.().catch(() => {}));
-  expandedVisual = visual;
-  expandedOverlay = overlay;
-  expandedBackdrop = backdrop;
-  visual.classList.add("visual-source-expanded");
-  setOverlayRect(overlay, sourceRect);
-  overlay.getBoundingClientRect();
-  requestAnimationFrame(() => setOverlayRect(overlay, targetRect));
-  window.setTimeout(() => {
-    expandedVisualAnimating = false;
-    if (expandedVisualPendingClose) {
-      expandedVisualPendingClose = false;
-      requestAnimationFrame(() => closeExpandedVisual(true));
-    }
-  }, 540);
-}
-
-function getVisualTagFromPoint(visual, x, y) {
-  if (!visual || !Number.isFinite(x) || !Number.isFinite(y)) return "";
-  const tagNodes = [...visual.querySelectorAll(".visual-tag[data-gallery-tag]")];
-  const directHit = tagNodes.find((tag) => {
-    const rect = tag.getBoundingClientRect();
-    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
-  });
-  if (directHit) return directHit.dataset.galleryTag || "";
-  const tagLabel = visual.querySelector(".visual-tags");
-  const labelRect = tagLabel?.getBoundingClientRect();
-  if (!labelRect || x < labelRect.left || x > labelRect.right || y < labelRect.top || y > labelRect.bottom) return "";
-  return tagNodes[0]?.dataset.galleryTag || "";
-}
-
-function handleVisualClick(event) {
-  const directTag = event.target.closest(".visual-tag[data-gallery-tag]");
-  if (directTag) {
-    event.preventDefault();
-    event.stopPropagation();
-    openTagGallery(directTag.dataset.galleryTag);
-    return;
-  }
-  const visual = event.currentTarget.classList?.contains("visual")
-    ? event.currentTarget
-    : event.target.closest(".visual");
-  const pointedTag = getVisualTagFromPoint(visual, event.clientX, event.clientY);
-  if (pointedTag) {
-    event.preventDefault();
-    event.stopPropagation();
-    openTagGallery(pointedTag);
-    return;
-  }
-  if (!mobileQuery.matches) return;
-  if (!visual) return;
-  event.preventDefault();
-  event.stopPropagation();
-  if (expandedVisualAnimating) {
-    if (expandedOverlay) expandedVisualPendingClose = true;
-    return;
-  }
-  if (visual === expandedVisual) closeExpandedVisual(true);
-  else openExpandedVisual(visual);
-}
-
-async function openTagGallery(tag) {
-  const normalizedTag = normalizeContentTag(tag);
-  if (!normalizedTag) return;
-  activeGalleryTag = "";
-  updateProjectLabels();
-  videoObserver.disconnect();
-  lazyMediaObserver.disconnect();
-  visibleVideos.clear();
-  suppressScrollSync = true;
-  gallery.replaceChildren();
-  await renderGallery();
-  requestAnimationFrame(() => {
-    scrollToProject(0);
-  });
-}
-
-function handleGalleryClick(event) {
-  const tag = event.target.closest(".visual-tag[data-gallery-tag]");
-  if (!tag) {
-    handleVisualClick(event);
-    return;
-  }
-  event.preventDefault();
-  event.stopPropagation();
-  openTagGallery(tag.dataset.galleryTag);
-}
-
-function handleGalleryKeydown(event) {
-  if (event.key !== "Enter" && event.key !== " ") return;
-  const tag = event.target.closest(".visual-tag[data-gallery-tag]");
-  if (!tag) return;
-  event.preventDefault();
-  openTagGallery(tag.dataset.galleryTag);
 }
 
 function createMedia(src, title) {
@@ -1529,40 +1080,7 @@ function loadShowcaseMedia(root) {
   root.querySelectorAll(".showcase-media:not([data-loaded-source])").forEach(loadMediaElement);
 }
 
-function getShowcaseInfoOverlay() {
-  if (showcaseInfoOverlay) return showcaseInfoOverlay;
-  showcaseInfoOverlay = document.createElement("div");
-  showcaseInfoOverlay.className = "showcase-info-stack showcase-info-overlay";
-  showcaseInfoOverlay.setAttribute("aria-hidden", "true");
-  showcaseInfoOverlay.innerHTML = `
-    <section class="showcase-info-panel">
-      <p class="label">Info</p>
-      <p class="showcase-info-description">Lead Raura’s visual language, tone, and storytelling to ensure a cohesive and distinctive brand identity. Raura explores our relationship with the sun through a device that delivers personalized wellness insights. From conceptual development to producing and directing final visuals.</p>
-    </section>
-    <section class="showcase-info-panel showcase-credits-panel">
-      <dl class="showcase-credits-list">
-        <dt>Creative Direction:</dt>
-        <dd>Maxim Brik, Alexey Molchanov</dd>
-        <dt>Visual Production:</dt>
-        <dd>Maxim Brik, Alexey Molchanov</dd>
-      </dl>
-    </section>
-  `;
-  document.body.append(showcaseInfoOverlay);
-  return showcaseInfoOverlay;
-}
-
-function updateShowcaseInfoOverlay(state) {
-  getShowcaseInfoOverlay();
-}
-
-function setShowcaseInfoOverlayOpen(open, state) {
-  const overlay = getShowcaseInfoOverlay();
-  const canOpen = Boolean(open && state && workTab.classList.contains("active") && document.querySelector(".showcase-open"));
-  if (canOpen) updateShowcaseInfoOverlay(state);
-  overlay.classList.toggle("is-open", canOpen);
-  overlay.setAttribute("aria-hidden", String(!canOpen));
-}
+function setShowcaseInfoOverlayOpen() {}
 
 function stopShowcaseGridRotation(state) {
   if (!state?.gridTimer) return;
@@ -1690,7 +1208,7 @@ function toggleShowcaseDrawer(group, state, forceOpen) {
   group.classList.toggle("showcase-open", open);
   document.body.classList.toggle("showcase-focus", open);
   updateWorkSnapState();
-  setShowcaseInfoOverlayOpen(open, open ? state : null);
+  setShowcaseInfoOverlayOpen(false, null);
   updateMobileWorkMenuPhase();
   updateFooterUpVisibility();
   group.querySelector(".showcase-drawer")?.setAttribute("aria-hidden", String(!open));
@@ -1700,11 +1218,12 @@ function toggleShowcaseDrawer(group, state, forceOpen) {
     return;
   }
   setActiveProject(projectIndex);
-  scrollToProject(projectIndex);
-  requestAnimationFrame(clampShowcaseScroll);
+  requestAnimationFrame(() => {
+    const targetTop = Math.max(0, group.getBoundingClientRect().top + window.scrollY - 8);
+    animateWindowScrollTo(targetTop, 520);
+  });
   buildShowcaseGrid(group, state);
   stopShowcaseGridRotation(state);
-  state.gridTimer = window.setInterval(() => buildShowcaseGrid(group, state), 5000);
   loadShowcaseMedia(group);
 }
 
@@ -1721,9 +1240,8 @@ function buildShowcaseGrid(group, state) {
     const media = createShowcaseMedia(item, state.title);
     if (media) cell.append(media);
     cell.addEventListener("click", (event) => {
+      event.preventDefault();
       event.stopPropagation();
-      toggleShowcaseDrawer(group, state, false);
-      setShowcaseItem(group, state, state.items.indexOf(item), state.items.indexOf(item) > state.index ? 1 : -1);
     });
     return cell;
   };
@@ -1771,167 +1289,97 @@ function createShowcaseGroup(title, index, slug, items) {
   const group = document.createElement("section");
   group.className = "project-group showcase-group";
   group.dataset.project = index;
+  const project = projects[index] || [];
+  const year = project[1] || "";
+  const designed = project[2] || "";
+  const url = project[3] || "";
+  const categories = getProjectCategories(orderedItems);
   const state = {
     title,
     slug,
     items: orderedItems,
+    year,
+    designed,
+    url,
+    categories,
     index: 0,
     animating: false,
   };
   showcaseStates.set(index, state);
 
   group.innerHTML = `
-    <div class="showcase-main" role="button" tabindex="0" aria-label="${title} content window">
+    <button class="showcase-main" type="button" aria-label="Open ${escapeHtml(title)} project">
       <span class="showcase-media-slot"></span>
-    </div>
+      <span class="showcase-card-title">${escapeHtml(title)}</span>
+    </button>
     <div class="showcase-drawer" aria-hidden="true">
+      <header class="showcase-project-header">
+        <h2 class="showcase-project-title">${escapeHtml(title)}</h2>
+        <button class="showcase-back" type="button">Back to Overview</button>
+      </header>
+      <aside class="showcase-project-info" aria-label="${escapeHtml(title)} information">
+        <section class="showcase-info-panel">
+          <p class="label">Information</p>
+          <dl class="showcase-credits-list">
+            <dt>Client:</dt>
+            <dd>${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">${escapeHtml(title)}</a>` : escapeHtml(title)}</dd>
+            <dt>Categories:</dt>
+            <dd>${escapeHtml(categories)}</dd>
+            <dt>Year:</dt>
+            <dd>${escapeHtml(year)}</dd>
+          </dl>
+        </section>
+        <section class="showcase-info-panel">
+          <p class="label">Description</p>
+          <p class="showcase-info-description">Selected visual research, art direction and production work for ${escapeHtml(title)}.</p>
+        </section>
+        <section class="showcase-info-panel showcase-credits-panel">
+          <p class="label">Credits</p>
+          <dl class="showcase-credits-list">
+            <dt>Designed:</dt>
+            <dd>${escapeHtml(designed)}</dd>
+          </dl>
+        </section>
+      </aside>
       <div class="showcase-grid"></div>
     </div>
   `;
 
   const main = group.querySelector(".showcase-main");
+  main.addEventListener("pointerenter", () => {
+    if (mobileQuery.matches || document.querySelector(".showcase-open")) return;
+    setActiveProject(index, { animate: false });
+  });
+  main.addEventListener("focus", () => {
+    if (mobileQuery.matches || document.querySelector(".showcase-open")) return;
+    setActiveProject(index, { animate: false });
+  });
   main.addEventListener("click", () => toggleShowcaseDrawer(group, state));
   main.addEventListener("keydown", (event) => {
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
     toggleShowcaseDrawer(group, state);
   });
+  group.querySelector(".showcase-back")?.addEventListener("click", () => toggleShowcaseDrawer(group, state, false));
   setShowcaseItem(group, state, 0, 1);
   return group;
 }
 
 async function renderGallery() {
   closeExpandedVisual(false);
-  gallery.dataset.seed = gallerySeed;
-  gallery.dataset.activeTag = activeGalleryTag;
+  gallery.replaceChildren();
+  gallery.dataset.seed = String(gallerySeed);
+  gallery.dataset.activeTag = "";
   updateProjectLabels();
   showcaseStates = new Map();
-  const galleryProjects = activeGalleryTag
-    ? [[getProjectDisplayTitle(projects[0][0], 0), 0, getAllContentItemsForTag(activeGalleryTag)]]
-    : projects.map(([title, , , , slug], index) => [title, index, getContentItems(slug)]);
 
-  galleryProjects.forEach(([title, index, projectMedia]) => {
-    if (!activeGalleryTag) {
-      const showcaseGroup = createShowcaseGroup(title, index, projects[index]?.[4] || "", projectMedia);
-      if (showcaseGroup) gallery.append(showcaseGroup);
-      return;
-    }
-    const random = seededRandom(gallerySeed ^ Math.imul(index + 1, 0x9e3779b1));
-    const media = shuffle(projectMedia, random);
-    if (!media.length) return;
-    const group = document.createElement("section");
-    group.className = "project-group";
-    group.dataset.project = index;
-    const compositionCount = Math.max(1, Math.ceil(media.length / colorLayers.length));
-    for (let compositionIndex = 0; compositionIndex < compositionCount; compositionIndex += 1) {
-      const compositionElement = document.createElement("div");
-      compositionElement.className = "project-composition";
-      const compositionHeight = mobileQuery.matches ? randomBetween(random, 980, 1140) : randomBetween(random, 1760, 1980);
-      compositionElement.style.setProperty("--composition-height", `${Math.round(compositionHeight)}px`);
-      const compositionWidth = Math.max(1, galleryColumn.getBoundingClientRect().width || gallery.getBoundingClientRect().width || window.innerWidth);
-      const placedVisualRects = [];
-      let compositionMaxBottom = compositionHeight;
-      const composition = mobileQuery.matches ? createMobileProceduralLayout(random) : createProceduralLayout(random);
-      const colors = shuffle([...colorLayers], random);
-      const slotsByArea = composition
-        .map(({ w: width, ratio }, layerIndex) => ({ layerIndex, area: width * width / ratio }))
-        .sort((left, right) => right.area - left.area);
-      const depths = slotsByArea
-        .reduce((result, { layerIndex }, depth) => {
-          result[layerIndex] = depth + 1;
-          return result;
-        }, []);
-      const mediaByLayer = [];
-      media
-        .slice(compositionIndex * colorLayers.length, (compositionIndex + 1) * colorLayers.length)
-        .sort((left, right) => Number(isVideoSource(right.src)) - Number(isVideoSource(left.src)))
-        .forEach((src, mediaIndex) => {
-          mediaByLayer[slotsByArea[mediaIndex].layerIndex] = src;
-        });
-      colors.forEach((color, layerIndex) => {
-        const { format, x, y, w: width, ratio } = composition[layerIndex];
-        const item = mediaByLayer[layerIndex];
-        const src = item?.src;
-        if (!src) return;
-        const visualButton = document.createElement("button");
-        const contentFormat = src ? getContentFormat(src, format) : format;
-        const contentWidth = src ? getContentWidth(width, contentFormat, isVideoSource(src)) : width;
-        const minContentX = mobileQuery.matches ? 0 : 22;
-        const contentX = clamp(x + (width - contentWidth) / 2, minContentX, 100 - contentWidth);
-        const visualRatio = src ? formatRatios[contentFormat] : ratio;
-        const contentWidthPx = compositionWidth * contentWidth / 100;
-        const tagReservePx = mobileQuery.matches ? 46 : 24;
-        const visualHeightPx = contentWidthPx / visualRatio + tagReservePx;
-        const layoutYPx = resolveVisualTop({
-          left: compositionWidth * contentX / 100,
-          top: compositionHeight * y / 100,
-          right: compositionWidth * (contentX + contentWidth) / 100,
-          bottom: compositionHeight * y / 100 + visualHeightPx,
-          width: contentWidthPx,
-          height: visualHeightPx,
-        }, placedVisualRects);
-        const verticalDensity = mobileQuery.matches ? 1.03 : 0.84;
-        const contentYPx = layoutYPx * verticalDensity;
-        placedVisualRects.push({
-          left: compositionWidth * contentX / 100,
-          top: contentYPx,
-          right: compositionWidth * (contentX + contentWidth) / 100,
-          bottom: contentYPx + visualHeightPx,
-          width: contentWidthPx,
-          height: visualHeightPx,
-        });
-        compositionMaxBottom = Math.max(compositionMaxBottom, contentYPx + visualHeightPx + 28);
-        const mediaElement = createMedia(src, item.projectTitle || title);
-        visualButton.type = "button";
-        visualButton.className = `visual visual-${color}${mediaElement ? ` visual-${mediaElement.tagName.toLowerCase()}` : ""}`;
-        visualButton.setAttribute("aria-label", `${item.projectTitle || title} project media`);
-        visualButton.addEventListener("click", handleVisualClick);
-        visualButton.dataset.format = contentFormat;
-        const parallaxDirection = layerIndex % 2 === 0 ? 1 : -1;
-        visualButton.dataset.parallax = (parallaxDirection * randomBetween(random, 0.055, 0.115)).toFixed(4);
-        visualButton.style.setProperty("--x", `${contentX.toFixed(2)}%`);
-        visualButton.style.setProperty("--y", `${contentYPx.toFixed(0)}px`);
-        visualButton.style.setProperty("--w", `${contentWidth.toFixed(2)}%`);
-        visualButton.style.setProperty("--ratio", visualRatio);
-        visualButton.style.setProperty("--z", depths[layerIndex]);
-        visualButton.style.setProperty("--delay", `${Math.round(randomBetween(random, 0, 420))}ms`);
-        const visualBox = document.createElement("span");
-        visualBox.className = "visual-box";
-        if (mediaElement) {
-          visualBox.append(mediaElement);
-          if (mediaElement.tagName === "VIDEO") {
-            const videoCover = document.createElement("span");
-            videoCover.className = "video-cover";
-            visualBox.append(videoCover);
-          }
-        }
-        visualButton.append(visualBox);
-        const tags = item?.tags || [];
-        if (tags.length) {
-          const tagLabel = document.createElement("span");
-          tagLabel.className = "visual-tags";
-          tagLabel.dataset.tags = tags.join("|");
-          const tagText = document.createElement("span");
-          tagText.className = "visual-tags-text";
-          renderVisualTagLinks(tagText, tags);
-          tagLabel.append(tagText);
-          visualButton.append(tagLabel);
-        }
-        compositionElement.append(visualButton);
-      });
-      compositionElement.style.setProperty("--composition-height", `${Math.ceil(compositionMaxBottom)}px`);
-      group.append(compositionElement);
-    }
-    gallery.append(group);
+  projects.forEach(([title, , , , slug], index) => {
+    const showcaseGroup = createShowcaseGroup(title, index, slug || "", getContentItems(slug));
+    if (showcaseGroup) gallery.append(showcaseGroup);
   });
+
   projectGroups = [...gallery.querySelectorAll(".project-group")];
   updateWorkSnapState();
-  parallaxCompositions = [...gallery.querySelectorAll(".project-composition")].map((composition) => ({
-    composition,
-    visuals: [...composition.querySelectorAll(".visual")],
-  }));
-  scheduleParallax();
-  scheduleVisualTags();
   scheduleNearbyMedia();
   resetMobileWorkScroll();
 }
@@ -1944,8 +1392,7 @@ projects.forEach(([title], index) => {
   button.textContent = getProjectDisplayTitle(title, index);
   button.addEventListener("click", () => {
     closeOpenShowcaseDrawer(false);
-    if (activeGalleryTag) recomposeGallery(index, { clearTag: true });
-    else scrollToProject(index);
+    scrollToProject(index);
   });
   projectList.append(button);
 
@@ -1958,8 +1405,7 @@ projects.forEach(([title], index) => {
   clientButton.addEventListener("click", () => {
     clientPickerIndex = index;
     mobileClientSlider.style.setProperty("--client-picker-index", clientPickerIndex);
-    if (activeGalleryTag) recomposeGallery(index, { clearTag: true });
-    else scrollToProject(index);
+    scrollToProject(index);
   });
   mobileClientSlider.append(clientButton);
 });
@@ -1972,8 +1418,6 @@ detailsColumn.addEventListener("touchend", endClientSliderProxy, { passive: true
 detailsColumn.addEventListener("touchcancel", endClientSliderProxy, { passive: true });
 window.addEventListener("touchstart", beginOpenShowcaseTouch, { passive: true });
 window.addEventListener("touchmove", containOpenShowcaseTouch, { passive: false });
-gallery.addEventListener("click", handleGalleryClick);
-gallery.addEventListener("keydown", handleGalleryKeydown);
 metaUrl.addEventListener("click", (event) => {
   if (metaUrl.classList.contains("is-disabled-link")) event.preventDefault();
 });
@@ -2453,8 +1897,7 @@ function updateBudgetIndicator() {
   budgetSwitch.style.setProperty("--budget-indicator-y", `${activeRect.top - switchRect.top + activeRect.height / 2}px`);
 }
 
-async function recomposeGallery(currentProject = Math.max(activeProject, 0), { clearTag = false } = {}) {
-  if (clearTag) activeGalleryTag = "";
+async function recomposeGallery(currentProject = Math.max(activeProject, 0)) {
   updateProjectLabels();
   gallerySeed = createGallerySeed();
   videoObserver.disconnect();
@@ -2464,7 +1907,6 @@ async function recomposeGallery(currentProject = Math.max(activeProject, 0), { c
   gallery.replaceChildren();
   await renderGallery();
   requestAnimationFrame(() => {
-    scheduleVisualTags();
     const hasProject = projectGroups.some((group) => Number(group.dataset.project) === currentProject);
     scrollToProject(hasProject ? currentProject : Number(projectGroups[0]?.dataset.project || 0));
   });
@@ -2554,8 +1996,7 @@ themeToggle.addEventListener("click", () => {
 });
 window.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
-  if (expandedOverlay) closeExpandedVisual(true);
-  else if (disclaimerModal.classList.contains("is-open")) setDisclaimerOpen(false);
+  if (disclaimerModal.classList.contains("is-open")) setDisclaimerOpen(false);
   else if (closeOpenShowcaseDrawer()) {}
   else recomposeGallery();
 });
@@ -2620,16 +2061,21 @@ window.addEventListener("hashchange", () => {
 });
 window.addEventListener("load", resetMobileWorkScrollAfterBrowserRestore);
 window.addEventListener("pageshow", resetMobileWorkScrollAfterBrowserRestore);
+window.addEventListener("touchstart", cancelMobileWorkRestoreReset, { passive: true });
+window.addEventListener("wheel", cancelMobileWorkRestoreReset, { passive: true });
+window.addEventListener("touchend", scheduleMobileWorkMenuSnap, { passive: true });
+window.addEventListener("wheel", scheduleMobileWorkMenuSnap, { passive: true });
+window.setInterval(syncMobileWorkSettledState, 160);
 
 window.addEventListener("scroll", () => {
-  if (mobileQuery.matches && expandedOverlay) closeExpandedVisual(true);
+  if (mobileRestoreResetTimers.length && window.scrollY > 4) cancelMobileWorkRestoreReset();
   if (clampShowcaseScroll()) return;
   syncMobileWorkProjectPhaseFromScroll();
   updateMobileWorkMenuPhase();
   updateWorkSnapState();
-  scheduleParallax();
-  scheduleVisibleVideos();
-  scheduleNearbyMedia();
+  if (!mobileQuery.matches) {
+    scheduleNearbyMedia();
+  }
   if (suppressScrollSync) return;
   if (!workTab.classList.contains("active")) return;
   if (!projectGroups.length) return;
@@ -2644,31 +2090,25 @@ window.addEventListener("scroll", () => {
     if (scrollFrame) return;
     scrollFrame = requestAnimationFrame(() => {
       scrollFrame = 0;
-      setActiveProject(getMostVisibleMobileProjectIndex(), { animate: false });
+      const visibleProject = getMostVisibleMobileProjectIndex();
+      if (visibleProject !== activeProject) setActiveProject(visibleProject, { animate: false });
     });
     return;
   }
   if (scrollFrame) return;
   scrollFrame = requestAnimationFrame(() => {
     scrollFrame = 0;
-    const active = projectGroups.reduce((current, group) => (
-      Math.abs(group.getBoundingClientRect().top) < Math.abs(current.getBoundingClientRect().top) ? group : current
-    ), projectGroups[0]);
-    setActiveProject(Number(active.dataset.project));
+    const visibleProject = getMostVisibleDesktopProjectIndex();
+    if (visibleProject !== activeProject) setActiveProject(visibleProject, { animate: false });
   });
 });
 
-window.addEventListener("resize", scheduleVisualTags);
 window.addEventListener("resize", updateViewportVars);
 window.visualViewport?.addEventListener("resize", updateViewportVars);
 window.addEventListener("resize", scheduleNearbyMedia);
 window.addEventListener("resize", scheduleNavIndicators);
-window.addEventListener("touchmove", () => {
-  if (mobileQuery.matches && expandedOverlay) closeExpandedVisual(true);
-}, { passive: true });
 
 window.addEventListener("wheel", (event) => {
-  if (mobileQuery.matches && expandedOverlay) closeExpandedVisual(true);
   const mobileOpenShowcaseGroup = mobileQuery.matches ? document.querySelector(".showcase-open") : null;
   if (mobileOpenShowcaseGroup) {
     const delta = normalizeWheelDelta(event);
@@ -2700,7 +2140,5 @@ window.addEventListener("wheel", (event) => {
     : { min: 0, max: document.documentElement.scrollHeight - window.innerHeight };
   if (!wheelScrollFrame) wheelScrollTarget = window.scrollY;
   wheelScrollTarget = Math.max(bounds.min, Math.min(bounds.max, wheelScrollTarget + delta));
-  parallaxImpulse = Math.max(-720, Math.min(720, parallaxImpulse + delta));
   scheduleWheelScroll();
-  scheduleParallax();
 }, { passive: false });
