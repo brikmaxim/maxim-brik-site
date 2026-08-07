@@ -169,9 +169,13 @@ const contentTags = {
 };
 
 const projectList = document.querySelector("#project-list");
+const mobileProjectList = document.querySelector("#mobile-project-list");
 const mobileClientSlider = document.querySelector("#mobile-client-slider");
 const tabsNav = document.querySelector(".tabs");
 const teamList = document.querySelector(".team-list");
+const workSelectedPanel = document.querySelector(".work-selected-panel");
+const workSelectedToggle = document.querySelector(".work-selected-toggle");
+const workSelectedContent = document.querySelector("#work-selected-content");
 const messageTextarea = document.querySelector("#message-text");
 const messageContinue = document.querySelector(".message-continue");
 const messageCopy = document.querySelector(".message-copy");
@@ -251,6 +255,8 @@ const projectHeroFiles = {
 let showcaseStates = new Map();
 let openShowcaseTouchY = 0;
 let showcaseReturnState = null;
+let previewStaggerToken = 0;
+let workSelectedAnimating = false;
 
 function normalizeContentTag(tag) {
   const cleaned = String(tag || "").toLowerCase().replace(/[^a-z]/g, "");
@@ -339,6 +345,96 @@ function scheduleNavIndicatorsAfterLayout() {
   scheduleNavIndicators();
   window.setTimeout(scheduleNavIndicators, 680);
 }
+
+async function animateWorkSelected(open) {
+  if (!workSelectedPanel || !workSelectedToggle || !workSelectedContent || workSelectedAnimating) return;
+  workSelectedAnimating = true;
+  workSelectedPanel.dataset.open = String(open);
+  workSelectedToggle.setAttribute("aria-expanded", String(open));
+  workSelectedContent.getAnimations().forEach((animation) => animation.cancel());
+  if (open) workSelectedContent.hidden = false;
+  const startHeight = open ? 0 : workSelectedContent.scrollHeight;
+  const endHeight = open ? workSelectedContent.scrollHeight : 0;
+  workSelectedContent.style.maxHeight = `${startHeight}px`;
+  workSelectedContent.style.opacity = open ? "0" : "1";
+  workSelectedContent.style.filter = open ? "blur(12px)" : "blur(0)";
+  workSelectedContent.style.transform = open ? "translate3d(0, -4px, 0)" : "translate3d(0, 0, 0)";
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  const animation = workSelectedContent.animate([
+    {
+      maxHeight: `${startHeight}px`,
+      opacity: open ? 0 : 1,
+      filter: open ? "blur(12px)" : "blur(0)",
+      transform: open ? "translate3d(0, -4px, 0)" : "translate3d(0, 0, 0)",
+    },
+    {
+      maxHeight: `${endHeight}px`,
+      opacity: open ? 1 : 0,
+      filter: open ? "blur(0)" : "blur(12px)",
+      transform: open ? "translate3d(0, 0, 0)" : "translate3d(0, -4px, 0)",
+    },
+  ], {
+    duration: 520,
+    easing: "cubic-bezier(.16, 1, .3, 1)",
+    fill: "both",
+  });
+  await animation.finished.catch(() => {});
+  animation.cancel();
+  if (!open) workSelectedContent.hidden = true;
+  workSelectedContent.style.maxHeight = open ? "" : "0";
+  workSelectedContent.style.opacity = open ? "" : "0";
+  workSelectedContent.style.filter = open ? "" : "blur(12px)";
+  workSelectedContent.style.transform = open ? "" : "translate3d(0, -4px, 0)";
+  workSelectedAnimating = false;
+}
+
+function animateWorkPreviews() {
+  if (!gallery || document.querySelector(".showcase-open")) return;
+  const token = ++previewStaggerToken;
+  const cards = [...gallery.querySelectorAll(".showcase-group .showcase-main")];
+  cards.forEach((card) => {
+    const group = card.closest(".showcase-group");
+    group?.classList.add("preview-entering");
+    card.getAnimations().forEach((animation) => animation.cancel());
+  });
+  requestAnimationFrame(() => {
+    if (token !== previewStaggerToken) return;
+    cards.forEach((card, index) => {
+      const group = card.closest(".showcase-group");
+      const animation = card.animate([
+        { opacity: 0, filter: "blur(18px)", transform: "translate3d(0, 12px, 0)" },
+        { opacity: 1, filter: "blur(0)", transform: "translate3d(0, 0, 0)" },
+      ], {
+        delay: Math.min(index, 12) * 42,
+        duration: 620,
+        easing: "cubic-bezier(.16, 1, .3, 1)",
+        fill: "both",
+      });
+      animation.finished.then(() => {
+        if (token !== previewStaggerToken) return;
+        animation.cancel();
+        group?.classList.remove("preview-entering");
+        card.style.opacity = "";
+        card.style.filter = "";
+        card.style.transform = "";
+      }).catch(() => {});
+    });
+  });
+}
+
+function primeWorkPreviews() {
+  if (!gallery || document.querySelector(".showcase-open")) return;
+  gallery.querySelectorAll(".showcase-group").forEach((group) => group.classList.add("preview-entering"));
+}
+
+function clearWorkPreviewPrime() {
+  gallery?.querySelectorAll(".preview-entering").forEach((group) => group.classList.remove("preview-entering"));
+}
+
+workSelectedToggle?.addEventListener("click", () => {
+  const open = workSelectedPanel?.dataset.open !== "true";
+  animateWorkSelected(open);
+});
 
 function getCookieValue(name) {
   return document.cookie.split("; ").reduce((value, item) => {
@@ -604,13 +700,30 @@ function clamp(value, min, max) {
 function resetMobileWorkColumns() {
   [introColumn, projectsColumn, detailsColumn].forEach((column) => {
     column.style.opacity = "";
+    column.style.filter = "";
     column.style.transform = "";
+    column.style.pointerEvents = "";
   });
 }
 
 function updateMobileWorkColumns() {
   mobileColumnsFrame = 0;
-  resetMobileWorkColumns();
+  if (!mobileQuery.matches || !workTab.classList.contains("active") || document.querySelector(".showcase-open")) {
+    resetMobileWorkColumns();
+    return;
+  }
+  const fadeEnd = Math.max(180, window.innerHeight * 0.38);
+  const progress = clamp(window.scrollY / fadeEnd, 0, 1);
+  const columns = [introColumn, projectsColumn, detailsColumn];
+  columns.forEach((column, index) => {
+    const localProgress = clamp((progress - index * 0.08) / 0.82, 0, 1);
+    const eased = 1 - Math.pow(1 - localProgress, 3);
+    const opacity = 1 - eased;
+    column.style.opacity = opacity.toFixed(3);
+    column.style.filter = `blur(${(eased * 14).toFixed(2)}px)`;
+    column.style.transform = `translate3d(0, ${(-eased * 10).toFixed(2)}px, 0)`;
+    column.style.pointerEvents = opacity < 0.08 ? "none" : "";
+  });
 }
 
 function scheduleMobileWorkColumns() {
@@ -900,6 +1013,29 @@ function isVideoSource(src) {
   return /\.(mp4|mov)$/i.test(src);
 }
 
+function configureGifLikeVideo(video) {
+  video.autoplay = true;
+  video.defaultMuted = true;
+  video.muted = true;
+  video.loop = true;
+  video.playsInline = true;
+  video.controls = false;
+  video.disablePictureInPicture = true;
+  video.disableRemotePlayback = true;
+  video.tabIndex = -1;
+  video.setAttribute("autoplay", "");
+  video.setAttribute("muted", "");
+  video.setAttribute("loop", "");
+  video.setAttribute("playsinline", "");
+  video.setAttribute("webkit-playsinline", "");
+  video.setAttribute("controlslist", "nodownload nofullscreen noremoteplayback");
+  video.setAttribute("disablepictureinpicture", "");
+  video.setAttribute("disableremoteplayback", "");
+  video.setAttribute("x-webkit-airplay", "deny");
+  video.removeAttribute("controls");
+  video.addEventListener("contextmenu", (event) => event.preventDefault());
+}
+
 function getMediaGridFormatFromRatio(width, height) {
   if (!(width > 0) || !(height > 0)) return "";
   return width / height > 1.08 ? "horizontal" : "vertical";
@@ -936,9 +1072,8 @@ function detectShowcaseItemFormat(item, onReady) {
   };
   if (isVideoSource(item.src)) {
     const video = document.createElement("video");
+    configureGifLikeVideo(video);
     video.preload = "metadata";
-    video.muted = true;
-    video.playsInline = true;
     video.addEventListener("loadedmetadata", () => finish(video.videoWidth, video.videoHeight), { once: true });
     video.addEventListener("error", fail, { once: true });
     video.src = item.src;
@@ -962,7 +1097,9 @@ function loadMediaElement(media) {
   }
   media.src = media.dataset.src;
   if (media.tagName === "VIDEO") {
+    configureGifLikeVideo(media);
     media.load();
+    media.play().catch(() => {});
     videoObserver.observe(media);
   }
 }
@@ -1025,17 +1162,7 @@ function createMedia(src, title) {
   };
   media.className = "visual-media is-loading";
   if (isVideo) {
-    media.autoplay = true;
-    media.controls = false;
-    media.disablePictureInPicture = true;
-    media.disableRemotePlayback = true;
-    media.muted = true;
-    media.loop = true;
-    media.playsInline = true;
-    media.setAttribute("playsinline", "");
-    media.setAttribute("webkit-playsinline", "");
-    media.setAttribute("x-webkit-airplay", "deny");
-    media.removeAttribute("controls");
+    configureGifLikeVideo(media);
     media.preload = mobileQuery.matches ? "none" : "metadata";
     media.addEventListener("loadedmetadata", () => storeMediaRatio(media), { once: true });
     media.addEventListener("loadeddata", reveal, { once: true });
@@ -1396,6 +1523,18 @@ projects.forEach(([title], index) => {
   });
   projectList.append(button);
 
+  const mobileProjectButton = document.createElement("button");
+  mobileProjectButton.type = "button";
+  mobileProjectButton.className = "project-button mobile-project-button";
+  mobileProjectButton.dataset.project = index;
+  mobileProjectButton.textContent = getProjectDisplayTitle(title, index);
+  mobileProjectButton.addEventListener("click", () => {
+    closeOpenShowcaseDrawer(false);
+    animateWorkSelected(false);
+    scrollToProject(index);
+  });
+  mobileProjectList?.append(mobileProjectButton);
+
   const clientButton = document.createElement("button");
   clientButton.type = "button";
   clientButton.className = "client-slider-button";
@@ -1628,29 +1767,17 @@ async function switchSection(targetSection, token) {
   const animatedNewColumns = targetSection === "work" ? newColumns.filter((column) => column !== galleryColumn) : newColumns;
   const oldColumns = [...document.querySelectorAll(".work-only:not([hidden]), .about-only:not([hidden]), .team-only:not([hidden]), .message-only:not([hidden])")]
     .filter((column) => !newColumns.includes(column));
+  const animatedOldColumns = oldColumns.filter((column) => column !== galleryColumn);
 
-  oldColumns.forEach((column) => {
-    column.getAnimations().forEach((animation) => animation.cancel());
-    column.hidden = true;
-    column.style.clipPath = "";
-    column.style.filter = "";
-    column.style.height = "";
-    column.style.opacity = "";
-    column.style.transform = "";
-    column.style.visibility = "";
-    column.style.willChange = "";
-  });
+  if (animatedOldColumns.length) {
+    const closed = await animateColumns(animatedOldColumns, false, token);
+    if (!closed || token !== transitionToken) return false;
+  }
+  resetColumns(oldColumns, false);
 
   if (oldColumns.includes(galleryColumn) || targetSection !== "work") {
     setGalleryPlayback(false);
-    galleryColumn.hidden = true;
-    galleryColumn.style.clipPath = "";
-    galleryColumn.style.filter = "";
-    galleryColumn.style.height = "";
-    galleryColumn.style.opacity = "";
-    galleryColumn.style.transform = "";
-    galleryColumn.style.visibility = "";
-    galleryColumn.style.willChange = "";
+    resetColumns([galleryColumn], false);
   }
 
   document.body.classList.toggle("section-work", targetSection === "work");
@@ -1658,53 +1785,22 @@ async function switchSection(targetSection, token) {
   if (targetSection !== "work") {
     document.body.classList.remove("mobile-work-menu-phase");
     document.body.classList.add("work-bg-disabled");
+    clearWorkPreviewPrime();
     closeOpenShowcaseDrawer(false);
     setGalleryPlayback(false);
     closeExpandedVisual(false);
   } else {
     document.body.classList.remove("work-bg-disabled");
     primeMobileWorkMenuPhase();
-    galleryColumn.hidden = false;
-    galleryColumn.style.clipPath = "";
-    galleryColumn.style.filter = "";
-    galleryColumn.style.height = "";
-    galleryColumn.style.opacity = "";
-    galleryColumn.style.transform = "";
-    galleryColumn.style.visibility = "visible";
-    galleryColumn.style.willChange = "";
+    primeWorkPreviews();
+    resetColumns([galleryColumn], true);
   }
   if (targetSection === "message") syncMessageTextareaBeforeShow();
 
-  animatedNewColumns.forEach((column) => {
-    column.getAnimations().forEach((animation) => animation.cancel());
-    column.hidden = false;
-    column.style.clipPath = "";
-    column.style.height = "";
-    column.style.visibility = "visible";
-    column.style.opacity = "0";
-    column.style.filter = "blur(10px)";
-    column.style.transform = "translate3d(0, 4px, 0)";
-    column.style.willChange = "opacity, filter, transform";
-    requestAnimationFrame(() => {
-      if (token !== transitionToken || column.hidden) return;
-      const animation = column.animate([
-        { opacity: 0, filter: "blur(10px)", transform: "translate3d(0, 4px, 0)" },
-        { opacity: 1, filter: "blur(0)", transform: "translate3d(0, 0, 0)" },
-      ], {
-        duration: 260,
-        easing: "cubic-bezier(.16, 1, .3, 1)",
-        fill: "both",
-      });
-      animation.finished.then(() => {
-        if (token !== transitionToken || column.hidden) return;
-        column.style.opacity = "";
-        column.style.filter = "";
-        column.style.transform = "";
-        column.style.willChange = "";
-        animation.cancel();
-      }).catch(() => {});
-    });
-  });
+  if (animatedNewColumns.length) {
+    const opened = await animateColumns(animatedNewColumns, true, token);
+    if (!opened || token !== transitionToken) return false;
+  }
 
   if (openingWork) window.setTimeout(() => {
     if (token === transitionToken) document.body.classList.remove("work-opening");
@@ -1722,9 +1818,12 @@ document.querySelectorAll(".tab").forEach((tab) => {
     detailsColumn.style.height = "";
     detailsColumn.style.visibility = detailsColumn.hidden ? "" : "visible";
     const token = ++transitionToken;
-    updateFooterUpVisibility();
-    if (!await switchSection(targetSection, token)) return;
     document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item === tab));
+    scheduleNavIndicators();
+    updateFooterUpVisibility();
+    await wait(180);
+    if (token !== transitionToken) return;
+    if (!await switchSection(targetSection, token)) return;
     if (location.hash !== `#${targetSection}`) history.pushState(null, "", `#${targetSection}`);
     updateWorkSnapState();
     scheduleNavIndicatorsAfterLayout();
@@ -1736,6 +1835,7 @@ document.querySelectorAll(".tab").forEach((tab) => {
       updateWorkSnapState();
       updateMobileWorkMenuPhase();
       scheduleWorkMediaWarmup();
+      animateWorkPreviews();
     });
     else if (targetSection === "team") requestAnimationFrame(() => {
       resetMobileWorkColumns();
@@ -2025,7 +2125,11 @@ function showSectionFromHash(instant = false) {
     showSectionColumns(initialSection);
     document.body.classList.remove("work-opening");
     document.body.classList.toggle("work-bg-disabled", initialSection !== "work");
-    if (initialSection === "work" && mobileQuery.matches && !document.querySelector(".showcase-open")) requestAnimationFrame(resetMobileWorkScroll);
+    if (initialSection === "work") primeWorkPreviews();
+    if (initialSection === "work") requestAnimationFrame(() => {
+      if (mobileQuery.matches && !document.querySelector(".showcase-open")) resetMobileWorkScroll();
+      animateWorkPreviews();
+    });
     if (!location.hash) history.replaceState(null, "", "#work");
     updateWorkSnapState();
     updateMobileWorkMenuPhase();
@@ -2034,7 +2138,11 @@ function showSectionFromHash(instant = false) {
     showSectionColumns(initialSection);
     document.body.classList.remove("work-opening");
     document.body.classList.toggle("work-bg-disabled", initialSection !== "work");
-    if (initialSection === "work" && mobileQuery.matches && !document.querySelector(".showcase-open")) requestAnimationFrame(resetMobileWorkScroll);
+    if (initialSection === "work") primeWorkPreviews();
+    if (initialSection === "work") requestAnimationFrame(() => {
+      if (mobileQuery.matches && !document.querySelector(".showcase-open")) resetMobileWorkScroll();
+      animateWorkPreviews();
+    });
     if (!location.hash) history.replaceState(null, "", "#work");
   }
 }

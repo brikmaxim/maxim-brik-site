@@ -28,7 +28,7 @@
       .auth-form { display: grid; width: min(340px, calc(100% - 20px)); padding: 6px; border-radius: 3px; background: rgba(240, 240, 240, 0.5); text-align: center; pointer-events: auto; backdrop-filter: blur(50px); -webkit-backdrop-filter: blur(50px); }
       html.is-authorized .auth-gate { display: none; }
     </style>
-    <link rel="stylesheet" href="./style.css?v=409" />
+    <link rel="stylesheet" href="./style.css?v=421" />
   </head>
   <body class="glass-theme">
     <section class="auth-gate" aria-label="Password access">
@@ -68,6 +68,12 @@
       <section class="column work-only projects-column" hidden>
         <p class="label">Projects(Selected)</p>
         <nav id="project-list" aria-label="Projects(Selected)"></nav>
+        <section class="work-selected-panel" data-open="false">
+          <button class="work-selected-toggle" type="button" aria-expanded="false" aria-controls="work-selected-content">Projects(Selected)</button>
+          <div class="work-selected-content" id="work-selected-content" hidden>
+            <nav id="mobile-project-list" aria-label="Projects Selected"></nav>
+          </div>
+        </section>
       </section>
 
       <section class="column work-only details-column" hidden>
@@ -183,6 +189,6 @@
     </section>
 
     <script src="./auth.js?v=5"></script>
-    <script src="./portfolio.js?v=402"></script>
+    <script src="./portfolio.js?v=420"></script>
   </body>
 </html>
