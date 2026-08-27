@@ -1,38 +1,37 @@
-# Maxim Brik Portfolio
+# Maxim Brik — Portfolio
 
-Static portfolio website prepared for GitHub and Vercel.
+Mobile-first portfolio website for visual creative Maxim Brik.
 
-## Local Preview
+## Stack
 
-```bash
-python3 -m http.server 4173
-```
+- Next.js 16
+- React 19
+- TypeScript
+- Vercel
 
-Open `http://127.0.0.1:4173/`.
+## Local development
 
-## Publish to GitHub
-
-The repository is ready for GitHub and contains no files above the GitHub web-upload limit.
-
-To publish the latest changes:
+Requires Node.js 22.13 or newer.
 
 ```bash
-git add .
-git commit -m "Update portfolio site"
-git push origin main
+pnpm install
+pnpm dev
 ```
 
-You can also upload the files through the GitHub website.
+Open the local URL printed in the terminal.
 
-## Deploy to Vercel
+## Production build
 
-1. Open `https://vercel.com/new`.
-2. Import the GitHub repository.
-3. Set `Framework Preset` to `Other`.
-4. Leave `Build Command` empty.
-5. Keep the output directory as `.`.
-6. Deploy.
+```bash
+pnpm build
+```
 
-The project is plain HTML, CSS and client-side JavaScript. No build step is required.
+## Project structure
 
-The site serves optimized mobile media from `assets/mobile-content` and original desktop media from `assets/content`.
+- `app/` — interface, content, and styles
+- `public/` — project imagery and static assets
+- `next.config.ts` — Next.js configuration
+
+## License
+
+All visual work and project imagery are © Maxim Brik. Source code is provided for portfolio hosting and demonstration.

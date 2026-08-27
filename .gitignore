@@ -1,6 +1,11 @@
 .DS_Store
 .vercel/
 node_modules/
+.next/
+out/
+coverage/
+.env*
+*.log
 
 # Local working directories
 outputs/
