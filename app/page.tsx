@@ -51,7 +51,6 @@ export default function Home() {
   const dockHiddenRef = useRef(false);
   const scrollDistance = useRef(0);
   const scrollDirection = useRef<-1 | 0 | 1>(0);
-  const scrollViewport = useRef<HTMLDivElement>(null);
   const workScrollY = useRef(0);
   const restoreWorkScroll = useRef(false);
 
@@ -67,13 +66,11 @@ export default function Home() {
 
   useLayoutEffect(() => {
     if (view !== "work" || !restoreWorkScroll.current) return;
-    const scroller = scrollViewport.current;
-    if (!scroller) return;
     const targetScrollY = workScrollY.current;
-    scroller.scrollTo({ top: targetScrollY, behavior: "auto" });
+    window.scrollTo({ top: targetScrollY, behavior: "auto" });
     const firstFrame = window.requestAnimationFrame(() => {
       const secondFrame = window.requestAnimationFrame(() => {
-        scroller.scrollTo({ top: targetScrollY, behavior: "auto" });
+        window.scrollTo({ top: targetScrollY, behavior: "auto" });
         restoreWorkScroll.current = false;
       });
       restoreFrames.current.push(secondFrame);
@@ -82,10 +79,7 @@ export default function Home() {
   }, [view]);
 
   useEffect(() => {
-    const scroller = scrollViewport.current;
-    if (!scroller) return;
-
-    lastScrollY.current = scroller.scrollTop;
+    lastScrollY.current = window.scrollY;
     scrollDistance.current = 0;
     scrollDirection.current = 0;
 
@@ -100,7 +94,7 @@ export default function Home() {
     const onScroll = () => {
       if (scrollFrame.current !== null) return;
       scrollFrame.current = window.requestAnimationFrame(() => {
-        const currentScrollY = scroller.scrollTop;
+        const currentScrollY = window.scrollY;
         const distance = currentScrollY - lastScrollY.current;
         lastScrollY.current = currentScrollY;
 
@@ -134,9 +128,9 @@ export default function Home() {
       });
     };
 
-    scroller.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
-      scroller.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScroll);
       if (scrollFrame.current !== null) {
         window.cancelAnimationFrame(scrollFrame.current);
         scrollFrame.current = null;
@@ -193,7 +187,7 @@ export default function Home() {
   };
 
   const openProject = (project: Project = projects[0]) => {
-    if (view === "work") workScrollY.current = scrollViewport.current?.scrollTop ?? 0;
+    if (view === "work") workScrollY.current = window.scrollY;
     const commitProject = () => {
       setSelectedProject(project);
       setOverlay(null);
@@ -262,7 +256,7 @@ export default function Home() {
 
   return (
     <main className="portfolio-viewport">
-      <div ref={scrollViewport} className={`portfolio-shell ${view === "project" ? "is-project" : "is-work"}`}>
+      <div className={`portfolio-shell ${view === "project" ? "is-project" : "is-work"}`}>
         <div className="site-content">
           {view === "work" ? <WorkView onOpenProject={openProject} /> : <ProjectView project={selectedProject} />}
         </div>

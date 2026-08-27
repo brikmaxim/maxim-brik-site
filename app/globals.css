@@ -20,9 +20,10 @@
 }
 
 * { box-sizing: border-box; }
-html { width: 100%; min-height: 100%; overflow: hidden; overflow-anchor: none; overscroll-behavior: none; background: #fff; }
+html { width: 100%; min-height: 100%; overflow-x: clip; overflow-y: auto; overflow-anchor: none; overscroll-behavior-y: none; background: #fff; scrollbar-width: none; }
+html::-webkit-scrollbar { display: none; }
 html, body { margin: 0; width: 100%; min-height: 100%; color: var(--ink); background: #fff; }
-body { position: fixed; inset: 0; height: 100dvh; min-height: 100dvh; overflow-x: clip; overflow-y: hidden; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: min(2.315vw, 12.5px); line-height: 1.2; font-weight: 300; letter-spacing: 0; }
+body { min-height: 100dvh; overflow-x: clip; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: min(2.315vw, 12.5px); line-height: 1.2; font-weight: 300; letter-spacing: 0; }
 button, input, textarea { color: inherit; font: inherit; letter-spacing: 0; }
 button { -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; }
 a { color: inherit; text-decoration: none; }
@@ -30,9 +31,8 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
-.portfolio-viewport { position: fixed; z-index: 1; inset: 0; width: 100%; height: 100dvh; min-height: 100dvh; overflow: hidden; overscroll-behavior: none; background: #fff; }
-.portfolio-shell { width: min(100%, 540px); height: 100%; min-height: 100%; margin: 0 auto; padding: min(26.019vw, 140.5px) min(8.611vw, 46.5px) min(37vw, 200px); position: relative; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: none; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-.portfolio-shell::-webkit-scrollbar { display: none; }
+.portfolio-viewport { position: relative; z-index: 1; width: 100%; min-height: 100dvh; overflow-x: clip; background: #fff; }
+.portfolio-shell { width: min(100%, 540px); min-height: 100dvh; margin: 0 auto; padding: min(26.019vw, 140.5px) min(8.611vw, 46.5px) min(37vw, 200px); position: relative; }
 .portfolio-shell.is-project { padding-top: min(28.611vw, 154.5px); }
 .site-content { position: relative; z-index: 1; }
 .work-grid { display: grid; gap: var(--layout-gap); }
