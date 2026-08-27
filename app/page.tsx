@@ -310,6 +310,22 @@ export default function Home() {
 
   return (
     <main className="portfolio-viewport">
+      <Dock
+        overlay={overlay}
+        view={view}
+        menuSection={menuSection}
+        indicatorPhase={indicatorPhase}
+        overlayPhase={overlayPhase}
+        projectClosePhase={projectClosePhase}
+        hidden={dockHidden}
+        onProjects={() => openOverlay("projects")}
+        onWork={selectWork}
+        onInfo={selectInfo}
+        onContact={selectContact}
+        onClose={selectWork}
+        onProjectClose={closeProjectFromButton}
+      />
+
       <div className={`portfolio-shell ${view === "project" ? "is-project" : "is-work"}`}>
         <div className="site-content">
           {view === "work" ? <WorkView onOpenProject={openProject} /> : <ProjectView project={selectedProject} />}
@@ -331,21 +347,6 @@ export default function Home() {
         </div>
       )}
 
-      <Dock
-        overlay={overlay}
-        view={view}
-        menuSection={menuSection}
-        indicatorPhase={indicatorPhase}
-        overlayPhase={overlayPhase}
-        projectClosePhase={projectClosePhase}
-        hidden={dockHidden}
-        onProjects={() => openOverlay("projects")}
-        onWork={selectWork}
-        onInfo={selectInfo}
-        onContact={selectContact}
-        onClose={selectWork}
-        onProjectClose={closeProjectFromButton}
-      />
     </main>
   );
 }
@@ -484,24 +485,28 @@ function Dock({ overlay, view, menuSection, indicatorPhase, overlayPhase, projec
 
   return (
     <>
-      <nav className={`dock dock--base ${overlay ? "dock--background" : ""} ${hidden ? "dock--hidden" : ""} indicator-${overlay ? "idle" : indicatorPhase} project-close-${projectClosePhase}`} aria-label="Primary navigation">
-        <div className="dock-item dock-circle dock-plus"><button type="button" onClick={overlay ? undefined : onProjects} aria-label="Open project index" aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span /></button></div>
-        {view === "project" && <div className="dock-item dock-circle dock-project-close"><button type="button" onClick={overlay ? undefined : onProjectClose} aria-label="Close project" aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span /></button></div>}
-        <div className="dock-links">
-          {items.map((item) => (
-            <div key={item} className={`dock-item dock-pill ${itemClass[item]} ${item === "Work" ? "is-active" : ""}`}><button type="button" onClick={overlay ? undefined : itemAction[item]} aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span>{item}</span></button></div>
-          ))}
-        </div>
-      </nav>
-      {overlay && (
-        <nav className={`dock dock--foreground is-open ${hidden ? "dock--hidden" : ""} indicator-${indicatorPhase} overlay-phase-${overlayPhase}`} aria-label="Panel navigation">
+      <div className="dock-anchor dock-anchor--base">
+        <nav className={`dock dock--base ${overlay ? "dock--background" : ""} ${hidden ? "dock--hidden" : ""} indicator-${overlay ? "idle" : indicatorPhase} project-close-${projectClosePhase}`} aria-label="Primary navigation">
+          <div className="dock-item dock-circle dock-plus"><button type="button" onClick={overlay ? undefined : onProjects} aria-label="Open project index" aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span /></button></div>
+          {view === "project" && <div className="dock-item dock-circle dock-project-close"><button type="button" onClick={overlay ? undefined : onProjectClose} aria-label="Close project" aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span /></button></div>}
           <div className="dock-links">
             {items.map((item) => (
-              <div key={item} className={`dock-item dock-pill dock-overlay-pill ${itemClass[item]} is-active ${active === item ? "is-overlay-active" : ""}`} aria-hidden={active !== item}><button type="button" tabIndex={-1}><span>{item}</span></button></div>
+              <div key={item} className={`dock-item dock-pill ${itemClass[item]} ${item === "Work" ? "is-active" : ""}`}><button type="button" onClick={overlay ? undefined : itemAction[item]} aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span>{item}</span></button></div>
             ))}
           </div>
-          <div className="dock-item dock-circle dock-close"><button type="button" onClick={onClose} aria-label="Close panel"><span /></button></div>
         </nav>
+      </div>
+      {overlay && (
+        <div className="dock-anchor dock-anchor--foreground">
+          <nav className={`dock dock--foreground is-open ${hidden ? "dock--hidden" : ""} indicator-${indicatorPhase} overlay-phase-${overlayPhase}`} aria-label="Panel navigation">
+            <div className="dock-links">
+              {items.map((item) => (
+                <div key={item} className={`dock-item dock-pill dock-overlay-pill ${itemClass[item]} is-active ${active === item ? "is-overlay-active" : ""}`} aria-hidden={active !== item}><button type="button" tabIndex={-1}><span>{item}</span></button></div>
+              ))}
+            </div>
+            <div className="dock-item dock-circle dock-close"><button type="button" onClick={onClose} aria-label="Close panel"><span /></button></div>
+          </nav>
+        </div>
       )}
     </>
   );
