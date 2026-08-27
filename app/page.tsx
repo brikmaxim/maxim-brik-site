@@ -53,7 +53,7 @@ export default function Home() {
   const scrollDirection = useRef<-1 | 0 | 1>(0);
   const workScrollY = useRef(0);
   const restoreWorkScroll = useRef(false);
-  const overlayLayerRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const previousScrollRestoration = window.history.scrollRestoration;
@@ -67,11 +67,13 @@ export default function Home() {
 
   useLayoutEffect(() => {
     if (view !== "work" || !restoreWorkScroll.current) return;
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
     const targetScrollY = workScrollY.current;
-    window.scrollTo({ top: targetScrollY, behavior: "auto" });
+    scroller.scrollTo({ top: targetScrollY, behavior: "auto" });
     const firstFrame = window.requestAnimationFrame(() => {
       const secondFrame = window.requestAnimationFrame(() => {
-        window.scrollTo({ top: targetScrollY, behavior: "auto" });
+        scroller.scrollTo({ top: targetScrollY, behavior: "auto" });
         restoreWorkScroll.current = false;
       });
       restoreFrames.current.push(secondFrame);
@@ -79,59 +81,10 @@ export default function Home() {
     restoreFrames.current.push(firstFrame);
   }, [view]);
 
-  useLayoutEffect(() => {
-    if (!overlay) return;
-
-    let lastViewportTop = Number.NaN;
-    let lastViewportHeight = Number.NaN;
-    let lastBlurOverscanTop = Number.NaN;
-    let lastBlurOverscanBottom = Number.NaN;
-
-    const syncViewportUi = () => {
-      const layer = overlayLayerRef.current;
-      if (!layer) return;
-      const viewport = window.visualViewport;
-      const viewportTop = Math.max(0, viewport?.pageTop ?? window.scrollY);
-      const viewportHeight = viewport?.height ?? window.innerHeight;
-      const viewportOffsetTop = Math.max(0, viewport?.offsetTop ?? 0);
-      const browserHeight = Math.max(window.outerHeight, viewportHeight + viewportOffsetTop);
-      const blurOverscanTop = -viewportOffsetTop;
-      const blurOverscanBottom = -Math.max(0, browserHeight - viewportHeight - viewportOffsetTop);
-
-      if (viewportTop !== lastViewportTop) {
-        lastViewportTop = viewportTop;
-        layer.style.setProperty("--viewport-top", `${viewportTop}px`);
-      }
-      if (viewportHeight !== lastViewportHeight) {
-        lastViewportHeight = viewportHeight;
-        layer.style.setProperty("--visual-viewport-height", `${viewportHeight}px`);
-      }
-      if (blurOverscanTop !== lastBlurOverscanTop) {
-        lastBlurOverscanTop = blurOverscanTop;
-        layer.style.setProperty("--blur-overscan-top", `${blurOverscanTop}px`);
-      }
-      if (blurOverscanBottom !== lastBlurOverscanBottom) {
-        lastBlurOverscanBottom = blurOverscanBottom;
-        layer.style.setProperty("--blur-overscan-bottom", `${blurOverscanBottom}px`);
-      }
-    };
-
-    syncViewportUi();
-    window.addEventListener("scroll", syncViewportUi, { passive: true });
-    window.addEventListener("resize", syncViewportUi, { passive: true });
-    window.visualViewport?.addEventListener("scroll", syncViewportUi, { passive: true });
-    window.visualViewport?.addEventListener("resize", syncViewportUi, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", syncViewportUi);
-      window.removeEventListener("resize", syncViewportUi);
-      window.visualViewport?.removeEventListener("scroll", syncViewportUi);
-      window.visualViewport?.removeEventListener("resize", syncViewportUi);
-    };
-  }, [overlay]);
-
   useEffect(() => {
-    const readPageTop = () => Math.max(0, window.visualViewport?.pageTop ?? window.scrollY);
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const readPageTop = () => Math.max(0, scroller.scrollTop);
 
     lastScrollY.current = readPageTop();
     scrollDistance.current = 0;
@@ -182,9 +135,9 @@ export default function Home() {
       });
     };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
+    scroller.addEventListener("scroll", onScroll, { passive: true });
     return () => {
-      window.removeEventListener("scroll", onScroll);
+      scroller.removeEventListener("scroll", onScroll);
       if (scrollFrame.current !== null) {
         window.cancelAnimationFrame(scrollFrame.current);
         scrollFrame.current = null;
@@ -241,7 +194,7 @@ export default function Home() {
   };
 
   const openProject = (project: Project = projects[0]) => {
-    if (view === "work") workScrollY.current = window.scrollY;
+    if (view === "work") workScrollY.current = scrollerRef.current?.scrollTop ?? 0;
     const commitProject = () => {
       setSelectedProject(project);
       setOverlay(null);
@@ -310,15 +263,16 @@ export default function Home() {
 
   return (
     <main className="portfolio-viewport">
-      <div className={`portfolio-shell ${view === "project" ? "is-project" : "is-work"}`}>
-        <div className="site-content">
-          {view === "work" ? <WorkView onOpenProject={openProject} /> : <ProjectView project={selectedProject} />}
+      <div className={`portfolio-scroll ${overlay ? "is-locked" : ""}`} ref={scrollerRef}>
+        <div className={`portfolio-shell ${view === "project" ? "is-project" : "is-work"}`}>
+          <div className="site-content">
+            {view === "work" ? <WorkView onOpenProject={openProject} /> : <ProjectView project={selectedProject} />}
+          </div>
         </div>
       </div>
 
       {overlay && (
         <div
-          ref={overlayLayerRef}
           className={`overlay-layer overlay-layer--active overlay-layer--${overlay} overlay-phase--${overlayPhase}`}
           role="dialog"
           aria-modal="true"
@@ -477,80 +431,14 @@ function Dock({ overlay, view, menuSection, indicatorPhase, overlayPhase, projec
   onClose: () => void;
   onProjectClose: () => void;
 }) {
-  const baseDockRef = useRef<HTMLElement>(null);
-  const foregroundDockRef = useRef<HTMLElement>(null);
   const active = menuSection === "info" ? "Info" : menuSection === "contact" ? "Contact" : "Work";
   const items = ["Work", "Info", "Contact"] as const;
   const itemClass = { Work: "dock-work", Info: "dock-info", Contact: "dock-contact" };
   const itemAction = { Work: onWork, Info: onInfo, Contact: onContact };
 
-  useLayoutEffect(() => {
-    let lastViewportBottom = Number.NaN;
-    let lastScrollRange = Number.NaN;
-    let geometryFrame: number | null = null;
-    const supportsScrollTimeline = CSS.supports("animation-timeline: scroll()");
-
-    const setDockProperty = (property: string, value: string) => {
-      baseDockRef.current?.style.setProperty(property, value);
-      foregroundDockRef.current?.style.setProperty(property, value);
-    };
-
-    const syncDockPosition = () => {
-      if (supportsScrollTimeline) {
-        const scroller = document.scrollingElement;
-        const scrollRange = scroller ? Math.max(0, scroller.scrollHeight - scroller.clientHeight) : 0;
-        if (scrollRange === lastScrollRange) return;
-        lastScrollRange = scrollRange;
-        setDockProperty("--scroll-range", `${scrollRange}px`);
-        return;
-      }
-
-      const viewport = window.visualViewport;
-      const viewportTop = Math.max(0, viewport?.pageTop ?? window.scrollY);
-      const viewportHeight = viewport?.height ?? window.innerHeight;
-      const viewportBottom = viewportTop + viewportHeight;
-      if (viewportBottom === lastViewportBottom) return;
-
-      lastViewportBottom = viewportBottom;
-      setDockProperty("--viewport-bottom", `${viewportBottom}px`);
-    };
-
-    const scheduleDockGeometry = () => {
-      if (geometryFrame !== null) return;
-      geometryFrame = window.requestAnimationFrame(() => {
-        geometryFrame = null;
-        syncDockPosition();
-      });
-    };
-
-    syncDockPosition();
-    window.addEventListener("resize", scheduleDockGeometry, { passive: true });
-    window.visualViewport?.addEventListener("resize", scheduleDockGeometry, { passive: true });
-
-    let resizeObserver: ResizeObserver | null = null;
-    if (supportsScrollTimeline) {
-      resizeObserver = new ResizeObserver(scheduleDockGeometry);
-      resizeObserver.observe(document.body);
-    } else {
-      window.addEventListener("scroll", syncDockPosition, { passive: true });
-      window.visualViewport?.addEventListener("scroll", syncDockPosition, { passive: true });
-    }
-
-    return () => {
-      window.removeEventListener("resize", scheduleDockGeometry);
-      window.visualViewport?.removeEventListener("resize", scheduleDockGeometry);
-      if (!supportsScrollTimeline) {
-        window.removeEventListener("scroll", syncDockPosition);
-        window.visualViewport?.removeEventListener("scroll", syncDockPosition);
-      }
-      resizeObserver?.disconnect();
-      if (geometryFrame !== null) window.cancelAnimationFrame(geometryFrame);
-    };
-  }, [overlay, view]);
-
   return (
     <>
-      <nav ref={baseDockRef} className={`dock dock--base ${overlay ? "dock--background" : ""} ${hidden ? "dock--hidden" : ""} indicator-${overlay ? "idle" : indicatorPhase} project-close-${projectClosePhase}`} aria-label="Primary navigation">
+      <nav className={`dock dock--base ${overlay ? "dock--background" : ""} ${hidden ? "dock--hidden" : ""} indicator-${overlay ? "idle" : indicatorPhase} project-close-${projectClosePhase}`} aria-label="Primary navigation">
         <div className="dock-item dock-circle dock-plus"><button type="button" onClick={overlay ? undefined : onProjects} aria-label="Open project index" aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span /></button></div>
         {view === "project" && <div className="dock-item dock-circle dock-project-close"><button type="button" onClick={overlay ? undefined : onProjectClose} aria-label="Close project" aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span /></button></div>}
         <div className="dock-links">
@@ -560,7 +448,7 @@ function Dock({ overlay, view, menuSection, indicatorPhase, overlayPhase, projec
         </div>
       </nav>
       {overlay && (
-        <nav ref={foregroundDockRef} className={`dock dock--foreground is-open ${hidden ? "dock--hidden" : ""} indicator-${indicatorPhase} overlay-phase-${overlayPhase}`} aria-label="Panel navigation">
+        <nav className={`dock dock--foreground is-open ${hidden ? "dock--hidden" : ""} indicator-${indicatorPhase} overlay-phase-${overlayPhase}`} aria-label="Panel navigation">
           <div className="dock-links">
             {items.map((item) => (
               <div key={item} className={`dock-item dock-pill dock-overlay-pill ${itemClass[item]} is-active ${active === item ? "is-overlay-active" : ""}`} aria-hidden={active !== item}><button type="button" tabIndex={-1}><span>{item}</span></button></div>
