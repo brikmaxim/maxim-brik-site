@@ -84,6 +84,8 @@ export default function Home() {
 
     let lastViewportTop = Number.NaN;
     let lastViewportHeight = Number.NaN;
+    let lastBlurOverscanTop = Number.NaN;
+    let lastBlurOverscanBottom = Number.NaN;
 
     const syncViewportUi = () => {
       const layer = overlayLayerRef.current;
@@ -91,6 +93,10 @@ export default function Home() {
       const viewport = window.visualViewport;
       const viewportTop = Math.max(0, viewport?.pageTop ?? window.scrollY);
       const viewportHeight = viewport?.height ?? window.innerHeight;
+      const viewportOffsetTop = Math.max(0, viewport?.offsetTop ?? 0);
+      const browserHeight = Math.max(window.outerHeight, viewportHeight + viewportOffsetTop);
+      const blurOverscanTop = -viewportOffsetTop;
+      const blurOverscanBottom = -Math.max(0, browserHeight - viewportHeight - viewportOffsetTop);
 
       if (viewportTop !== lastViewportTop) {
         lastViewportTop = viewportTop;
@@ -99,6 +105,14 @@ export default function Home() {
       if (viewportHeight !== lastViewportHeight) {
         lastViewportHeight = viewportHeight;
         layer.style.setProperty("--visual-viewport-height", `${viewportHeight}px`);
+      }
+      if (blurOverscanTop !== lastBlurOverscanTop) {
+        lastBlurOverscanTop = blurOverscanTop;
+        layer.style.setProperty("--blur-overscan-top", `${blurOverscanTop}px`);
+      }
+      if (blurOverscanBottom !== lastBlurOverscanBottom) {
+        lastBlurOverscanBottom = blurOverscanBottom;
+        layer.style.setProperty("--blur-overscan-bottom", `${blurOverscanBottom}px`);
       }
     };
 
@@ -472,8 +486,25 @@ function Dock({ overlay, view, menuSection, indicatorPhase, overlayPhase, projec
 
   useLayoutEffect(() => {
     let lastViewportBottom = Number.NaN;
+    let lastScrollRange = Number.NaN;
+    let geometryFrame: number | null = null;
+    const supportsScrollTimeline = CSS.supports("animation-timeline: scroll()");
+
+    const setDockProperty = (property: string, value: string) => {
+      baseDockRef.current?.style.setProperty(property, value);
+      foregroundDockRef.current?.style.setProperty(property, value);
+    };
 
     const syncDockPosition = () => {
+      if (supportsScrollTimeline) {
+        const scroller = document.scrollingElement;
+        const scrollRange = scroller ? Math.max(0, scroller.scrollHeight - scroller.clientHeight) : 0;
+        if (scrollRange === lastScrollRange) return;
+        lastScrollRange = scrollRange;
+        setDockProperty("--scroll-range", `${scrollRange}px`);
+        return;
+      }
+
       const viewport = window.visualViewport;
       const viewportTop = Math.max(0, viewport?.pageTop ?? window.scrollY);
       const viewportHeight = viewport?.height ?? window.innerHeight;
@@ -481,24 +512,41 @@ function Dock({ overlay, view, menuSection, indicatorPhase, overlayPhase, projec
       if (viewportBottom === lastViewportBottom) return;
 
       lastViewportBottom = viewportBottom;
-      const value = `${viewportBottom}px`;
-      baseDockRef.current?.style.setProperty("--viewport-bottom", value);
-      foregroundDockRef.current?.style.setProperty("--viewport-bottom", value);
+      setDockProperty("--viewport-bottom", `${viewportBottom}px`);
+    };
+
+    const scheduleDockGeometry = () => {
+      if (geometryFrame !== null) return;
+      geometryFrame = window.requestAnimationFrame(() => {
+        geometryFrame = null;
+        syncDockPosition();
+      });
     };
 
     syncDockPosition();
-    window.addEventListener("scroll", syncDockPosition, { passive: true });
-    window.addEventListener("resize", syncDockPosition, { passive: true });
-    window.visualViewport?.addEventListener("scroll", syncDockPosition, { passive: true });
-    window.visualViewport?.addEventListener("resize", syncDockPosition, { passive: true });
+    window.addEventListener("resize", scheduleDockGeometry, { passive: true });
+    window.visualViewport?.addEventListener("resize", scheduleDockGeometry, { passive: true });
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (supportsScrollTimeline) {
+      resizeObserver = new ResizeObserver(scheduleDockGeometry);
+      resizeObserver.observe(document.body);
+    } else {
+      window.addEventListener("scroll", syncDockPosition, { passive: true });
+      window.visualViewport?.addEventListener("scroll", syncDockPosition, { passive: true });
+    }
 
     return () => {
-      window.removeEventListener("scroll", syncDockPosition);
-      window.removeEventListener("resize", syncDockPosition);
-      window.visualViewport?.removeEventListener("scroll", syncDockPosition);
-      window.visualViewport?.removeEventListener("resize", syncDockPosition);
+      window.removeEventListener("resize", scheduleDockGeometry);
+      window.visualViewport?.removeEventListener("resize", scheduleDockGeometry);
+      if (!supportsScrollTimeline) {
+        window.removeEventListener("scroll", syncDockPosition);
+        window.visualViewport?.removeEventListener("scroll", syncDockPosition);
+      }
+      resizeObserver?.disconnect();
+      if (geometryFrame !== null) window.cancelAnimationFrame(geometryFrame);
     };
-  }, [overlay]);
+  }, [overlay, view]);
 
   return (
     <>
