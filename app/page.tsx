@@ -33,23 +33,6 @@ const projects: Project[] = [
   { id: "11", name: "Omanko", category: "CGI", year: "2022", image: "/kyng-detail-drawing.png", visual: "drawing-dark" },
 ];
 
-function applySafariEdgeImage(image: string) {
-  const root = document.documentElement;
-  if (root.dataset.safariEdgeImage === image) return;
-  root.dataset.safariEdgeImage = image;
-  root.style.setProperty("--safari-edge-image", `url("${image}")`);
-}
-
-function getCenteredProjectImage() {
-  const viewportCenter = window.innerHeight / 2;
-  const cards = Array.from(document.querySelectorAll<HTMLElement>("[data-edge-image]"));
-  const centeredCard = cards.find((card) => {
-    const bounds = card.getBoundingClientRect();
-    return bounds.top <= viewportCenter && bounds.bottom >= viewportCenter;
-  });
-  return centeredCard?.dataset.edgeImage;
-}
-
 export default function Home() {
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [view, setView] = useState<View>("work");
@@ -74,26 +57,12 @@ export default function Home() {
   useEffect(() => {
     const previousScrollRestoration = window.history.scrollRestoration;
     window.history.scrollRestoration = "manual";
-    applySafariEdgeImage(projects[0].image);
     return () => {
       window.history.scrollRestoration = previousScrollRestoration;
       transitionTimers.current.forEach(window.clearTimeout);
       restoreFrames.current.forEach(window.cancelAnimationFrame);
-      delete document.documentElement.dataset.safariEdgeImage;
-      document.documentElement.style.removeProperty("--safari-edge-image");
     };
   }, []);
-
-  useEffect(() => {
-    if (view === "project") {
-      applySafariEdgeImage(selectedProject.image);
-      return;
-    }
-    const frame = window.requestAnimationFrame(() => {
-      applySafariEdgeImage(getCenteredProjectImage() ?? projects[0].image);
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [selectedProject.image, view]);
 
   useLayoutEffect(() => {
     if (view !== "work" || !restoreWorkScroll.current) return;
@@ -128,8 +97,6 @@ export default function Home() {
         const currentScrollY = window.scrollY;
         const distance = currentScrollY - lastScrollY.current;
         lastScrollY.current = currentScrollY;
-        const centeredProjectImage = getCenteredProjectImage();
-        if (centeredProjectImage) applySafariEdgeImage(centeredProjectImage);
 
         if (overlay || currentScrollY <= 24) {
           scrollDistance.current = 0;
@@ -335,7 +302,6 @@ function WorkView({ onOpenProject }: { onOpenProject: (project: Project) => void
           className={`project-card project-card--${project.visual}`}
           type="button"
           key={project.id}
-          data-edge-image={project.image}
           onClick={() => onOpenProject(project)}
         >
           <img className="project-card__image" src={project.image} alt="" />
