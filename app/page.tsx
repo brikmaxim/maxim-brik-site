@@ -262,18 +262,19 @@ export default function Home() {
         </div>
       </div>
 
-      <div
-        className={`overlay-layer ${overlay ? `overlay-layer--active overlay-layer--${overlay}` : "overlay-layer--inactive"} overlay-phase--${overlayPhase}`}
-        role={overlay ? "dialog" : undefined}
-        aria-modal={overlay ? true : undefined}
-        aria-hidden={overlay ? undefined : true}
-        aria-label={overlay ? `${overlay} panel` : undefined}
-      >
-        <button className="blur-screen" type="button" onClick={overlay ? selectWork : undefined} aria-label="Close panel" tabIndex={overlay ? 0 : -1} />
-        {overlay === "projects" && <ProjectIndex onOpenProject={openProject} />}
-        {overlay === "info" && <InfoPanel />}
-        {overlay === "contact" && <ContactPanel budget={budget} setBudget={setBudget} sent={sent} setSent={setSent} />}
-      </div>
+      {overlay && (
+        <div
+          className={`overlay-layer overlay-layer--active overlay-layer--${overlay} overlay-phase--${overlayPhase}`}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${overlay} panel`}
+        >
+          <button className="blur-screen" type="button" onClick={selectWork} aria-label="Close panel" />
+          {overlay === "projects" && <ProjectIndex onOpenProject={openProject} />}
+          {overlay === "info" && <InfoPanel />}
+          {overlay === "contact" && <ContactPanel budget={budget} setBudget={setBudget} sent={sent} setSent={setSent} />}
+        </div>
+      )}
 
       <Dock
         overlay={overlay}
@@ -437,14 +438,16 @@ function Dock({ overlay, view, menuSection, indicatorPhase, overlayPhase, projec
           ))}
         </div>
       </nav>
-      <nav className={`dock dock--foreground ${overlay ? "is-open" : ""} ${hidden ? "dock--hidden" : ""} indicator-${indicatorPhase} overlay-phase-${overlayPhase}`} aria-hidden={overlay ? undefined : true} aria-label={overlay ? "Panel navigation" : undefined}>
-        <div className="dock-links">
-          {items.map((item) => (
-            <div key={item} className={`dock-item dock-pill dock-overlay-pill ${itemClass[item]} is-active ${active === item ? "is-overlay-active" : ""}`} aria-hidden={!overlay || active !== item}><button type="button" tabIndex={-1}><span>{item}</span></button></div>
-          ))}
-        </div>
-        <div className="dock-item dock-circle dock-close"><button type="button" onClick={overlay ? onClose : undefined} aria-label="Close panel" tabIndex={overlay ? 0 : -1}><span /></button></div>
-      </nav>
+      {overlay && (
+        <nav className={`dock dock--foreground is-open ${hidden ? "dock--hidden" : ""} indicator-${indicatorPhase} overlay-phase-${overlayPhase}`} aria-label="Panel navigation">
+          <div className="dock-links">
+            {items.map((item) => (
+              <div key={item} className={`dock-item dock-pill dock-overlay-pill ${itemClass[item]} is-active ${active === item ? "is-overlay-active" : ""}`} aria-hidden={active !== item}><button type="button" tabIndex={-1}><span>{item}</span></button></div>
+            ))}
+          </div>
+          <div className="dock-item dock-circle dock-close"><button type="button" onClick={onClose} aria-label="Close panel"><span /></button></div>
+        </nav>
+      )}
     </>
   );
 }
