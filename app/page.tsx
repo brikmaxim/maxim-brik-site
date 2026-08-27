@@ -78,6 +78,38 @@ export default function Home() {
     restoreFrames.current.push(firstFrame);
   }, [view]);
 
+  useLayoutEffect(() => {
+    let viewportFrame: number | null = null;
+
+    const syncViewportUi = () => {
+      if (viewportFrame !== null) return;
+      viewportFrame = window.requestAnimationFrame(() => {
+        viewportFrame = null;
+        const viewport = window.visualViewport;
+        const viewportTop = window.scrollY + (viewport?.offsetTop ?? 0);
+        const viewportHeight = viewport?.height ?? window.innerHeight;
+        document.documentElement.style.setProperty("--viewport-top", `${viewportTop}px`);
+        document.documentElement.style.setProperty("--visual-viewport-height", `${viewportHeight}px`);
+      });
+    };
+
+    syncViewportUi();
+    window.addEventListener("scroll", syncViewportUi, { passive: true });
+    window.addEventListener("resize", syncViewportUi, { passive: true });
+    window.visualViewport?.addEventListener("scroll", syncViewportUi, { passive: true });
+    window.visualViewport?.addEventListener("resize", syncViewportUi, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", syncViewportUi);
+      window.removeEventListener("resize", syncViewportUi);
+      window.visualViewport?.removeEventListener("scroll", syncViewportUi);
+      window.visualViewport?.removeEventListener("resize", syncViewportUi);
+      if (viewportFrame !== null) window.cancelAnimationFrame(viewportFrame);
+      document.documentElement.style.removeProperty("--viewport-top");
+      document.documentElement.style.removeProperty("--visual-viewport-height");
+    };
+  }, []);
+
   useEffect(() => {
     lastScrollY.current = window.scrollY;
     scrollDistance.current = 0;
