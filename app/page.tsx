@@ -53,6 +53,7 @@ export default function Home() {
   const scrollDirection = useRef<-1 | 0 | 1>(0);
   const workScrollY = useRef(0);
   const restoreWorkScroll = useRef(false);
+  const overlayLayerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const previousScrollRestoration = window.history.scrollRestoration;
@@ -79,18 +80,26 @@ export default function Home() {
   }, [view]);
 
   useLayoutEffect(() => {
-    let viewportFrame: number | null = null;
+    if (!overlay) return;
+
+    let lastViewportTop = Number.NaN;
+    let lastViewportHeight = Number.NaN;
 
     const syncViewportUi = () => {
-      if (viewportFrame !== null) return;
-      viewportFrame = window.requestAnimationFrame(() => {
-        viewportFrame = null;
-        const viewport = window.visualViewport;
-        const viewportTop = window.scrollY + (viewport?.offsetTop ?? 0);
-        const viewportHeight = viewport?.height ?? window.innerHeight;
-        document.documentElement.style.setProperty("--viewport-top", `${viewportTop}px`);
-        document.documentElement.style.setProperty("--visual-viewport-height", `${viewportHeight}px`);
-      });
+      const layer = overlayLayerRef.current;
+      if (!layer) return;
+      const viewport = window.visualViewport;
+      const viewportTop = Math.max(0, viewport?.pageTop ?? window.scrollY);
+      const viewportHeight = viewport?.height ?? window.innerHeight;
+
+      if (viewportTop !== lastViewportTop) {
+        lastViewportTop = viewportTop;
+        layer.style.setProperty("--viewport-top", `${viewportTop}px`);
+      }
+      if (viewportHeight !== lastViewportHeight) {
+        lastViewportHeight = viewportHeight;
+        layer.style.setProperty("--visual-viewport-height", `${viewportHeight}px`);
+      }
     };
 
     syncViewportUi();
@@ -104,14 +113,13 @@ export default function Home() {
       window.removeEventListener("resize", syncViewportUi);
       window.visualViewport?.removeEventListener("scroll", syncViewportUi);
       window.visualViewport?.removeEventListener("resize", syncViewportUi);
-      if (viewportFrame !== null) window.cancelAnimationFrame(viewportFrame);
-      document.documentElement.style.removeProperty("--viewport-top");
-      document.documentElement.style.removeProperty("--visual-viewport-height");
     };
-  }, []);
+  }, [overlay]);
 
   useEffect(() => {
-    lastScrollY.current = window.scrollY;
+    const readPageTop = () => Math.max(0, window.visualViewport?.pageTop ?? window.scrollY);
+
+    lastScrollY.current = readPageTop();
     scrollDistance.current = 0;
     scrollDirection.current = 0;
 
@@ -126,7 +134,7 @@ export default function Home() {
     const onScroll = () => {
       if (scrollFrame.current !== null) return;
       scrollFrame.current = window.requestAnimationFrame(() => {
-        const currentScrollY = window.scrollY;
+        const currentScrollY = readPageTop();
         const distance = currentScrollY - lastScrollY.current;
         lastScrollY.current = currentScrollY;
 
@@ -150,7 +158,7 @@ export default function Home() {
           if (direction === 1 && scrollDistance.current >= 24) {
             setDockVisibility(true);
             scrollDistance.current = 0;
-          } else if (direction === -1 && scrollDistance.current <= -12) {
+          } else if (direction === -1 && scrollDistance.current <= -24) {
             setDockVisibility(false);
             scrollDistance.current = 0;
           }
@@ -296,6 +304,7 @@ export default function Home() {
 
       {overlay && (
         <div
+          ref={overlayLayerRef}
           className={`overlay-layer overlay-layer--active overlay-layer--${overlay} overlay-phase--${overlayPhase}`}
           role="dialog"
           aria-modal="true"
@@ -454,14 +463,46 @@ function Dock({ overlay, view, menuSection, indicatorPhase, overlayPhase, projec
   onClose: () => void;
   onProjectClose: () => void;
 }) {
+  const baseDockRef = useRef<HTMLElement>(null);
+  const foregroundDockRef = useRef<HTMLElement>(null);
   const active = menuSection === "info" ? "Info" : menuSection === "contact" ? "Contact" : "Work";
   const items = ["Work", "Info", "Contact"] as const;
   const itemClass = { Work: "dock-work", Info: "dock-info", Contact: "dock-contact" };
   const itemAction = { Work: onWork, Info: onInfo, Contact: onContact };
 
+  useLayoutEffect(() => {
+    let lastViewportBottom = Number.NaN;
+
+    const syncDockPosition = () => {
+      const viewport = window.visualViewport;
+      const viewportTop = Math.max(0, viewport?.pageTop ?? window.scrollY);
+      const viewportHeight = viewport?.height ?? window.innerHeight;
+      const viewportBottom = viewportTop + viewportHeight;
+      if (viewportBottom === lastViewportBottom) return;
+
+      lastViewportBottom = viewportBottom;
+      const value = `${viewportBottom}px`;
+      baseDockRef.current?.style.setProperty("--viewport-bottom", value);
+      foregroundDockRef.current?.style.setProperty("--viewport-bottom", value);
+    };
+
+    syncDockPosition();
+    window.addEventListener("scroll", syncDockPosition, { passive: true });
+    window.addEventListener("resize", syncDockPosition, { passive: true });
+    window.visualViewport?.addEventListener("scroll", syncDockPosition, { passive: true });
+    window.visualViewport?.addEventListener("resize", syncDockPosition, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", syncDockPosition);
+      window.removeEventListener("resize", syncDockPosition);
+      window.visualViewport?.removeEventListener("scroll", syncDockPosition);
+      window.visualViewport?.removeEventListener("resize", syncDockPosition);
+    };
+  }, [overlay]);
+
   return (
     <>
-      <nav className={`dock dock--base ${overlay ? "dock--background" : ""} ${hidden ? "dock--hidden" : ""} indicator-${overlay ? "idle" : indicatorPhase} project-close-${projectClosePhase}`} aria-label="Primary navigation">
+      <nav ref={baseDockRef} className={`dock dock--base ${overlay ? "dock--background" : ""} ${hidden ? "dock--hidden" : ""} indicator-${overlay ? "idle" : indicatorPhase} project-close-${projectClosePhase}`} aria-label="Primary navigation">
         <div className="dock-item dock-circle dock-plus"><button type="button" onClick={overlay ? undefined : onProjects} aria-label="Open project index" aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span /></button></div>
         {view === "project" && <div className="dock-item dock-circle dock-project-close"><button type="button" onClick={overlay ? undefined : onProjectClose} aria-label="Close project" aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span /></button></div>}
         <div className="dock-links">
@@ -471,7 +512,7 @@ function Dock({ overlay, view, menuSection, indicatorPhase, overlayPhase, projec
         </div>
       </nav>
       {overlay && (
-        <nav className={`dock dock--foreground is-open ${hidden ? "dock--hidden" : ""} indicator-${indicatorPhase} overlay-phase-${overlayPhase}`} aria-label="Panel navigation">
+        <nav ref={foregroundDockRef} className={`dock dock--foreground is-open ${hidden ? "dock--hidden" : ""} indicator-${indicatorPhase} overlay-phase-${overlayPhase}`} aria-label="Panel navigation">
           <div className="dock-links">
             {items.map((item) => (
               <div key={item} className={`dock-item dock-pill dock-overlay-pill ${itemClass[item]} is-active ${active === item ? "is-overlay-active" : ""}`} aria-hidden={active !== item}><button type="button" tabIndex={-1}><span>{item}</span></button></div>

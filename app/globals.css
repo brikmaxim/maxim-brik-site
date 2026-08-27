@@ -18,6 +18,7 @@
   --dock-surface: rgba(226, 226, 226, .38);
   --viewport-top: 0px;
   --visual-viewport-height: 100dvh;
+  --viewport-bottom: 100dvh;
 }
 
 * { box-sizing: border-box; }
@@ -100,7 +101,7 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .detail-closeup { aspect-ratio: 893 / 1173; background: #82808b; }
 .detail-closeup img { width: 100%; height: 100%; display: block; object-fit: cover; transform: scale(1.45); }
 
-.overlay-layer { position: absolute; z-index: 30; top: 0; right: 0; left: 0; height: var(--visual-viewport-height); transform: translate3d(0, var(--viewport-top), 0); pointer-events: none; }
+.overlay-layer { position: absolute; z-index: 30; top: 0; right: 0; left: 0; height: var(--visual-viewport-height); transform: translate3d(0, var(--viewport-top), 0); pointer-events: none; will-change: transform, height; backface-visibility: hidden; }
 .blur-screen { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; background: rgba(255,255,255,.02); opacity: 0; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); pointer-events: none; cursor: default; animation: none; will-change: opacity; }
 .overlay-layer--active .blur-screen { opacity: 1; pointer-events: auto; }
 .glass-panel { position: relative; z-index: 1; border: 0; border-radius: var(--layout-radius); background: var(--glass); color: #fff; pointer-events: auto; }
@@ -143,7 +144,7 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .continue-button { width: 100%; height: min(8.148vw, 44px); margin-top: min(4.167vw, 22.5px); border: 0; border-radius: 999px; color: #fff; background: rgba(255,255,255,.28); font-size: min(3.241vw, 17.503px); font-weight: 400; cursor: pointer; }
 .copy-email { width: 100%; margin-top: min(4.444vw, 24px); border: 0; color: #fff; background: transparent; font-size: min(3.241vw, 17.503px); }
 
-.dock { position: absolute; z-index: 40; top: 0; left: calc(50% - min(50vw, 270px)); width: min(100%, 540px); height: var(--dock-height); transform: translate3d(0, calc(var(--viewport-top) + var(--visual-viewport-height) - var(--dock-bottom) - var(--dock-height)), 0); pointer-events: none; }
+.dock { position: absolute; z-index: 40; top: 0; left: calc(50% - min(50vw, 270px)); width: min(100%, 540px); height: var(--dock-height); transform: translate3d(0, calc(var(--viewport-bottom) - var(--dock-bottom) - var(--dock-height)), 0); pointer-events: none; will-change: transform; backface-visibility: hidden; }
 .dock--background { z-index: 20; }
 .dock--foreground { z-index: 40; }
 .dock.dock--hidden .dock-item { pointer-events: none; }
