@@ -53,7 +53,7 @@ export default function Home() {
   const scrollDirection = useRef<-1 | 0 | 1>(0);
   const workScrollY = useRef(0);
   const restoreWorkScroll = useRef(false);
-  const scrollerRef = useRef<HTMLDivElement>(null);
+  const overlayLayerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const previousScrollRestoration = window.history.scrollRestoration;
@@ -67,13 +67,11 @@ export default function Home() {
 
   useLayoutEffect(() => {
     if (view !== "work" || !restoreWorkScroll.current) return;
-    const scroller = scrollerRef.current;
-    if (!scroller) return;
     const targetScrollY = workScrollY.current;
-    scroller.scrollTo({ top: targetScrollY, behavior: "auto" });
+    window.scrollTo({ top: targetScrollY, behavior: "auto" });
     const firstFrame = window.requestAnimationFrame(() => {
       const secondFrame = window.requestAnimationFrame(() => {
-        scroller.scrollTo({ top: targetScrollY, behavior: "auto" });
+        window.scrollTo({ top: targetScrollY, behavior: "auto" });
         restoreWorkScroll.current = false;
       });
       restoreFrames.current.push(secondFrame);
@@ -81,10 +79,59 @@ export default function Home() {
     restoreFrames.current.push(firstFrame);
   }, [view]);
 
+  useLayoutEffect(() => {
+    if (!overlay) return;
+
+    let lastViewportTop = Number.NaN;
+    let lastViewportHeight = Number.NaN;
+    let lastBlurOverscanTop = Number.NaN;
+    let lastBlurOverscanBottom = Number.NaN;
+
+    const syncViewportUi = () => {
+      const layer = overlayLayerRef.current;
+      if (!layer) return;
+      const viewport = window.visualViewport;
+      const viewportTop = Math.max(0, viewport?.pageTop ?? window.scrollY);
+      const viewportHeight = viewport?.height ?? window.innerHeight;
+      const viewportOffsetTop = Math.max(0, viewport?.offsetTop ?? 0);
+      const browserHeight = Math.max(window.outerHeight, viewportHeight + viewportOffsetTop);
+      const blurOverscanTop = -viewportOffsetTop;
+      const blurOverscanBottom = -Math.max(0, browserHeight - viewportHeight - viewportOffsetTop);
+
+      if (viewportTop !== lastViewportTop) {
+        lastViewportTop = viewportTop;
+        layer.style.setProperty("--viewport-top", `${viewportTop}px`);
+      }
+      if (viewportHeight !== lastViewportHeight) {
+        lastViewportHeight = viewportHeight;
+        layer.style.setProperty("--visual-viewport-height", `${viewportHeight}px`);
+      }
+      if (blurOverscanTop !== lastBlurOverscanTop) {
+        lastBlurOverscanTop = blurOverscanTop;
+        layer.style.setProperty("--blur-overscan-top", `${blurOverscanTop}px`);
+      }
+      if (blurOverscanBottom !== lastBlurOverscanBottom) {
+        lastBlurOverscanBottom = blurOverscanBottom;
+        layer.style.setProperty("--blur-overscan-bottom", `${blurOverscanBottom}px`);
+      }
+    };
+
+    syncViewportUi();
+    window.addEventListener("scroll", syncViewportUi, { passive: true });
+    window.addEventListener("resize", syncViewportUi, { passive: true });
+    window.visualViewport?.addEventListener("scroll", syncViewportUi, { passive: true });
+    window.visualViewport?.addEventListener("resize", syncViewportUi, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", syncViewportUi);
+      window.removeEventListener("resize", syncViewportUi);
+      window.visualViewport?.removeEventListener("scroll", syncViewportUi);
+      window.visualViewport?.removeEventListener("resize", syncViewportUi);
+    };
+  }, [overlay]);
+
   useEffect(() => {
-    const scroller = scrollerRef.current;
-    if (!scroller) return;
-    const readPageTop = () => Math.max(0, scroller.scrollTop);
+    const readPageTop = () => Math.max(0, window.visualViewport?.pageTop ?? window.scrollY);
 
     lastScrollY.current = readPageTop();
     scrollDistance.current = 0;
@@ -135,9 +182,9 @@ export default function Home() {
       });
     };
 
-    scroller.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
-      scroller.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScroll);
       if (scrollFrame.current !== null) {
         window.cancelAnimationFrame(scrollFrame.current);
         scrollFrame.current = null;
@@ -194,7 +241,7 @@ export default function Home() {
   };
 
   const openProject = (project: Project = projects[0]) => {
-    if (view === "work") workScrollY.current = scrollerRef.current?.scrollTop ?? 0;
+    if (view === "work") workScrollY.current = window.scrollY;
     const commitProject = () => {
       setSelectedProject(project);
       setOverlay(null);
@@ -263,16 +310,15 @@ export default function Home() {
 
   return (
     <main className="portfolio-viewport">
-      <div className={`portfolio-scroll ${overlay ? "is-locked" : ""}`} ref={scrollerRef}>
-        <div className={`portfolio-shell ${view === "project" ? "is-project" : "is-work"}`}>
-          <div className="site-content">
-            {view === "work" ? <WorkView onOpenProject={openProject} /> : <ProjectView project={selectedProject} />}
-          </div>
+      <div className={`portfolio-shell ${view === "project" ? "is-project" : "is-work"}`}>
+        <div className="site-content">
+          {view === "work" ? <WorkView onOpenProject={openProject} /> : <ProjectView project={selectedProject} />}
         </div>
       </div>
 
       {overlay && (
         <div
+          ref={overlayLayerRef}
           className={`overlay-layer overlay-layer--active overlay-layer--${overlay} overlay-phase--${overlayPhase}`}
           role="dialog"
           aria-modal="true"
