@@ -9,9 +9,11 @@
   --inner-radius: min(4.074vw, 22px);
   --layout-radius: calc(var(--inner-radius) + var(--card-inset));
   --ui-lower-shift: clamp(42px, 11.85vw, 50px);
-  --panel-top: min(26.019vw, 140.5px);
+  --content-lift: clamp(14px, 3.704vw, 20px);
+  --dock-lower-shift: clamp(8px, 2.222vw, 12px);
+  --panel-top: calc(min(26.019vw, 140.5px) - var(--content-lift));
   --dock-height: min(9.074vw, 49px);
-  --dock-bottom: var(--ui-lower-shift);
+  --dock-bottom: calc(var(--ui-lower-shift) - var(--dock-lower-shift));
   --panel-bottom: calc(var(--dock-bottom) + var(--dock-height) + var(--layout-gap));
   --menu-left: min(23.519vw, 127px);
   --menu-width: min(51.389vw, 277.5px);
@@ -32,8 +34,8 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
 .portfolio-viewport { position: relative; width: 100%; overflow-x: hidden; }
-.portfolio-shell { width: min(100%, 540px); margin: 0 auto; padding: min(26.019vw, 140.5px) min(8.611vw, 46.5px) min(37vw, 200px); position: relative; background: #fff; }
-.portfolio-shell.is-project { padding-top: min(26.019vw, 140.5px); }
+.portfolio-shell { width: min(100%, 540px); margin: 0 auto; padding: var(--panel-top) min(8.611vw, 46.5px) min(37vw, 200px); position: relative; background: #fff; }
+.portfolio-shell.is-project { padding-top: var(--panel-top); }
 .site-content { position: relative; }
 .brand-mark { position: fixed; z-index: 25; top: calc(var(--panel-top) - min(10.648vw, 57.5px)); left: 50%; width: min(10.741vw, 58px); height: min(5.741vw, 31px); visibility: visible; opacity: .96; display: grid; place-items: center; border-radius: min(2.315vw, 12.5px); background: var(--glass); background-clip: padding-box; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transform: translate3d(-50%, 0, 0); pointer-events: none; transition: opacity 500ms cubic-bezier(.4,0,.2,1), visibility 0s linear 0s; }
 .brand-mark--hidden { visibility: hidden; opacity: 0; transition: opacity 420ms cubic-bezier(.4,0,.2,1), visibility 0s linear 520ms; }
