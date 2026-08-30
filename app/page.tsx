@@ -97,17 +97,6 @@ export default function Home() {
     const layer = overlayLayerRef.current;
     if (!layer) return;
 
-    const viewport = window.visualViewport;
-    const viewportTop = Math.max(0, viewport?.pageTop ?? window.scrollY);
-    const viewportHeight = viewport?.height ?? window.innerHeight;
-    const viewportOffsetTop = Math.max(0, viewport?.offsetTop ?? 0);
-    const browserHeight = Math.max(window.outerHeight, viewportHeight + viewportOffsetTop);
-
-    layer.style.setProperty("--viewport-top", `${viewportTop}px`);
-    layer.style.setProperty("--visual-viewport-height", `${viewportHeight}px`);
-    layer.style.setProperty("--blur-overscan-top", `${-viewportOffsetTop}px`);
-    layer.style.setProperty("--blur-overscan-bottom", `${-Math.max(0, browserHeight - viewportHeight - viewportOffsetTop)}px`);
-
     const preventBackgroundScroll = (event: Event) => {
       if (event.cancelable) event.preventDefault();
     };
