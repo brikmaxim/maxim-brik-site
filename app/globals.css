@@ -9,8 +9,8 @@
   --inner-radius: min(4.074vw, 22px);
   --layout-radius: calc(var(--inner-radius) + var(--card-inset));
   --ui-lower-shift: clamp(42px, 11.85vw, 50px);
-  --content-lift: clamp(14px, 3.704vw, 20px);
-  --dock-lower-shift: clamp(8px, 2.222vw, 12px);
+  --content-lift: clamp(38px, 10vw, 54px);
+  --dock-lower-shift: clamp(22px, 5.926vw, 32px);
   --panel-top: calc(min(26.019vw, 140.5px) - var(--content-lift));
   --dock-height: min(9.074vw, 49px);
   --dock-bottom: calc(var(--ui-lower-shift) - var(--dock-lower-shift));
@@ -37,9 +37,9 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .portfolio-shell { width: min(100%, 540px); margin: 0 auto; padding: var(--panel-top) min(8.611vw, 46.5px) min(37vw, 200px); position: relative; background: #fff; }
 .portfolio-shell.is-project { padding-top: var(--panel-top); }
 .site-content { position: relative; }
-.brand-mark { position: fixed; z-index: 25; top: calc(var(--panel-top) - min(10.648vw, 57.5px)); left: 50%; width: min(10.741vw, 58px); height: min(5.741vw, 31px); visibility: visible; opacity: .96; display: grid; place-items: center; border-radius: min(2.315vw, 12.5px); background: var(--glass); background-clip: padding-box; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transform: translate3d(-50%, 0, 0); pointer-events: none; transition: opacity 500ms cubic-bezier(.4,0,.2,1), visibility 0s linear 0s; }
+.brand-mark { position: fixed; z-index: 25; top: calc(var(--panel-top) - min(10.648vw, 57.5px)); left: 50%; width: min(10.741vw, 58px); height: min(5.741vw, 31px); visibility: visible; opacity: .96; display: grid; place-items: center; background: transparent; transform: translate3d(-50%, 0, 0); pointer-events: none; transition: opacity 500ms cubic-bezier(.4,0,.2,1), visibility 0s linear 0s; }
 .brand-mark--hidden { visibility: hidden; opacity: 0; transition: opacity 420ms cubic-bezier(.4,0,.2,1), visibility 0s linear 520ms; }
-.brand-mark img { display: block; width: 100%; height: 100%; opacity: .55; filter: brightness(0) invert(86%); }
+.brand-mark img { display: block; width: 100%; height: 100%; opacity: .85; }
 .work-grid { display: grid; gap: var(--layout-gap); }
 
 .project-card { position: relative; display: block; width: 100%; aspect-ratio: 893 / 1173; overflow: hidden; padding: 0; border: 0; border-radius: var(--layout-radius); background: var(--soft); cursor: pointer; isolation: isolate; clip-path: inset(0 round var(--layout-radius)); -webkit-mask-image: -webkit-radial-gradient(white, black); transform: translateZ(0); }
@@ -112,6 +112,7 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 
 .project-index > .glass-panel, .info-stack > .glass-panel, .contact-panel { opacity: 1; transform: none; animation: none; }
 .overlay-phase--enter .project-index > .glass-panel, .overlay-phase--enter .info-stack > .glass-panel, .overlay-phase--enter .contact-panel { animation: panel-reveal 760ms cubic-bezier(.16,1,.3,1) both; transform-origin: center; }
+.overlay-phase--switch-exit .project-index > .glass-panel, .overlay-phase--switch-exit .info-stack > .glass-panel, .overlay-phase--switch-exit .contact-panel,
 .overlay-phase--panel-exit .project-index > .glass-panel, .overlay-phase--panel-exit .info-stack > .glass-panel, .overlay-phase--panel-exit .contact-panel { animation: panel-dismiss 380ms cubic-bezier(.4,0,.2,1) both; }
 .overlay-phase--blur-exit .project-index > .glass-panel, .overlay-phase--blur-exit .info-stack > .glass-panel, .overlay-phase--blur-exit .contact-panel { opacity: 0; transform: translateY(min(1.389vw, 7.5px)) scale(.985); animation: none; }
 @keyframes panel-reveal { from { opacity: 0; transform: translateY(min(1.852vw, 10px)) scale(1.045); } to { opacity: 1; transform: translateY(0) scale(1); } }
@@ -171,7 +172,9 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .dock-pill > button:active { background-color: var(--dock-selected); }
 .dock--background .dock-item, .dock--background .dock-item > button { pointer-events: none; }
 .dock--foreground .dock-overlay-pill, .dock--foreground .dock-close { opacity: .001; pointer-events: none; will-change: opacity; }
-.dock--foreground .dock-overlay-pill > button, .dock--foreground .dock-close > button { pointer-events: none; }
+.dock--foreground .dock-overlay-pill { pointer-events: auto; }
+.dock--foreground .dock-overlay-pill > button { pointer-events: auto; }
+.dock--foreground .dock-close > button { pointer-events: none; }
 .dock--foreground.is-open .dock-overlay-pill.is-overlay-active,
 .dock--foreground.is-open .dock-close { opacity: 1; pointer-events: auto; }
 .dock--foreground.is-open .dock-overlay-pill.is-overlay-active > button,

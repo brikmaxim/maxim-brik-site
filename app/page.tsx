@@ -6,7 +6,7 @@ type Overlay = "projects" | "info" | "contact" | null;
 type View = "work" | "project";
 type MenuSection = "work" | "info" | "contact";
 type IndicatorPhase = "idle" | "exit" | "enter";
-type OverlayPhase = "enter" | "idle" | "control-exit" | "panel-exit" | "blur-exit";
+type OverlayPhase = "enter" | "idle" | "switch-exit" | "control-exit" | "panel-exit" | "blur-exit";
 type ProjectClosePhase = "idle" | "exit";
 
 type Project = {
@@ -178,8 +178,31 @@ export default function Home() {
     transitionTimers.current.push(window.setTimeout(() => setOverlayPhase("idle"), 900));
   };
 
+  const switchOverlay = (nextOverlay: "info" | "contact", nextSection: "info" | "contact") => {
+    if (!overlay) {
+      switchSection(nextSection, () => openOverlay(nextOverlay));
+      return;
+    }
+
+    if (overlay === nextOverlay || overlayPhase !== "idle") return;
+
+    transitionTimers.current.forEach(window.clearTimeout);
+    transitionTimers.current = [];
+    setIndicatorPhase("exit");
+    setOverlayPhase("switch-exit");
+
+    transitionTimers.current.push(window.setTimeout(() => {
+      setOverlay(nextOverlay);
+      setMenuSection(nextSection);
+      setOverlayPhase("enter");
+      setIndicatorPhase("enter");
+      transitionTimers.current.push(window.setTimeout(() => setIndicatorPhase("idle"), INDICATOR_ENTER_MS));
+      transitionTimers.current.push(window.setTimeout(() => setOverlayPhase("idle"), 900));
+    }, PANEL_EXIT_MS));
+  };
+
   const closeOverlay = () => {
-    if (!overlay || overlayPhase === "control-exit" || overlayPhase === "panel-exit" || overlayPhase === "blur-exit") return;
+    if (!overlay || overlayPhase !== "idle") return;
     transitionTimers.current.forEach(window.clearTimeout);
     transitionTimers.current = [];
     setOverlayPhase("control-exit");
@@ -244,8 +267,8 @@ export default function Home() {
   };
 
   const selectWork = () => overlay ? closeOverlay() : switchSection("work", showWork);
-  const selectInfo = () => switchSection("info", () => openOverlay("info"));
-  const selectContact = () => switchSection("contact", () => openOverlay("contact"));
+  const selectInfo = () => switchOverlay("info", "info");
+  const selectContact = () => switchOverlay("contact", "contact");
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => event.key === "Escape" && closeOverlay();
@@ -521,7 +544,9 @@ function Dock({ overlay, view, menuSection, indicatorPhase, overlayPhase, projec
           <nav className={`dock dock--foreground is-open ${hidden ? "dock--hidden" : ""} indicator-${indicatorPhase} overlay-phase-${overlayPhase}`} aria-label="Panel navigation">
             <div className="dock-links">
               {items.map((item) => (
-                <div key={item} className={`dock-item dock-pill dock-overlay-pill ${itemClass[item]} ${active === item ? "is-selected is-overlay-active" : ""}`} aria-hidden={active !== item}><button type="button" tabIndex={-1}><span>{item}</span></button></div>
+                <div key={item} className={`dock-item dock-pill dock-overlay-pill ${itemClass[item]} ${active === item ? "is-selected is-overlay-active" : ""}`}>
+                  <button type="button" onClick={itemAction[item]} aria-current={active === item ? "page" : undefined}><span>{item}</span></button>
+                </div>
               ))}
             </div>
             <div className="dock-item dock-circle dock-close"><button type="button" onClick={onClose} aria-label="Close panel"><span /></button></div>
