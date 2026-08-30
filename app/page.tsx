@@ -215,7 +215,7 @@ export default function Home() {
     transitionTimers.current = [];
     setOverlayPhase("enter");
     setOverlay(nextOverlay);
-    transitionTimers.current.push(window.setTimeout(() => setOverlayPhase("idle"), 500));
+    transitionTimers.current.push(window.setTimeout(() => setOverlayPhase("idle"), 900));
   };
 
   const closeOverlay = () => {
