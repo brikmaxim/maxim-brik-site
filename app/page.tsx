@@ -365,6 +365,8 @@ function WorkView({ onOpenProject, hidden }: { onOpenProject: (project: Project)
 }
 
 function ProjectView({ project }: { project: Project }) {
+  const isAngel = project.visual === "angel";
+
   return (
     <article className="project-detail">
       <section className="project-info-card">
@@ -389,14 +391,33 @@ function ProjectView({ project }: { project: Project }) {
         <span className="card-chip card-chip--name">{project.year}</span>
       </figure>
 
-      <div className="detail-pair">
-        <figure><img src="/kyng-detail-side.png" alt="KYNG side view" /></figure>
-        <figure className="detail-drawing"><img src="/kyng-detail-drawing.png" alt="KYNG technical drawing" /></figure>
-      </div>
+      {isAngel ? (
+        <>
+          <div className="detail-pair detail-pair--angel">
+            <figure><img src="/angel-333-ring.jpg" alt="ANGEL 333 silver ring" /></figure>
+            <figure><img src="/angel-333-views.jpg" alt="ANGEL 333 ring studies" /></figure>
+          </div>
 
-      <p className="story-card">Instead of simply placing it on a piece of jewellery, we began looking for a form that could carry the same language. The first reference was a <em>chastity belt</em> — a rigid object built around the body, somewhere between protection, control and ornament.</p>
+          <figure className="project-content-card project-content-card--portrait">
+            <img src="/angel-333-development.jpg" alt="ANGEL 333 design development" />
+          </figure>
 
-      <figure className="detail-closeup"><img src="/kyng-detail-cover.png" alt="KYNG silver form close view" /></figure>
+          <figure className="project-content-card">
+            <img src="/angel-333-boots.jpg" alt="ANGEL 333 boots" />
+          </figure>
+        </>
+      ) : (
+        <>
+          <div className="detail-pair">
+            <figure><img src="/kyng-detail-side.png" alt="KYNG side view" /></figure>
+            <figure className="detail-drawing"><img src="/kyng-detail-drawing.png" alt="KYNG technical drawing" /></figure>
+          </div>
+
+          <p className="story-card">Instead of simply placing it on a piece of jewellery, we began looking for a form that could carry the same language. The first reference was a <em>chastity belt</em> — a rigid object built around the body, somewhere between protection, control and ornament.</p>
+
+          <figure className="detail-closeup"><img src="/kyng-detail-cover.png" alt="KYNG silver form close view" /></figure>
+        </>
+      )}
     </article>
   );
 }
