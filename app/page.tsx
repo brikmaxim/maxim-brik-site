@@ -284,7 +284,7 @@ export default function Home() {
 
       <div className={`portfolio-shell ${view === "project" ? "is-project" : "is-work"}`}>
         <div className="site-content">
-          {view === "work" ? <WorkView onOpenProject={openProject} /> : <ProjectView project={selectedProject} />}
+          {view === "work" ? <WorkView onOpenProject={openProject} hidden={dockHidden} /> : <ProjectView project={selectedProject} />}
         </div>
       </div>
 
@@ -315,10 +315,10 @@ export default function Home() {
   );
 }
 
-function WorkView({ onOpenProject }: { onOpenProject: (project: Project) => void }) {
+function WorkView({ onOpenProject, hidden }: { onOpenProject: (project: Project) => void; hidden: boolean }) {
   return (
     <>
-      <div className="brand-mark" aria-hidden="true">
+      <div className={`brand-mark ${hidden ? "brand-mark--hidden" : ""}`} aria-hidden="true">
         <img src="/maxim-brik-mark.svg" alt="" />
       </div>
       <section className="work-grid" aria-label="Selected work">
