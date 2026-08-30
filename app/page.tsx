@@ -33,6 +33,12 @@ const projects: Project[] = [
   { id: "11", name: "Omanko", category: "CGI", year: "2022", image: "/kyng-detail-drawing.png", visual: "drawing-dark" },
 ];
 
+const messagePrompts = [
+  "Tell us about your project",
+  "Describe what you want to create",
+  "Share your idea with us",
+] as const;
+
 export default function Home() {
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [view, setView] = useState<View>("work");
@@ -230,13 +236,10 @@ export default function Home() {
       if (changesMenu) setIndicatorPhase("exit");
       setOverlayPhase("panel-exit");
       transitionTimers.current.push(window.setTimeout(() => {
-        setOverlayPhase("blur-exit");
-        transitionTimers.current.push(window.setTimeout(() => {
-          setOverlay(null);
-          setOverlayPhase("idle");
-          setMenuSection("work");
-          setIndicatorPhase("idle");
-        }, 320));
+        setOverlay(null);
+        setOverlayPhase("idle");
+        setMenuSection("work");
+        setIndicatorPhase("idle");
       }, 240));
     }, 220));
   };
@@ -264,8 +267,7 @@ export default function Home() {
     setIndicatorPhase("exit");
     setOverlayPhase("panel-exit");
     transitionTimers.current.push(window.setTimeout(() => {
-      setOverlayPhase("blur-exit");
-      transitionTimers.current.push(window.setTimeout(commitProject, 320));
+      commitProject();
     }, 240));
   };
 
@@ -480,10 +482,29 @@ function ContactPanel({ urgency, setUrgency, agreed, setAgreed, sent, setSent }:
   sent: boolean;
   setSent: (value: boolean) => void;
 }) {
+  const [message, setMessage] = useState("");
+  const [promptIndex, setPromptIndex] = useState(0);
+
+  useEffect(() => {
+    if (message) return;
+    const promptTimer = window.setInterval(() => {
+      setPromptIndex((current) => (current + 1) % messagePrompts.length);
+    }, 3200);
+    return () => window.clearInterval(promptTimer);
+  }, [message]);
+
   return (
     <section className="glass-panel contact-panel">
       <label htmlFor="message">Messege</label>
-      <textarea id="message" placeholder="Tell us about your project" />
+      <div className={`message-field ${message ? "has-value" : ""}`}>
+        <textarea id="message" value={message} onChange={(event) => setMessage(event.target.value)} aria-describedby="message-prompt" />
+        {!message && (
+          <span className="message-prompt" id="message-prompt" aria-hidden="true">
+            <span className="message-prompt__text" key={promptIndex}>{messagePrompts[promptIndex]}</span>
+            <span className="message-prompt__caret" />
+          </span>
+        )}
+      </div>
       <div className="urgency-block">
         <span className="contact-label">Urgency</span>
         <div className="urgency-options">
