@@ -353,21 +353,26 @@ export default function Home() {
 
 function WorkView({ onOpenProject }: { onOpenProject: (project: Project) => void }) {
   return (
-    <section className="work-grid" aria-label="Selected work">
-      {projects.map((project) => (
-        <button
-          className={`project-card project-card--${project.visual}`}
-          type="button"
-          key={project.id}
-          onClick={() => onOpenProject(project)}
-        >
-          <img className="project-card__image" src={project.image} alt="" />
-          <span className="card-chip card-chip--name">{project.name}</span>
-          {project.isNew && <span className="card-chip card-chip--new">NEW</span>}
-          <span className="sr-only">Open {project.name} project</span>
-        </button>
-      ))}
-    </section>
+    <>
+      <div className="brand-mark" aria-hidden="true">
+        <img src="/maxim-brik-mark.svg" alt="" />
+      </div>
+      <section className="work-grid" aria-label="Selected work">
+        {projects.map((project) => (
+          <button
+            className={`project-card project-card--${project.visual}`}
+            type="button"
+            key={project.id}
+            onClick={() => onOpenProject(project)}
+          >
+            <img className="project-card__image" src={project.image} alt="" />
+            <span className="card-chip card-chip--name">{project.name}</span>
+            {project.isNew && <span className="card-chip card-chip--new">NEW</span>}
+            <span className="sr-only">Open {project.name} project</span>
+          </button>
+        ))}
+      </section>
+    </>
   );
 }
 
