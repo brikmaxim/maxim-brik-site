@@ -106,8 +106,9 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .detail-pair figure { aspect-ratio: 432 / 567; }
 .detail-pair img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .detail-pair .detail-drawing { background: #b2b3b9; }
-.detail-pair--angel figure { aspect-ratio: 1 / 1; }
-.project-content-card img { display: block; width: 100%; height: auto; }
+.detail-pair--square figure { aspect-ratio: 1 / 1; }
+.project-content-card img,
+.project-content-card video { display: block; width: 100%; height: auto; }
 .story-card { min-height: min(16.389vw, 88.5px); padding: min(2.685vw, 14.5px) min(3.704vw, 20px); }
 .detail-closeup { aspect-ratio: 893 / 1173; background: #82808b; }
 .detail-closeup img { width: 100%; height: 100%; display: block; object-fit: cover; transform: scale(1.45); }

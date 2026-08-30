@@ -366,6 +366,7 @@ function WorkView({ onOpenProject, hidden }: { onOpenProject: (project: Project)
 
 function ProjectView({ project }: { project: Project }) {
   const isAngel = project.visual === "angel";
+  const isKyng = project.visual === "kyng";
 
   return (
     <article className="project-detail">
@@ -393,7 +394,7 @@ function ProjectView({ project }: { project: Project }) {
 
       {isAngel ? (
         <>
-          <div className="detail-pair detail-pair--angel">
+          <div className="detail-pair detail-pair--square">
             <figure><img src="/angel-333-ring.jpg" alt="ANGEL 333 silver ring" /></figure>
             <figure><img src="/angel-333-views.jpg" alt="ANGEL 333 ring studies" /></figure>
           </div>
@@ -416,6 +417,24 @@ function ProjectView({ project }: { project: Project }) {
           <p className="story-card">Instead of simply placing it on a piece of jewellery, we began looking for a form that could carry the same language. The first reference was a <em>chastity belt</em> — a rigid object built around the body, somewhere between protection, control and ornament.</p>
 
           <figure className="detail-closeup"><img src="/kyng-detail-cover.png" alt="KYNG silver form close view" /></figure>
+
+          {isKyng && (
+            <>
+              <figure className="project-content-card">
+                <img src="/kyng-work-front.jpg" alt="KYNG front view" />
+              </figure>
+
+              <figure className="project-content-card">
+                <img src="/kyng-work-back.jpg" alt="KYNG back view" />
+              </figure>
+
+              <figure className="project-content-card project-content-card--video">
+                <video autoPlay muted loop playsInline preload="metadata" aria-label="KYNG object in motion">
+                  <source src="/kyng-motion.mp4" type="video/mp4" />
+                </video>
+              </figure>
+            </>
+          )}
         </>
       )}
     </article>
