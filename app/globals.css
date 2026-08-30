@@ -65,6 +65,8 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .project-card--drawing .project-card__image,
 .project-card--drawing-dark .project-card__image { inset: 7%; width: 86%; height: 86%; object-fit: contain; }
 .project-card--drawing-dark .project-card__image { filter: invert(.1) contrast(1.15); }
+.project-card--angel { background: #eef2f3; }
+.project-card--angel .project-card__image { inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .project-card--cover-warm,
 .project-card--cover-blue { background: #f4f4f4; }
 .project-card--cover-warm .project-card__image,
