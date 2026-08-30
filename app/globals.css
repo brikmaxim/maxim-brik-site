@@ -160,14 +160,13 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .dock-anchor { position: fixed; right: 0; bottom: var(--dock-bottom); left: 0; width: 100%; height: var(--dock-height); pointer-events: none; }
 .dock-anchor--base { z-index: 20; }
 .dock-anchor--foreground { z-index: 40; }
-.dock { position: absolute; top: 0; left: calc(50% - min(50vw, 270px)); width: min(100%, 540px); height: var(--dock-height); opacity: 1; transform: translate3d(0, 0, 0); pointer-events: none; backface-visibility: hidden; will-change: transform, opacity; transition: transform 620ms cubic-bezier(.16,1,.3,1), opacity 500ms cubic-bezier(.4,0,.2,1); }
+.dock { position: absolute; top: 0; left: calc(50% - min(50vw, 270px)); width: min(100%, 540px); height: var(--dock-height); pointer-events: none; }
 .dock--background { z-index: 20; }
 .dock--foreground { z-index: 40; }
-.dock.dock--hidden .dock-item { pointer-events: none; }
-.dock.dock--hidden { opacity: 0; transform: translate3d(0, calc(140% + var(--dock-bottom) + var(--layout-gap)), 0); transition-duration: 520ms; transition-timing-function: cubic-bezier(.4,0,.2,1); }
-.dock-item { position: absolute; top: 0; height: var(--dock-height); opacity: 1; pointer-events: auto; transition: opacity 360ms cubic-bezier(.16,1,.3,1); }
-.dock-item > button { position: relative; width: 100%; height: 100%; padding: 0; border: 0; border-radius: inherit; color: var(--ink); background: var(--dock-surface); background-clip: padding-box; -webkit-backdrop-filter: blur(6.7px); backdrop-filter: blur(6.7px); box-shadow: none; cursor: pointer; pointer-events: auto; font-size: min(3.241vw, 17.5px); font-weight: 400; line-height: normal; transition: opacity 180ms cubic-bezier(.4,0,.2,1), background-color 220ms cubic-bezier(.4,0,.2,1); }
-.dock-pill.is-selected > button, .dock-pill > button:active { background-color: var(--dock-selected); }
+.dock-item { position: absolute; top: 0; height: var(--dock-height); opacity: 1; transform: translate3d(0, 0, 0); pointer-events: auto; background: var(--dock-surface); background-clip: padding-box; -webkit-backdrop-filter: blur(6.7px); backdrop-filter: blur(6.7px); transition: transform 620ms cubic-bezier(.16,1,.3,1), opacity 500ms cubic-bezier(.4,0,.2,1), background-color 220ms cubic-bezier(.4,0,.2,1); }
+.dock-item > button { position: relative; width: 100%; height: 100%; padding: 0; border: 0; border-radius: inherit; color: var(--ink); background: transparent; box-shadow: none; cursor: pointer; pointer-events: auto; font-size: min(3.241vw, 17.5px); font-weight: 400; line-height: normal; transition: opacity 180ms cubic-bezier(.4,0,.2,1), background-color 220ms cubic-bezier(.4,0,.2,1); }
+.dock-pill.is-selected { background-color: var(--dock-selected); }
+.dock-pill > button:active { background-color: var(--dock-selected); }
 .dock--background .dock-item, .dock--background .dock-item > button { pointer-events: none; }
 .dock--foreground .dock-overlay-pill, .dock--foreground .dock-close { opacity: .001; pointer-events: none; will-change: opacity; }
 .dock--foreground .dock-overlay-pill > button, .dock--foreground .dock-close > button { pointer-events: none; }
@@ -180,7 +179,7 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .dock button:focus-visible { outline: 1px solid rgba(34,34,34,.28); outline-offset: 2px; }
 .dock-circle { width: var(--dock-height); border-radius: 50%; }
 .dock-plus { left: min(9.352vw, 50.5px); }
-.dock-project-close, .dock-close { left: min(79.722vw, 430.5px); top: 0; transition: opacity 220ms cubic-bezier(.4,0,.2,1); }
+.dock-project-close, .dock-close { left: min(79.722vw, 430.5px); top: 0; }
 .dock-plus span, .dock-project-close span, .dock-close span { position: absolute; inset: 0; display: block; }
 .dock-plus span::before, .dock-plus span::after, .dock-project-close span::before, .dock-project-close span::after, .dock-close span::before, .dock-close span::after { content: ""; position: absolute; left: 50%; top: 50%; width: min(3.889vw, 21px); height: min(.37vw, 2px); background: #fff; transform: translate(-50%,-50%); }
 .dock-plus span::after { transform: translate(-50%,-50%) rotate(90deg); }
@@ -204,6 +203,7 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .dock.overlay-phase-panel-exit .dock-close,
 .dock.overlay-phase-blur-exit .dock-close,
 .dock.project-close-exit .dock-project-close { opacity: 0; }
+.dock.dock--hidden .dock-item { opacity: 0; transform: translate3d(0, calc(140% + var(--dock-bottom) + var(--layout-gap)), 0); pointer-events: none; transition-duration: 520ms; transition-timing-function: cubic-bezier(.4,0,.2,1); }
 
 @media (min-width: 541px) {
   body { background: #f4f4f4; }
