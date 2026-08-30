@@ -20,7 +20,7 @@ type Project = {
 };
 
 const projects: Project[] = [
-  { id: "01", name: "KYNG", category: "CGI,Dev", year: "2026", image: "/kyng-work.png", visual: "kyng", isNew: true },
+  { id: "01", name: "KYNG", category: "CGI,Dev", year: "2026", image: "/kyng-work-front.jpg", visual: "kyng", isNew: true },
   { id: "02", name: "Solution", category: "CGI", year: "2022", image: "/sicko-work.png", visual: "solution" },
   { id: "03", name: "NDSP", category: "CGI,AI,Dev", year: "2025", image: "/kyng-detail-drawing.png", visual: "drawing" },
   { id: "04", name: "ANGEL 333", category: "ID,CGI", year: "2024", image: "/angel-333-cover.jpg", visual: "angel" },
