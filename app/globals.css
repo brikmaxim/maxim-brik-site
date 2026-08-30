@@ -185,7 +185,7 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .dock button:focus-visible { outline: 1px solid rgba(34,34,34,.28); outline-offset: 2px; }
 .dock-circle { width: var(--dock-height); border-radius: 50%; }
 .dock-plus { left: min(9.352vw, 50.5px); }
-.dock-project-close, .dock-close { left: min(79.722vw, 430.5px); top: 0; }
+.dock-project-close, .dock-close { right: min(9.352vw, 50.5px); left: auto; top: 0; }
 .dock-plus span, .dock-project-close span, .dock-close span { position: absolute; inset: 0; display: block; }
 .dock-plus span::before, .dock-plus span::after, .dock-project-close span::before, .dock-project-close span::after, .dock-close span::before, .dock-close span::after { content: ""; position: absolute; left: 50%; top: 50%; width: min(2.917vw, 15.75px); height: min(.278vw, 1.5px); background: #222; transform: translate(-50%,-50%); }
 .dock-plus span::after { transform: translate(-50%,-50%) rotate(90deg); }
