@@ -65,7 +65,6 @@ export default function Home() {
   const scrollDirection = useRef<-1 | 0 | 1>(0);
   const workScrollY = useRef(0);
   const restoreWorkScroll = useRef(false);
-  const overlayLayerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const previousScrollRestoration = window.history.scrollRestoration;
@@ -90,25 +89,6 @@ export default function Home() {
     });
     restoreFrames.current.push(firstFrame);
   }, [view]);
-
-  useLayoutEffect(() => {
-    if (!overlay) return;
-
-    const layer = overlayLayerRef.current;
-    if (!layer) return;
-
-    const preventBackgroundScroll = (event: Event) => {
-      if (event.cancelable) event.preventDefault();
-    };
-
-    layer.addEventListener("touchmove", preventBackgroundScroll, { passive: false });
-    layer.addEventListener("wheel", preventBackgroundScroll, { passive: false });
-
-    return () => {
-      layer.removeEventListener("touchmove", preventBackgroundScroll);
-      layer.removeEventListener("wheel", preventBackgroundScroll);
-    };
-  }, [overlay]);
 
   useEffect(() => {
     const readPageTop = () => Math.max(0, window.scrollY);
@@ -310,7 +290,6 @@ export default function Home() {
 
       {overlay && (
         <div
-          ref={overlayLayerRef}
           className={`overlay-layer overlay-layer--active overlay-layer--${overlay} overlay-phase--${overlayPhase}`}
           role="dialog"
           aria-modal="true"
