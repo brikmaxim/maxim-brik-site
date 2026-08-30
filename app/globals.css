@@ -3,7 +3,7 @@
   --green: #00ff26;
   --soft: #f6f6f6;
   --glass: rgba(239, 239, 239, .5);
-  --glass-filter: blur(46.2px);
+  --glass-filter: blur(15px);
   --line: rgba(217, 217, 217, .78);
   --layout-gap: min(2.13vw, 11.5px);
   --content-inset: min(8.611vw, 46.5px);
