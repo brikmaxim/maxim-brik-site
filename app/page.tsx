@@ -37,7 +37,8 @@ export default function Home() {
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [view, setView] = useState<View>("work");
   const [selectedProject, setSelectedProject] = useState<Project>(projects[0]);
-  const [budget, setBudget] = useState("5000");
+  const [urgency, setUrgency] = useState<"1week" | "2weeks" | "4weeks">("2weeks");
+  const [agreed, setAgreed] = useState(false);
   const [sent, setSent] = useState(false);
   const [menuSection, setMenuSection] = useState<MenuSection>("work");
   const [indicatorPhase, setIndicatorPhase] = useState<IndicatorPhase>("idle");
@@ -343,7 +344,16 @@ export default function Home() {
           <button className="blur-screen" type="button" onClick={selectWork} aria-label="Close panel" />
           {overlay === "projects" && <ProjectIndex onOpenProject={openProject} />}
           {overlay === "info" && <InfoPanel />}
-          {overlay === "contact" && <ContactPanel budget={budget} setBudget={setBudget} sent={sent} setSent={setSent} />}
+          {overlay === "contact" && (
+            <ContactPanel
+              urgency={urgency}
+              setUrgency={setUrgency}
+              agreed={agreed}
+              setAgreed={setAgreed}
+              sent={sent}
+              setSent={setSent}
+            />
+          )}
         </div>
       )}
 
@@ -384,7 +394,7 @@ function ProjectView({ project }: { project: Project }) {
         <dl className="project-facts">
           <div><dt>Client:</dt><dd>{project.name}</dd></div>
           <div><dt>Categories:</dt><dd>{project.category}</dd></div>
-          <div><dt>Year:</dt><dd>{project.year}</dd></div>
+          <div><dt>Year:</dt><dd>{project.id === "01" ? "2021-2026" : project.year}</dd></div>
         </dl>
         <div className="project-description">
           <h2>Description</h2>
@@ -406,7 +416,7 @@ function ProjectView({ project }: { project: Project }) {
         <figure className="detail-drawing"><img src="/kyng-detail-drawing.png" alt="KYNG technical drawing" /></figure>
       </div>
 
-      <p className="story-card">Instead of simply placing it on a piece of jewellery, we began looking for a form that could carry the same language. The first reference was a chastity belt — a rigid object built around the body, somewhere between protection, control and ornament.</p>
+      <p className="story-card">Instead of simply placing it on a piece of jewellery, we began looking for a form that could carry the same language. The first reference was a <em>chastity belt</em> — a rigid object built around the body, somewhere between protection, control and ornament.</p>
 
       <figure className="detail-closeup"><img src="/kyng-detail-cover.png" alt="KYNG silver form close view" /></figure>
     </article>
@@ -414,17 +424,32 @@ function ProjectView({ project }: { project: Project }) {
 }
 
 function ProjectIndex({ onOpenProject }: { onOpenProject: (project: Project) => void }) {
+  const [filter, setFilter] = useState<"recent" | "oldest" | "alphabetical">("recent");
+  const visibleProjects = filter === "oldest"
+    ? [...projects].sort((a, b) => Number(a.year) - Number(b.year))
+    : filter === "alphabetical"
+      ? [...projects].sort((a, b) => a.name.localeCompare(b.name))
+      : projects;
+
   return (
-    <section className="glass-panel project-index">
-      <div className="project-table project-table--head"><span>#</span><span>name</span><span>Categories</span><span>Year</span></div>
-      <div className="project-list">
-        {projects.map((project) => (
-          <button className="project-table" type="button" key={project.id} onClick={() => onOpenProject(project)}>
-            {[project.id, project.name, project.category, project.year].map((value) => <span key={value}>{value}</span>)}
-          </button>
-        ))}
-      </div>
-    </section>
+    <div className="project-index">
+      <section className="glass-panel project-index__table">
+        <div className="project-table project-table--head"><span>#</span><span>name</span><span>Categories</span><span>Year</span></div>
+        <div className="project-list">
+          {visibleProjects.map((project) => (
+            <button className="project-table" type="button" key={project.id} onClick={() => onOpenProject(project)}>
+              {[project.id, project.name, project.category, project.year].map((value) => <span key={value}>{value}</span>)}
+            </button>
+          ))}
+        </div>
+      </section>
+      <section className="glass-panel project-filter" aria-label="Project sorting">
+        <h2>Filter</h2>
+        <button className={filter === "recent" ? "is-selected" : ""} type="button" onClick={() => setFilter("recent")}>Most Recent</button>
+        <button className={filter === "oldest" ? "is-selected" : ""} type="button" onClick={() => setFilter("oldest")}>Oldest first</button>
+        <button className={filter === "alphabetical" ? "is-selected" : ""} type="button" onClick={() => setFilter("alphabetical")}>Alphapetical</button>
+      </section>
+    </div>
   );
 }
 
@@ -436,10 +461,10 @@ function InfoPanel() {
         <p>Maxim Brik is a visual creative specializing in CGI, AI, Concepts and creative editing. Driven by a desire to reimagine reality, he creates distinctive visual experiences for brands across fashion, digital and technology.</p>
         <h2>Services</h2>
         <p>Art Direction<br />Industrial design<br />Visual identity<br />Graphic systems<br />Web identity<br />Motion Graphic<br />AI</p>
-        <h2>Social Media</h2>
-        <p><a href="mailto:hello@maximbrik.com">Email</a><br /><a href="https://t.me/" target="_blank" rel="noreferrer">Telegram</a><br /><a href="https://instagram.com/" target="_blank" rel="noreferrer">Instagram</a></p>
       </section>
       <section className="glass-panel team-panel">
+        <h2>Social Media</h2>
+        <p><a href="mailto:hello@maximbrik.com">Email</a><br /><a href="https://t.me/" target="_blank" rel="noreferrer">Telegram</a><br /><a href="https://instagram.com/" target="_blank" rel="noreferrer">Instagram</a></p>
         <h2>Team</h2>
         <p>Maxim Brik<br />Alexey Molchanov<br />Rustam Gaifutdinov</p>
       </section>
@@ -447,9 +472,11 @@ function InfoPanel() {
   );
 }
 
-function ContactPanel({ budget, setBudget, sent, setSent }: {
-  budget: string;
-  setBudget: (value: string) => void;
+function ContactPanel({ urgency, setUrgency, agreed, setAgreed, sent, setSent }: {
+  urgency: "1week" | "2weeks" | "4weeks";
+  setUrgency: (value: "1week" | "2weeks" | "4weeks") => void;
+  agreed: boolean;
+  setAgreed: (value: boolean) => void;
   sent: boolean;
   setSent: (value: boolean) => void;
 }) {
@@ -457,13 +484,28 @@ function ContactPanel({ budget, setBudget, sent, setSent }: {
     <section className="glass-panel contact-panel">
       <label htmlFor="message">Messege</label>
       <textarea id="message" placeholder="Tell us about your project" />
-      <div className="budget-block">
-        <label htmlFor="budget">Budget</label>
-        <input id="budget" type="range" min="1000" max="10000" step="500" value={budget} onChange={(event) => setBudget(event.target.value)} />
-        <div className="budget-labels"><span>$1000</span><span>$5000</span><span>$10 000</span></div>
+      <div className="urgency-block">
+        <span className="contact-label">Urgency</span>
+        <div className="urgency-options">
+          {(["1week", "2weeks", "4weeks"] as const).map((option) => (
+            <button
+              className={urgency === option ? "is-selected" : ""}
+              type="button"
+              key={option}
+              onClick={() => setUrgency(option)}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+        <label className="privacy-check">
+          <input type="checkbox" checked={agreed} onChange={(event) => setAgreed(event.target.checked)} />
+          <span className="privacy-check__control" aria-hidden="true" />
+          <span>I agree with the&nbsp;<a href="/privacy">privacy policy</a></span>
+        </label>
       </div>
       <button className="continue-button" type="button" onClick={() => setSent(true)}>{sent ? "Thank you" : "Continue"}</button>
-      {sent && <button className="copy-email" type="button" onClick={() => navigator.clipboard?.writeText("hello@maximbrik.com")}>Copy Email</button>}
+      <button className="copy-email" type="button" onClick={() => navigator.clipboard?.writeText("hello@maximbrik.com")}>Copy Email</button>
     </section>
   );
 }
@@ -496,7 +538,7 @@ function Dock({ overlay, view, menuSection, indicatorPhase, overlayPhase, projec
           {view === "project" && <div className="dock-item dock-circle dock-project-close"><button type="button" onClick={overlay ? undefined : onProjectClose} aria-label="Close project" aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span /></button></div>}
           <div className="dock-links">
             {items.map((item) => (
-              <div key={item} className={`dock-item dock-pill ${itemClass[item]} ${item === "Work" ? "is-active" : ""}`}><button type="button" onClick={overlay ? undefined : itemAction[item]} aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span>{item}</span></button></div>
+              <div key={item} className={`dock-item dock-pill ${itemClass[item]} ${!overlay && active === item ? "is-selected" : ""}`}><button type="button" onClick={overlay ? undefined : itemAction[item]} aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span>{item}</span></button></div>
             ))}
           </div>
         </nav>
@@ -506,7 +548,7 @@ function Dock({ overlay, view, menuSection, indicatorPhase, overlayPhase, projec
           <nav className={`dock dock--foreground is-open ${hidden ? "dock--hidden" : ""} indicator-${indicatorPhase} overlay-phase-${overlayPhase}`} aria-label="Panel navigation">
             <div className="dock-links">
               {items.map((item) => (
-                <div key={item} className={`dock-item dock-pill dock-overlay-pill ${itemClass[item]} is-active ${active === item ? "is-overlay-active" : ""}`} aria-hidden={active !== item}><button type="button" tabIndex={-1}><span>{item}</span></button></div>
+                <div key={item} className={`dock-item dock-pill dock-overlay-pill ${itemClass[item]} ${active === item ? "is-selected is-overlay-active" : ""}`} aria-hidden={active !== item}><button type="button" tabIndex={-1}><span>{item}</span></button></div>
               ))}
             </div>
             <div className="dock-item dock-circle dock-close"><button type="button" onClick={onClose} aria-label="Close panel"><span /></button></div>
