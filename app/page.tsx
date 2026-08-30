@@ -385,7 +385,7 @@ function ProjectView({ project }: { project: Project }) {
 
       <figure className="detail-cover">
         <img src="/kyng-detail-cover.png" alt="KYNG silver jewellery object" />
-        <span className="card-chip card-chip--name">{project.name}</span>
+        <span className="card-chip card-chip--name">{project.year}</span>
       </figure>
 
       <div className="detail-pair">
