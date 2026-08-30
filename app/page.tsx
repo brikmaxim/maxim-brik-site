@@ -39,6 +39,11 @@ const messagePrompts = [
   "Share your idea with us",
 ] as const;
 
+const INDICATOR_EXIT_MS = 300;
+const INDICATOR_ENTER_MS = 420;
+const CONTROL_EXIT_MS = 280;
+const PANEL_EXIT_MS = 380;
+
 export default function Home() {
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [view, setView] = useState<View>("work");
@@ -89,56 +94,35 @@ export default function Home() {
   useLayoutEffect(() => {
     if (!overlay) return;
 
-    let lastViewportTop = Number.NaN;
-    let lastViewportHeight = Number.NaN;
-    let lastBlurOverscanTop = Number.NaN;
-    let lastBlurOverscanBottom = Number.NaN;
+    const layer = overlayLayerRef.current;
+    if (!layer) return;
 
-    const syncViewportUi = () => {
-      const layer = overlayLayerRef.current;
-      if (!layer) return;
-      const viewport = window.visualViewport;
-      const viewportTop = Math.max(0, viewport?.pageTop ?? window.scrollY);
-      const viewportHeight = viewport?.height ?? window.innerHeight;
-      const viewportOffsetTop = Math.max(0, viewport?.offsetTop ?? 0);
-      const browserHeight = Math.max(window.outerHeight, viewportHeight + viewportOffsetTop);
-      const blurOverscanTop = -viewportOffsetTop;
-      const blurOverscanBottom = -Math.max(0, browserHeight - viewportHeight - viewportOffsetTop);
+    const viewport = window.visualViewport;
+    const viewportTop = Math.max(0, viewport?.pageTop ?? window.scrollY);
+    const viewportHeight = viewport?.height ?? window.innerHeight;
+    const viewportOffsetTop = Math.max(0, viewport?.offsetTop ?? 0);
+    const browserHeight = Math.max(window.outerHeight, viewportHeight + viewportOffsetTop);
 
-      if (viewportTop !== lastViewportTop) {
-        lastViewportTop = viewportTop;
-        layer.style.setProperty("--viewport-top", `${viewportTop}px`);
-      }
-      if (viewportHeight !== lastViewportHeight) {
-        lastViewportHeight = viewportHeight;
-        layer.style.setProperty("--visual-viewport-height", `${viewportHeight}px`);
-      }
-      if (blurOverscanTop !== lastBlurOverscanTop) {
-        lastBlurOverscanTop = blurOverscanTop;
-        layer.style.setProperty("--blur-overscan-top", `${blurOverscanTop}px`);
-      }
-      if (blurOverscanBottom !== lastBlurOverscanBottom) {
-        lastBlurOverscanBottom = blurOverscanBottom;
-        layer.style.setProperty("--blur-overscan-bottom", `${blurOverscanBottom}px`);
-      }
+    layer.style.setProperty("--viewport-top", `${viewportTop}px`);
+    layer.style.setProperty("--visual-viewport-height", `${viewportHeight}px`);
+    layer.style.setProperty("--blur-overscan-top", `${-viewportOffsetTop}px`);
+    layer.style.setProperty("--blur-overscan-bottom", `${-Math.max(0, browserHeight - viewportHeight - viewportOffsetTop)}px`);
+
+    const preventBackgroundScroll = (event: Event) => {
+      if (event.cancelable) event.preventDefault();
     };
 
-    syncViewportUi();
-    window.addEventListener("scroll", syncViewportUi, { passive: true });
-    window.addEventListener("resize", syncViewportUi, { passive: true });
-    window.visualViewport?.addEventListener("scroll", syncViewportUi, { passive: true });
-    window.visualViewport?.addEventListener("resize", syncViewportUi, { passive: true });
+    layer.addEventListener("touchmove", preventBackgroundScroll, { passive: false });
+    layer.addEventListener("wheel", preventBackgroundScroll, { passive: false });
 
     return () => {
-      window.removeEventListener("scroll", syncViewportUi);
-      window.removeEventListener("resize", syncViewportUi);
-      window.visualViewport?.removeEventListener("scroll", syncViewportUi);
-      window.visualViewport?.removeEventListener("resize", syncViewportUi);
+      layer.removeEventListener("touchmove", preventBackgroundScroll);
+      layer.removeEventListener("wheel", preventBackgroundScroll);
     };
   }, [overlay]);
 
   useEffect(() => {
-    const readPageTop = () => Math.max(0, window.visualViewport?.pageTop ?? window.scrollY);
+    const readPageTop = () => Math.max(0, window.scrollY);
 
     lastScrollY.current = readPageTop();
     scrollDistance.current = 0;
@@ -213,8 +197,8 @@ export default function Home() {
       commit();
       setMenuSection(nextSection);
       setIndicatorPhase("enter");
-      transitionTimers.current.push(window.setTimeout(() => setIndicatorPhase("idle"), 240));
-    }, 180));
+      transitionTimers.current.push(window.setTimeout(() => setIndicatorPhase("idle"), INDICATOR_ENTER_MS));
+    }, INDICATOR_EXIT_MS));
   };
 
   const openOverlay = (nextOverlay: Exclude<Overlay, null>) => {
@@ -229,19 +213,19 @@ export default function Home() {
     if (!overlay || overlayPhase === "control-exit" || overlayPhase === "panel-exit" || overlayPhase === "blur-exit") return;
     transitionTimers.current.forEach(window.clearTimeout);
     transitionTimers.current = [];
-    const changesMenu = menuSection !== "work";
     setOverlayPhase("control-exit");
 
     transitionTimers.current.push(window.setTimeout(() => {
-      if (changesMenu) setIndicatorPhase("exit");
+      setIndicatorPhase("exit");
       setOverlayPhase("panel-exit");
       transitionTimers.current.push(window.setTimeout(() => {
         setOverlay(null);
         setOverlayPhase("idle");
         setMenuSection("work");
-        setIndicatorPhase("idle");
-      }, 240));
-    }, 220));
+        setIndicatorPhase("enter");
+        transitionTimers.current.push(window.setTimeout(() => setIndicatorPhase("idle"), INDICATOR_ENTER_MS));
+      }, PANEL_EXIT_MS));
+    }, CONTROL_EXIT_MS));
   };
 
   const openProject = (project: Project = projects[0]) => {
@@ -268,7 +252,7 @@ export default function Home() {
     setOverlayPhase("panel-exit");
     transitionTimers.current.push(window.setTimeout(() => {
       commitProject();
-    }, 240));
+    }, PANEL_EXIT_MS));
   };
 
   const showWork = () => {

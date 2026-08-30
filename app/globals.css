@@ -25,9 +25,9 @@
 }
 
 * { box-sizing: border-box; }
-html { min-height: 100%; overflow-y: scroll; overflow-anchor: none; background: #fff; }
+html { overflow-anchor: none; }
 html, body { margin: 0; width: 100%; color: var(--ink); }
-body { min-height: 100%; overflow-x: clip; background: #fff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: min(3.241vw, 17.5px); line-height: 1.2; font-weight: 300; letter-spacing: 0; }
+body { overflow-x: hidden; background: #fff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: min(3.241vw, 17.5px); line-height: 1.2; font-weight: 300; letter-spacing: 0; }
 button, input, textarea { color: inherit; font: inherit; letter-spacing: 0; }
 button { -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; }
 a { color: inherit; text-decoration: none; }
@@ -35,7 +35,7 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
-.portfolio-viewport { position: relative; width: 100%; overflow-x: clip; }
+.portfolio-viewport { position: relative; width: 100%; overflow-x: hidden; }
 .portfolio-shell { width: min(100%, 540px); margin: 0 auto; padding: min(26.019vw, 140.5px) min(8.611vw, 46.5px) min(37vw, 200px); position: relative; background: #fff; }
 .portfolio-shell.is-project { padding-top: min(26.019vw, 140.5px); }
 .site-content { position: relative; }
@@ -106,16 +106,17 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .detail-closeup { aspect-ratio: 893 / 1173; background: #82808b; }
 .detail-closeup img { width: 100%; height: 100%; display: block; object-fit: cover; transform: scale(1.45); }
 
-.overlay-layer { position: absolute; z-index: 30; top: 0; right: 0; left: 0; height: var(--visual-viewport-height); transform: translate3d(0, var(--viewport-top), 0); pointer-events: none; will-change: transform, height; backface-visibility: hidden; }
+.overlay-layer { position: absolute; z-index: 30; top: 0; right: 0; left: 0; height: var(--visual-viewport-height); transform: translate3d(0, var(--viewport-top), 0); pointer-events: none; will-change: transform; backface-visibility: hidden; }
+.overlay-layer--active { touch-action: none; overscroll-behavior: none; }
 .blur-screen { position: absolute; top: var(--blur-overscan-top); right: 0; bottom: var(--blur-overscan-bottom); left: 0; width: 100%; height: auto; padding: 0; border: 0; background: transparent; opacity: 1; -webkit-backdrop-filter: none; backdrop-filter: none; pointer-events: none; cursor: default; animation: none; }
 .overlay-layer--active .blur-screen { opacity: 1; pointer-events: auto; }
 .glass-panel { position: relative; z-index: 1; border: 0; border-radius: var(--layout-radius); background: var(--glass); background-clip: padding-box; color: #000; -webkit-backdrop-filter: blur(6.7px); backdrop-filter: blur(6.7px); pointer-events: auto; }
 
-.project-index, .info-stack, .contact-panel { opacity: 1; scale: 1; transform: none; animation: none; will-change: opacity, scale; }
-.overlay-phase--enter .project-index, .overlay-phase--enter .info-stack, .overlay-phase--enter .contact-panel { animation: panel-reveal 700ms cubic-bezier(.7,.01,.11,.96) both; transform-origin: center; }
-.overlay-phase--panel-exit .project-index, .overlay-phase--panel-exit .info-stack, .overlay-phase--panel-exit .contact-panel { animation: panel-dismiss 240ms cubic-bezier(.4,0,.2,1) both; }
+.project-index, .info-stack, .contact-panel { opacity: 1; transform: none; animation: none; will-change: opacity, transform; }
+.overlay-phase--enter .project-index, .overlay-phase--enter .info-stack, .overlay-phase--enter .contact-panel { animation: panel-reveal 760ms cubic-bezier(.16,1,.3,1) both; transform-origin: center; }
+.overlay-phase--panel-exit .project-index, .overlay-phase--panel-exit .info-stack, .overlay-phase--panel-exit .contact-panel { animation: panel-dismiss 380ms cubic-bezier(.4,0,.2,1) both; }
 .overlay-phase--blur-exit .project-index, .overlay-phase--blur-exit .info-stack, .overlay-phase--blur-exit .contact-panel { opacity: 0; transform: translateY(min(1.389vw, 7.5px)) scale(.985); animation: none; }
-@keyframes panel-reveal { from { opacity: 0; scale: 1.15; } to { opacity: 1; scale: 1; } }
+@keyframes panel-reveal { from { opacity: 0; transform: translateY(min(1.852vw, 10px)) scale(1.045); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes panel-dismiss { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(min(1.389vw, 7.5px)) scale(.985); } }
 
 .project-index { position: absolute; top: var(--panel-top); left: calc(50% - min(50vw, 270px) + min(10.093vw, 54.5px)); width: min(78.704vw, 425px); height: var(--panel-height); display: grid; grid-template-rows: min(79.537vw, 429.5px) minmax(0, 1fr); gap: var(--layout-gap); pointer-events: auto; }
@@ -163,11 +164,11 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .dock-anchor { position: sticky; top: calc(100svh - var(--dock-bottom) - var(--dock-height)); width: 100%; height: 0; pointer-events: none; }
 .dock-anchor--base { z-index: 20; }
 .dock-anchor--foreground { z-index: 40; }
-.dock { position: absolute; top: 0; left: calc(50% - min(50vw, 270px)); width: min(100%, 540px); height: var(--dock-height); transform: translate3d(0, 0, 0); pointer-events: none; backface-visibility: hidden; will-change: transform; transition: transform 620ms cubic-bezier(.16,1,.3,1); }
+.dock { position: absolute; top: 0; left: calc(50% - min(50vw, 270px)); width: min(100%, 540px); height: var(--dock-height); opacity: 1; transform: translate3d(0, 0, 0); pointer-events: none; backface-visibility: hidden; will-change: transform, opacity; transition: transform 620ms cubic-bezier(.16,1,.3,1), opacity 500ms cubic-bezier(.4,0,.2,1); }
 .dock--background { z-index: 20; }
 .dock--foreground { z-index: 40; }
 .dock.dock--hidden .dock-item { pointer-events: none; }
-.dock.dock--hidden { transform: translate3d(0, calc(100% + var(--dock-bottom) + var(--layout-gap)), 0); transition-duration: 440ms; transition-timing-function: cubic-bezier(.4,0,.2,1); }
+.dock.dock--hidden { opacity: 0; transform: translate3d(0, calc(140% + var(--dock-bottom) + var(--layout-gap)), 0); transition-duration: 520ms; transition-timing-function: cubic-bezier(.4,0,.2,1); }
 .dock-item { position: absolute; top: 0; height: var(--dock-height); opacity: 1; pointer-events: auto; transition: opacity 360ms cubic-bezier(.16,1,.3,1); }
 .dock-item > button { position: relative; width: 100%; height: 100%; padding: 0; border: 0; border-radius: inherit; color: var(--ink); background: var(--dock-surface); background-clip: padding-box; -webkit-backdrop-filter: blur(6.7px); backdrop-filter: blur(6.7px); box-shadow: none; cursor: pointer; pointer-events: auto; font-size: min(3.241vw, 17.5px); font-weight: 400; line-height: normal; transition: opacity 180ms cubic-bezier(.4,0,.2,1), background-color 220ms cubic-bezier(.4,0,.2,1); }
 .dock-pill.is-selected > button, .dock-pill > button:active { background-color: var(--dock-selected); }
@@ -195,8 +196,8 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .dock-info { left: min(42.407vw, 229px); width: min(12.222vw, 66px); }
 .dock-contact { left: min(55.648vw, 300.5px); width: min(19.259vw, 104px); }
 .dock-pill.is-selected > button::after { content: ""; position: absolute; z-index: 2; width: min(2.778vw, 15px); height: min(2.778vw, 15px); top: 0; right: 0; border-radius: 50%; background: var(--green); opacity: 1; transform: scale(1); transform-origin: center; pointer-events: none; }
-.dock.indicator-exit .dock-pill.is-selected > button::after { animation: indicator-out 180ms cubic-bezier(.4,0,.2,1) both; }
-.dock.indicator-enter .dock-pill.is-selected > button::after { animation: indicator-in 240ms cubic-bezier(.16,1,.3,1) both; }
+.dock.indicator-exit .dock-pill.is-selected > button::after { animation: indicator-out 300ms cubic-bezier(.4,0,.2,1) both; }
+.dock.indicator-enter .dock-pill.is-selected > button::after { animation: indicator-in 420ms cubic-bezier(.16,1,.3,1) both; }
 @keyframes indicator-out { to { opacity: 0; transform: scale(0); } }
 @keyframes indicator-in { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
 .dock--overlay .dock-info { left: min(42.407vw, 229px); }
