@@ -16,13 +16,14 @@ type Project = {
   year: string;
   image: string;
   visual: string;
+  video?: string;
   isNew?: boolean;
 };
 
 const projects: Project[] = [
   { id: "01", name: "KYNG", category: "CGI,Dev", year: "2026", image: "/kyng-work-front.jpg", visual: "kyng", isNew: true },
   { id: "02", name: "Solution", category: "CGI", year: "2022", image: "/sicko-work.png", visual: "solution" },
-  { id: "03", name: "NDSP", category: "CGI,AI,Dev", year: "2025", image: "/kyng-detail-drawing.png", visual: "drawing" },
+  { id: "03", name: "NDSP", category: "CGI,AI,Dev", year: "2025", image: "/kyng-detail-drawing.png", visual: "drawing", video: "/ndsp-card.mp4" },
   { id: "04", name: "ANGEL 333", category: "ID,CGI", year: "2024", image: "/angel-333-cover.jpg", visual: "angel" },
   { id: "05", name: "Yandex", category: "CGI", year: "2023", image: "/kyng-detail-cover.png", visual: "cover-warm" },
   { id: "06", name: "SBER", category: "CGI,Dev", year: "2022", image: "/kyng-detail-side.png", visual: "side-green" },
@@ -353,7 +354,21 @@ function WorkView({ onOpenProject, hidden }: { onOpenProject: (project: Project)
             key={project.id}
             onClick={() => onOpenProject(project)}
           >
-            <img className="project-card__image" src={project.image} alt="" />
+            {project.video ? (
+              <video
+                className="project-card__video"
+                src={project.video}
+                poster={project.image}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                aria-hidden="true"
+              />
+            ) : (
+              <img className="project-card__image" src={project.image} alt="" />
+            )}
             <span className="card-chip card-chip--name">{project.name}</span>
             {project.isNew && <span className="card-chip card-chip--new">NEW</span>}
             <span className="sr-only">Open {project.name} project</span>

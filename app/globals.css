@@ -46,7 +46,9 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .work-grid { display: grid; gap: var(--layout-gap); }
 
 .project-card { position: relative; display: block; width: 100%; aspect-ratio: 893 / 1173; overflow: hidden; padding: 0; border: 0; border-radius: var(--layout-radius); background: var(--soft); cursor: pointer; isolation: isolate; clip-path: inset(0 round var(--layout-radius)); -webkit-mask-image: -webkit-radial-gradient(white, black); transform: translateZ(0); }
-.project-card__image { position: absolute; display: block; max-width: none; pointer-events: none; }
+.project-card__image,
+.project-card__video { position: absolute; display: block; max-width: none; pointer-events: none; }
+.project-card__video { inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .project-card--kyng .project-card__image { inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; mix-blend-mode: darken; }
 .project-card--kyng-grey .project-card__image { width: 150.59%; aspect-ratio: 1; left: -25.3%; top: -7.05%; transform: rotate(90deg); object-fit: cover; mix-blend-mode: darken; }
 .project-card--kyng-grey { background: #ececec; }
