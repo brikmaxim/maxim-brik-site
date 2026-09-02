@@ -46,6 +46,75 @@ const INDICATOR_ENTER_MS = 420;
 const CONTROL_EXIT_MS = 280;
 const PANEL_EXIT_MS = 380;
 
+function GifVideo({
+  src,
+  className,
+  poster,
+  ariaLabel,
+  ariaHidden,
+}: {
+  src: string;
+  className?: string;
+  poster?: string;
+  ariaLabel?: string;
+  ariaHidden?: boolean;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.defaultMuted = true;
+    video.muted = true;
+    video.playsInline = true;
+
+    const play = () => {
+      if (video.paused) void video.play().catch(() => undefined);
+    };
+    const handleVisibility = () => {
+      if (!document.hidden) play();
+    };
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) play();
+    }, { threshold: 0.01 });
+
+    observer.observe(video);
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("pageshow", play);
+    play();
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("pageshow", play);
+    };
+  }, [src]);
+
+  return (
+    <video
+      ref={videoRef}
+      className={`gif-video${className ? ` ${className}` : ""}`}
+      src={src}
+      poster={poster}
+      autoPlay
+      muted
+      loop
+      playsInline
+      controls={false}
+      disablePictureInPicture
+      controlsList="nodownload nofullscreen noremoteplayback"
+      preload="auto"
+      aria-label={ariaLabel}
+      aria-hidden={ariaHidden}
+      onCanPlay={(event) => {
+        event.currentTarget.muted = true;
+        void event.currentTarget.play().catch(() => undefined);
+      }}
+    />
+  );
+}
+
 export default function Home() {
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [view, setView] = useState<View>("work");
@@ -355,15 +424,10 @@ function WorkView({ onOpenProject, hidden }: { onOpenProject: (project: Project)
             onClick={() => onOpenProject(project)}
           >
             {project.video ? (
-              <video
+              <GifVideo
                 className="project-card__video"
                 src={project.video}
                 poster={project.image}
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="metadata"
                 aria-hidden="true"
               />
             ) : (
@@ -444,9 +508,7 @@ function ProjectView({ project }: { project: Project }) {
               </figure>
 
               <figure className="project-content-card project-content-card--video">
-                <video autoPlay muted loop playsInline preload="metadata" aria-label="KYNG object in motion">
-                  <source src="/kyng-motion.mp4" type="video/mp4" />
-                </video>
+                <GifVideo src="/kyng-motion.mp4" ariaLabel="KYNG object in motion" />
               </figure>
             </>
           )}

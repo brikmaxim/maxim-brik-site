@@ -49,6 +49,11 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .project-card__image,
 .project-card__video { position: absolute; display: block; max-width: none; pointer-events: none; }
 .project-card__video { inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.gif-video { pointer-events: none; }
+.gif-video::-webkit-media-controls,
+.gif-video::-webkit-media-controls-panel,
+.gif-video::-webkit-media-controls-play-button,
+.gif-video::-webkit-media-controls-start-playback-button { display: none !important; -webkit-appearance: none; }
 .project-card--kyng .project-card__image { inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; mix-blend-mode: darken; }
 .project-card--kyng-grey .project-card__image { width: 150.59%; aspect-ratio: 1; left: -25.3%; top: -7.05%; transform: rotate(90deg); object-fit: cover; mix-blend-mode: darken; }
 .project-card--kyng-grey { background: #ececec; }
