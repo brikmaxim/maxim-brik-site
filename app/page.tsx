@@ -33,6 +33,9 @@ const projects: Project[] = [
   { id: "10", name: "KM20", category: "CGI,Dev", year: "2021", image: "/kyng-detail-side.png", visual: "side-dark" },
   { id: "11", name: "Reckless Schoolars", category: "CGI,Dev", year: "2022", image: "/sicko-work.png", visual: "sicko-mono" },
   { id: "12", name: "Omanko", category: "CGI", year: "2022", image: "/kyng-detail-drawing.png", visual: "drawing-dark" },
+  { id: "13", name: "PoemiKoso", category: "GD", year: "2026", image: "/poemikoso-cover.jpg", visual: "poemikoso" },
+  { id: "14", name: "MIXIT", category: "CGI", year: "2026", image: "/mixit-cover.jpg", visual: "mixit" },
+  { id: "15", name: "Armor Hord", category: "CGI", year: "2026", image: "/armor-hord-cover.jpg", visual: "armor-hord" },
 ];
 
 const messagePrompts = [
@@ -467,7 +470,7 @@ function ProjectView({ project }: { project: Project }) {
       </section>
 
       <figure className="detail-cover">
-        <img src={project.visual === "angel" ? project.image : "/kyng-detail-cover.png"} alt={`${project.name} project cover`} />
+        <img src={["angel", "poemikoso", "mixit", "armor-hord"].includes(project.visual) ? project.image : "/kyng-detail-cover.png"} alt={`${project.name} project cover`} />
         <span className="card-chip card-chip--name">{project.year}</span>
       </figure>
 
