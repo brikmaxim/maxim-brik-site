@@ -209,6 +209,7 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .dock-pill.is-selected { background-color: var(--dock-selected); }
 .dock-pill > button:active { background-color: var(--dock-selected); }
 .dock--background .dock-item, .dock--background .dock-item > button { pointer-events: none; }
+.dock--background .dock-pill.is-underlay-active { visibility: hidden; opacity: 0; transition: none; }
 .dock--foreground .dock-overlay-pill, .dock--foreground .dock-close { opacity: .001; pointer-events: none; will-change: opacity; }
 .dock--foreground .dock-overlay-pill { pointer-events: auto; }
 .dock--foreground .dock-overlay-pill > button { pointer-events: auto; }

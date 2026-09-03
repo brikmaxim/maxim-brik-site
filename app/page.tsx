@@ -730,7 +730,7 @@ function Dock({ overlay, view, menuSection, indicatorPhase, overlayPhase, projec
           {view === "project" && <div className="dock-item dock-circle dock-project-close"><button type="button" onClick={overlay ? undefined : onProjectClose} aria-label="Close project" aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span /></button></div>}
           <div className="dock-links">
             {items.map((item) => (
-              <div key={item} className={`dock-item dock-pill ${itemClass[item]} ${!overlay && active === item ? "is-selected" : ""}`}><button type="button" onClick={overlay ? undefined : itemAction[item]} aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span>{item}</span></button></div>
+              <div key={item} className={`dock-item dock-pill ${itemClass[item]} ${!overlay && active === item ? "is-selected" : ""} ${overlay && active === item ? "is-underlay-active" : ""}`}><button type="button" onClick={overlay ? undefined : itemAction[item]} aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span>{item}</span></button></div>
             ))}
           </div>
         </nav>
