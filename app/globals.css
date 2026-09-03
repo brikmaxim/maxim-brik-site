@@ -41,7 +41,7 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .password-gate--leaving { opacity: 0; -webkit-backdrop-filter: blur(0); backdrop-filter: blur(0); pointer-events: none; }
 .password-panel { width: min(calc(100vw - var(--content-inset) - var(--content-inset)), 447px); padding: min(4.167vw, 22.5px); display: grid; grid-template-columns: 1fr; gap: var(--layout-gap); border-radius: var(--layout-radius); background: var(--glass); background-clip: padding-box; -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); transform: translateY(0) scale(1); animation: password-panel-in 620ms cubic-bezier(.16,1,.3,1) both; transition: transform 460ms cubic-bezier(.4,0,.2,1), opacity 380ms cubic-bezier(.4,0,.2,1); }
 .password-gate--leaving .password-panel { opacity: 0; transform: translateY(min(1.852vw, 10px)) scale(.985); }
-.password-panel__logo { width: min(10.741vw, 58px); height: min(10.741vw, 58px); margin: 0 auto min(1.389vw, 7.5px); object-fit: contain; }
+.password-panel__logo { display: block; width: min(10.741vw, 58px); height: min(10.741vw, 58px); margin: 0 auto min(1.389vw, 7.5px); background: var(--glass); -webkit-backdrop-filter: blur(9px) saturate(2.5); backdrop-filter: blur(9px) saturate(2.5); -webkit-mask: url("/maxim-brik-mark.svg") center / contain no-repeat; mask: url("/maxim-brik-mark.svg") center / contain no-repeat; }
 .password-panel label { color: rgba(0,0,0,.5); }
 .password-panel input,
 .password-panel button { width: 100%; height: min(9.074vw, 49px); border: 0; border-radius: var(--inner-radius); font-size: max(16px, min(3.241vw, 17.5px)); outline: 0; }
@@ -59,9 +59,8 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .portfolio-shell { width: min(100%, 540px); margin: 0 auto; padding: var(--panel-top) var(--content-inset) min(37vw, 200px); position: relative; background: #fff; }
 .portfolio-shell.is-project { padding-top: var(--panel-top); }
 .site-content { position: relative; }
-.brand-mark { position: fixed; z-index: 25; top: calc(var(--panel-top) - min(13.148vw, 71px)); left: 50%; width: min(10.741vw, 58px); height: min(10.741vw, 58px); visibility: visible; opacity: .96; display: grid; place-items: center; background: transparent; transform: translate3d(-50%, 0, 0); pointer-events: none; transition: opacity 500ms cubic-bezier(.4,0,.2,1), visibility 0s linear 0s; }
+.brand-mark { position: fixed; z-index: 25; top: calc(var(--panel-top) - min(13.148vw, 71px)); left: 50%; width: min(10.741vw, 58px); height: min(10.741vw, 58px); visibility: visible; opacity: .96; background: var(--glass); -webkit-backdrop-filter: blur(9px) saturate(2.5); backdrop-filter: blur(9px) saturate(2.5); -webkit-mask: url("/maxim-brik-mark.svg") center / contain no-repeat; mask: url("/maxim-brik-mark.svg") center / contain no-repeat; transform: translate3d(-50%, 0, 0); pointer-events: none; transition: opacity 500ms cubic-bezier(.4,0,.2,1), visibility 0s linear 0s; }
 .brand-mark--hidden { visibility: hidden; opacity: 0; transition: opacity 420ms cubic-bezier(.4,0,.2,1), visibility 0s linear 520ms; }
-.brand-mark img { display: block; width: 100%; height: 100%; opacity: 1; }
 .work-grid { display: grid; gap: var(--layout-gap); }
 
 .project-card { position: relative; display: block; width: 100%; aspect-ratio: 893 / 1173; overflow: hidden; padding: 0; border: 0; border-radius: var(--layout-radius); background: var(--soft); cursor: pointer; isolation: isolate; clip-path: inset(0 round var(--layout-radius)); -webkit-mask-image: -webkit-radial-gradient(white, black); transform: translateZ(0); }

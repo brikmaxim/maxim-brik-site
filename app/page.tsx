@@ -87,7 +87,7 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   return (
     <div className={`password-gate ${leaving ? "password-gate--leaving" : ""}`} role="dialog" aria-modal="true" aria-labelledby="password-title">
       <form className={`password-panel ${error ? "password-panel--error" : ""}`} onSubmit={submitPassword}>
-        <img className="password-panel__logo" src="/maxim-brik-mark.svg" alt="" />
+        <span className="password-panel__logo" aria-hidden="true" />
         <label id="password-title" htmlFor="portfolio-password">Password</label>
         <input
           id="portfolio-password"
@@ -492,9 +492,7 @@ export default function Home() {
 function WorkView({ onOpenProject, hidden }: { onOpenProject: (project: Project) => void; hidden: boolean }) {
   return (
     <>
-      <div className={`brand-mark ${hidden ? "brand-mark--hidden" : ""}`} aria-hidden="true">
-        <img src="/maxim-brik-mark.svg" alt="" />
-      </div>
+      <div className={`brand-mark ${hidden ? "brand-mark--hidden" : ""}`} aria-hidden="true" />
       <section className="work-grid" aria-label="Selected work">
         {projects.map((project) => (
           <button
