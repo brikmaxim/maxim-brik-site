@@ -27,6 +27,7 @@
 
 * { box-sizing: border-box; }
 html { overflow-anchor: none; }
+html.password-locked { overflow: hidden; }
 html, body { margin: 0; width: 100%; color: var(--ink); }
 body { overflow-x: hidden; background: #fff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: min(3.241vw, 17.5px); line-height: 1.2; font-weight: 300; letter-spacing: 0; }
 button, input, textarea { color: inherit; font: inherit; letter-spacing: 0; }
@@ -35,6 +36,24 @@ a { color: inherit; text-decoration: none; }
 figure, h1, h2, p, dl, dd { margin: 0; }
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+.password-gate { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; padding: var(--content-inset); background: rgba(255,255,255,.08); -webkit-backdrop-filter: blur(15px); backdrop-filter: blur(15px); opacity: 1; transition: opacity 460ms cubic-bezier(.4,0,.2,1), -webkit-backdrop-filter 460ms cubic-bezier(.4,0,.2,1), backdrop-filter 460ms cubic-bezier(.4,0,.2,1); }
+.password-gate--leaving { opacity: 0; -webkit-backdrop-filter: blur(0); backdrop-filter: blur(0); pointer-events: none; }
+.password-panel { width: min(calc(100vw - var(--content-inset) - var(--content-inset)), 447px); padding: min(4.167vw, 22.5px); display: grid; grid-template-columns: 1fr; gap: var(--layout-gap); border-radius: var(--layout-radius); background: var(--glass); background-clip: padding-box; -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); transform: translateY(0) scale(1); animation: password-panel-in 620ms cubic-bezier(.16,1,.3,1) both; transition: transform 460ms cubic-bezier(.4,0,.2,1), opacity 380ms cubic-bezier(.4,0,.2,1); }
+.password-gate--leaving .password-panel { opacity: 0; transform: translateY(min(1.852vw, 10px)) scale(.985); }
+.password-panel__logo { width: min(10.741vw, 58px); height: min(10.741vw, 58px); margin: 0 auto min(1.389vw, 7.5px); object-fit: contain; }
+.password-panel label { color: rgba(0,0,0,.5); }
+.password-panel input,
+.password-panel button { width: 100%; height: min(9.074vw, 49px); border: 0; border-radius: var(--inner-radius); font-size: max(16px, min(3.241vw, 17.5px)); outline: 0; }
+.password-panel input { padding: 0 min(3.704vw, 20px); color: var(--ink); background: var(--dock-surface); -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); }
+.password-panel input::placeholder { color: rgba(34,34,34,.5); opacity: 1; }
+.password-panel input:focus { background: rgba(255,255,255,.65); }
+.password-panel button { color: var(--ink); background: var(--dock-selected); cursor: pointer; transition: opacity 220ms cubic-bezier(.4,0,.2,1), background-color 220ms cubic-bezier(.4,0,.2,1); }
+.password-panel button:disabled { opacity: .48; cursor: default; }
+.password-panel__error { min-height: 1.2em; color: rgba(0,0,0,.5); text-align: center; }
+.password-panel--error { animation: password-panel-shake 360ms cubic-bezier(.36,.07,.19,.97); }
+@keyframes password-panel-in { from { opacity: 0; transform: translateY(min(1.852vw, 10px)) scale(1.025); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes password-panel-shake { 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
 
 .portfolio-viewport { position: relative; width: 100%; overflow-x: hidden; }
 .portfolio-shell { width: min(100%, 540px); margin: 0 auto; padding: var(--panel-top) var(--content-inset) min(37vw, 200px); position: relative; background: #fff; }

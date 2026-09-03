@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { type FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 type Overlay = "projects" | "info" | "contact" | null;
 type View = "work" | "project";
@@ -48,6 +48,67 @@ const INDICATOR_EXIT_MS = 300;
 const INDICATOR_ENTER_MS = 420;
 const CONTROL_EXIT_MS = 280;
 const PANEL_EXIT_MS = 380;
+const PASSWORD_HASH = "576786d48ecd81b7eeb68563dfa21147520a9175df55384ab1be1ef9ea268670";
+
+async function hashPassword(value: string) {
+  const buffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+
+  const submitPassword = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!password || checking || leaving) return;
+
+    setChecking(true);
+    const matches = await hashPassword(password) === PASSWORD_HASH;
+    setChecking(false);
+
+    if (!matches) {
+      setError(true);
+      setPassword("");
+      return;
+    }
+
+    try {
+      window.sessionStorage.setItem("maximbrik-access", "granted");
+    } catch {
+      // The page still unlocks when session storage is unavailable.
+    }
+    setLeaving(true);
+    window.setTimeout(onUnlock, 460);
+  };
+
+  return (
+    <div className={`password-gate ${leaving ? "password-gate--leaving" : ""}`} role="dialog" aria-modal="true" aria-labelledby="password-title">
+      <form className={`password-panel ${error ? "password-panel--error" : ""}`} onSubmit={submitPassword}>
+        <img className="password-panel__logo" src="/maxim-brik-mark.svg" alt="" />
+        <label id="password-title" htmlFor="portfolio-password">Password</label>
+        <input
+          id="portfolio-password"
+          type="password"
+          value={password}
+          onChange={(event) => {
+            setPassword(event.target.value);
+            if (error) setError(false);
+          }}
+          placeholder="Enter password"
+          autoComplete="current-password"
+          spellCheck={false}
+          aria-invalid={error}
+          aria-describedby="password-error"
+        />
+        <button type="submit" disabled={!password || checking}>{checking ? "Checking…" : "Continue"}</button>
+        <p id="password-error" className="password-panel__error" aria-live="polite">{error ? "Incorrect password" : ""}</p>
+      </form>
+    </div>
+  );
+}
 
 function GifVideo({
   src,
@@ -119,6 +180,7 @@ function GifVideo({
 }
 
 export default function Home() {
+  const [isUnlocked, setIsUnlocked] = useState(false);
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [view, setView] = useState<View>("work");
   const [selectedProject, setSelectedProject] = useState<Project>(projects[0]);
@@ -139,6 +201,19 @@ export default function Home() {
   const scrollDirection = useRef<-1 | 0 | 1>(0);
   const workScrollY = useRef(0);
   const restoreWorkScroll = useRef(false);
+
+  useEffect(() => {
+    try {
+      if (window.sessionStorage.getItem("maximbrik-access") === "granted") setIsUnlocked(true);
+    } catch {
+      // Keep the gate visible when session storage is unavailable.
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("password-locked", !isUnlocked);
+    return () => document.documentElement.classList.remove("password-locked");
+  }, [isUnlocked]);
 
   useEffect(() => {
     const previousScrollRestoration = window.history.scrollRestoration;
@@ -407,6 +482,8 @@ export default function Home() {
           )}
         </div>
       )}
+
+      {!isUnlocked && <PasswordGate onUnlock={() => setIsUnlocked(true)} />}
 
     </main>
   );
