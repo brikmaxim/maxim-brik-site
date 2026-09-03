@@ -82,7 +82,7 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .project-card--sicko .project-card__image,
 .project-card--solution .project-card__image,
 .project-card--sicko-mono .project-card__image { inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
-.project-card--solution .project-card__image { filter: hue-rotate(195deg) saturate(.55) brightness(1.1); transform: scale(1.04); }
+.project-card--solution .project-card__image { object-position: center; }
 .project-card--sicko-mono .project-card__image { filter: grayscale(1) contrast(1.12); transform: scale(1.03); }
 .project-card--drawing,
 .project-card--drawing-dark { background: #b5b6bd; }
@@ -95,6 +95,8 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .project-card--poemikoso .project-card__image,
 .project-card--mixit .project-card__image,
 .project-card--armor-hord .project-card__image { inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.project-card--sber { background: #fff; }
+.project-card--sber .project-card__image { inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .project-card--cover-warm,
 .project-card--cover-blue { background: #f4f4f4; }
 .project-card--cover-warm .project-card__image,

@@ -22,11 +22,11 @@ type Project = {
 
 const projects: Project[] = [
   { id: "01", name: "KYNG", category: "CGI,Dev", year: "2026", image: "/kyng-work-front.jpg", visual: "kyng", isNew: true },
-  { id: "02", name: "Solution", category: "CGI", year: "2022", image: "/sicko-work.png", visual: "solution" },
+  { id: "02", name: "Solution", category: "CGI", year: "2022", image: "/solution-cover.jpg", visual: "solution" },
   { id: "03", name: "NDSP", category: "CGI,AI,Dev", year: "2025", image: "/kyng-detail-drawing.png", visual: "drawing", video: "/ndsp-card.mp4" },
   { id: "04", name: "ANGEL 333", category: "ID,CGI", year: "2024", image: "/angel-333-cover.jpg", visual: "angel" },
   { id: "05", name: "Yandex", category: "CGI", year: "2023", image: "/kyng-detail-cover.png", visual: "cover-warm" },
-  { id: "06", name: "SBER", category: "CGI,Dev", year: "2022", image: "/kyng-detail-side.png", visual: "side-green" },
+  { id: "06", name: "SBER", category: "CGI,Dev", year: "2022", image: "/sber-cover.jpg", visual: "sber" },
   { id: "07", name: "Sicko", category: "CGI,AI,Dev", year: "2026", image: "/sicko-work.png", visual: "sicko" },
   { id: "08", name: "9Mice", category: "GD", year: "2024", image: "/kyng-work.png", visual: "kyng-grey" },
   { id: "09", name: "Bogema Leningrad", category: "CGI,Dev", year: "2021", image: "/kyng-detail-cover.png", visual: "cover-blue" },
