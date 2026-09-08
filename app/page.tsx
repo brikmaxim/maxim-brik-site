@@ -89,7 +89,7 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
     <div className={`password-gate ${leaving ? "password-gate--leaving" : ""}`} role="dialog" aria-modal="true" aria-labelledby="password-title">
       <form className={`password-panel ${error ? "password-panel--error" : ""}`} onSubmit={submitPassword}>
         <span className="password-panel__logo" aria-hidden="true" />
-        <label id="password-title" htmlFor="portfolio-password">Password</label>
+        <label className="sr-only" id="password-title" htmlFor="portfolio-password">Password</label>
         <div className="password-field">
           <input
             id="portfolio-password"
