@@ -511,8 +511,8 @@ function WorkView({ onOpenProject, hidden }: { onOpenProject: (project: Project)
             ) : (
               <img className="project-card__image" src={project.image} alt="" />
             )}
-            <span className="card-chip card-chip--name">{project.name}</span>
-            {project.isNew && <span className="card-chip card-chip--new">NEW</span>}
+            <span className="card-chip card-chip--name"><span>{project.name}</span></span>
+            {project.isNew && <span className="card-chip card-chip--new"><span>NEW</span></span>}
             <span className="sr-only">Open {project.name} project</span>
           </button>
         ))}
@@ -546,7 +546,7 @@ function ProjectView({ project }: { project: Project }) {
 
       <figure className="detail-cover">
         <img src={["angel", "poemikoso", "mixit", "armor-hord"].includes(project.visual) ? project.image : "/kyng-detail-cover.png"} alt={`${project.name} project cover`} />
-        <span className="card-chip card-chip--name">{project.year}</span>
+        <span className="card-chip card-chip--name"><span>{project.year}</span></span>
       </figure>
 
       {isAngel ? (

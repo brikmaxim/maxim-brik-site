@@ -113,10 +113,13 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .project-card--side-green .project-card__image { filter: sepia(.16) hue-rotate(70deg); }
 .project-card--side-dark .project-card__image { filter: grayscale(1) contrast(1.18); }
 
-.card-chip { position: absolute; z-index: 2; top: var(--card-inset); width: max-content; max-width: calc(100% - var(--card-inset) - var(--card-inset)); height: min(8.148vw, 44px); display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0 min(5.833vw, 31.5px); border-radius: var(--inner-radius); background: var(--glass); background-clip: padding-box; -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); -webkit-mask-image: -webkit-radial-gradient(white, black); isolation: isolate; backface-visibility: hidden; box-shadow: none; font-size: min(3.241vw, 17.503px); font-weight: 400; line-height: normal; white-space: nowrap; text-overflow: ellipsis; }
+.card-chip { position: absolute; z-index: 2; top: var(--card-inset); width: max-content; max-width: calc(100% - var(--card-inset) - var(--card-inset)); height: min(8.148vw, 44px); display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0 min(5.833vw, 31.5px); border-radius: 999px; background: transparent; isolation: isolate; transform: translateZ(0); backface-visibility: hidden; box-shadow: none; font-size: min(3.241vw, 17.503px); font-weight: 400; line-height: normal; white-space: nowrap; text-overflow: ellipsis; }
+.card-chip::before { content: ""; position: absolute; z-index: 0; inset: 0; border-radius: inherit; background: var(--glass); background-clip: padding-box; -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); -webkit-clip-path: inset(0 round 999px); clip-path: inset(0 round 999px); transform: translateZ(0); pointer-events: none; }
+.card-chip > span { position: relative; z-index: 1; display: block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .card-chip--name { left: var(--card-inset); }
 .project-card--kyng .card-chip--name { left: var(--card-inset); }
-.card-chip--new { right: var(--card-inset); padding-inline: min(3.704vw, 20px); background: var(--green); }
+.card-chip--new { right: var(--card-inset); padding-inline: min(3.704vw, 20px); }
+.card-chip--new::before { background: var(--green); -webkit-backdrop-filter: none; backdrop-filter: none; }
 
 .project-detail { display: grid; gap: min(2.778vw, 15px); }
 .project-info-card { height: min(77.685vw, 419.5px); padding: min(4.167vw, 22.5px) min(4.167vw, 22.5px) min(2.778vw, 15px); border-radius: var(--layout-radius); background: #ebebeb; display: flex; flex-direction: column; }
