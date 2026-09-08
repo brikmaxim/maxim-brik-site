@@ -8,6 +8,7 @@ type MenuSection = "work" | "info" | "contact";
 type IndicatorPhase = "idle" | "exit" | "enter";
 type OverlayPhase = "enter" | "idle" | "switch-exit" | "control-exit" | "panel-exit" | "blur-exit";
 type ProjectClosePhase = "idle" | "exit";
+type PromptPhase = "typing" | "deleting";
 
 type Project = {
   id: string;
@@ -89,20 +90,22 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
       <form className={`password-panel ${error ? "password-panel--error" : ""}`} onSubmit={submitPassword}>
         <span className="password-panel__logo" aria-hidden="true" />
         <label id="password-title" htmlFor="portfolio-password">Password</label>
-        <input
-          id="portfolio-password"
-          type="password"
-          value={password}
-          onChange={(event) => {
-            setPassword(event.target.value);
-            if (error) setError(false);
-          }}
-          placeholder="Enter password"
-          autoComplete="current-password"
-          spellCheck={false}
-          aria-invalid={error}
-          aria-describedby="password-error"
-        />
+        <div className="password-field">
+          <input
+            id="portfolio-password"
+            type="password"
+            value={password}
+            onChange={(event) => {
+              setPassword(event.target.value);
+              if (error) setError(false);
+            }}
+            placeholder="Enter password"
+            autoComplete="current-password"
+            spellCheck={false}
+            aria-invalid={error}
+            aria-describedby="password-error"
+          />
+        </div>
         <button type="submit" disabled={!password || checking}>{checking ? "Checking…" : "Continue"}</button>
         <p id="password-error" className="password-panel__error" aria-live="polite">{error ? "Incorrect password" : ""}</p>
       </form>
@@ -655,14 +658,32 @@ function ContactPanel({ urgency, setUrgency, agreed, setAgreed, sent, setSent }:
 }) {
   const [message, setMessage] = useState("");
   const [promptIndex, setPromptIndex] = useState(0);
+  const [typedPrompt, setTypedPrompt] = useState("");
+  const [promptPhase, setPromptPhase] = useState<PromptPhase>("typing");
 
   useEffect(() => {
     if (message) return;
-    const promptTimer = window.setInterval(() => {
-      setPromptIndex((current) => (current + 1) % messagePrompts.length);
-    }, 3200);
-    return () => window.clearInterval(promptTimer);
-  }, [message]);
+    const target = messagePrompts[promptIndex];
+    let delay = 38;
+    let update = () => setTypedPrompt(target.slice(0, typedPrompt.length + 1));
+
+    if (promptPhase === "typing" && typedPrompt === target) {
+      delay = 1050;
+      update = () => setPromptPhase("deleting");
+    } else if (promptPhase === "deleting" && typedPrompt.length > 0) {
+      delay = 20;
+      update = () => setTypedPrompt((current) => current.slice(0, -1));
+    } else if (promptPhase === "deleting") {
+      delay = 180;
+      update = () => {
+        setPromptIndex((current) => (current + 1) % messagePrompts.length);
+        setPromptPhase("typing");
+      };
+    }
+
+    const promptTimer = window.setTimeout(update, delay);
+    return () => window.clearTimeout(promptTimer);
+  }, [message, promptIndex, promptPhase, typedPrompt]);
 
   return (
     <section className="glass-panel contact-panel">
@@ -671,7 +692,7 @@ function ContactPanel({ urgency, setUrgency, agreed, setAgreed, sent, setSent }:
         <textarea id="message" value={message} onChange={(event) => setMessage(event.target.value)} aria-describedby="message-prompt" />
         {!message && (
           <span className="message-prompt" id="message-prompt" aria-hidden="true">
-            <span className="message-prompt__text" key={promptIndex}>{messagePrompts[promptIndex]}</span>
+            <span className="message-prompt__text">{typedPrompt}</span>
             <span className="message-prompt__caret" />
           </span>
         )}
