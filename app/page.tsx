@@ -6,7 +6,7 @@ type Overlay = "projects" | "info" | "contact" | null;
 type View = "work" | "project";
 type MenuSection = "work" | "info" | "contact";
 type IndicatorPhase = "idle" | "exit" | "enter";
-type OverlayPhase = "enter" | "idle" | "switch-exit" | "control-exit" | "panel-exit" | "blur-exit";
+type OverlayPhase = "enter" | "idle" | "panel-exit";
 type ProjectClosePhase = "idle" | "exit";
 type PromptPhase = "typing" | "deleting";
 
@@ -45,10 +45,9 @@ const messagePrompts = [
   "Share your idea with us",
 ] as const;
 
-const INDICATOR_EXIT_MS = 300;
-const INDICATOR_ENTER_MS = 420;
-const CONTROL_EXIT_MS = 280;
-const PANEL_EXIT_MS = 380;
+const INDICATOR_ENTER_MS = 180;
+const PANEL_ENTER_MS = 240;
+const PANEL_EXIT_MS = 160;
 const PASSWORD_HASH = "576786d48ecd81b7eeb68563dfa21147520a9175df55384ab1be1ef9ea268670";
 
 async function hashPassword(value: string) {
@@ -190,6 +189,7 @@ export default function Home() {
   const [urgency, setUrgency] = useState<"1week" | "2weeks" | "4weeks">("2weeks");
   const [agreed, setAgreed] = useState(false);
   const [sent, setSent] = useState(false);
+  const [messagePromptDismissed, setMessagePromptDismissed] = useState(false);
   const [menuSection, setMenuSection] = useState<MenuSection>("work");
   const [indicatorPhase, setIndicatorPhase] = useState<IndicatorPhase>("idle");
   const [overlayPhase, setOverlayPhase] = useState<OverlayPhase>("idle");
@@ -313,13 +313,10 @@ export default function Home() {
       return;
     }
 
-    setIndicatorPhase("exit");
-    transitionTimers.current.push(window.setTimeout(() => {
-      commit();
-      setMenuSection(nextSection);
-      setIndicatorPhase("enter");
-      transitionTimers.current.push(window.setTimeout(() => setIndicatorPhase("idle"), INDICATOR_ENTER_MS));
-    }, INDICATOR_EXIT_MS));
+    commit();
+    setMenuSection(nextSection);
+    setIndicatorPhase("enter");
+    transitionTimers.current.push(window.setTimeout(() => setIndicatorPhase("idle"), INDICATOR_ENTER_MS));
   };
 
   const openOverlay = (nextOverlay: Exclude<Overlay, null>) => {
@@ -327,7 +324,7 @@ export default function Home() {
     transitionTimers.current = [];
     setOverlayPhase("enter");
     setOverlay(nextOverlay);
-    transitionTimers.current.push(window.setTimeout(() => setOverlayPhase("idle"), 900));
+    transitionTimers.current.push(window.setTimeout(() => setOverlayPhase("idle"), PANEL_ENTER_MS));
   };
 
   const switchOverlay = (nextOverlay: "info" | "contact", nextSection: "info" | "contact") => {
@@ -336,40 +333,38 @@ export default function Home() {
       return;
     }
 
-    if (overlay === nextOverlay || overlayPhase !== "idle") return;
+    if (overlay === nextOverlay) {
+      if (overlayPhase === "panel-exit") {
+        transitionTimers.current.forEach(window.clearTimeout);
+        transitionTimers.current = [];
+        setOverlayPhase("enter");
+        transitionTimers.current.push(window.setTimeout(() => setOverlayPhase("idle"), PANEL_ENTER_MS));
+      }
+      return;
+    }
 
     transitionTimers.current.forEach(window.clearTimeout);
     transitionTimers.current = [];
-    setIndicatorPhase("exit");
-    setOverlayPhase("switch-exit");
-
-    transitionTimers.current.push(window.setTimeout(() => {
-      setOverlay(nextOverlay);
-      setMenuSection(nextSection);
-      setOverlayPhase("enter");
-      setIndicatorPhase("enter");
-      transitionTimers.current.push(window.setTimeout(() => setIndicatorPhase("idle"), INDICATOR_ENTER_MS));
-      transitionTimers.current.push(window.setTimeout(() => setOverlayPhase("idle"), 900));
-    }, PANEL_EXIT_MS));
+    setOverlay(nextOverlay);
+    setMenuSection(nextSection);
+    setOverlayPhase("enter");
+    setIndicatorPhase("enter");
+    transitionTimers.current.push(window.setTimeout(() => setIndicatorPhase("idle"), INDICATOR_ENTER_MS));
+    transitionTimers.current.push(window.setTimeout(() => setOverlayPhase("idle"), PANEL_ENTER_MS));
   };
 
   const closeOverlay = () => {
-    if (!overlay || overlayPhase !== "idle") return;
+    if (!overlay) return;
     transitionTimers.current.forEach(window.clearTimeout);
     transitionTimers.current = [];
-    setOverlayPhase("control-exit");
-
+    setOverlayPhase("panel-exit");
     transitionTimers.current.push(window.setTimeout(() => {
-      setIndicatorPhase("exit");
-      setOverlayPhase("panel-exit");
-      transitionTimers.current.push(window.setTimeout(() => {
-        setOverlay(null);
-        setOverlayPhase("idle");
-        setMenuSection("work");
-        setIndicatorPhase("enter");
-        transitionTimers.current.push(window.setTimeout(() => setIndicatorPhase("idle"), INDICATOR_ENTER_MS));
-      }, PANEL_EXIT_MS));
-    }, CONTROL_EXIT_MS));
+      setOverlay(null);
+      setOverlayPhase("idle");
+      setMenuSection("work");
+      setIndicatorPhase("enter");
+      transitionTimers.current.push(window.setTimeout(() => setIndicatorPhase("idle"), INDICATOR_ENTER_MS));
+    }, PANEL_EXIT_MS));
   };
 
   const openProject = (project: Project = projects[0]) => {
@@ -415,7 +410,7 @@ export default function Home() {
     transitionTimers.current.push(window.setTimeout(() => {
       showWork();
       setProjectClosePhase("idle");
-    }, 220));
+    }, 160));
   };
 
   const selectWork = () => overlay ? closeOverlay() : switchSection("work", showWork);
@@ -481,6 +476,8 @@ export default function Home() {
               setAgreed={setAgreed}
               sent={sent}
               setSent={setSent}
+              promptDismissed={messagePromptDismissed}
+              setPromptDismissed={setMessagePromptDismissed}
             />
           )}
         </div>
@@ -648,13 +645,15 @@ function InfoPanel() {
   );
 }
 
-function ContactPanel({ urgency, setUrgency, agreed, setAgreed, sent, setSent }: {
+function ContactPanel({ urgency, setUrgency, agreed, setAgreed, sent, setSent, promptDismissed, setPromptDismissed }: {
   urgency: "1week" | "2weeks" | "4weeks";
   setUrgency: (value: "1week" | "2weeks" | "4weeks") => void;
   agreed: boolean;
   setAgreed: (value: boolean) => void;
   sent: boolean;
   setSent: (value: boolean) => void;
+  promptDismissed: boolean;
+  setPromptDismissed: (value: boolean) => void;
 }) {
   const [message, setMessage] = useState("");
   const [promptIndex, setPromptIndex] = useState(0);
@@ -662,7 +661,7 @@ function ContactPanel({ urgency, setUrgency, agreed, setAgreed, sent, setSent }:
   const [promptPhase, setPromptPhase] = useState<PromptPhase>("typing");
 
   useEffect(() => {
-    if (message) return;
+    if (message || promptDismissed) return;
     const target = messagePrompts[promptIndex];
     let delay = 38;
     let update = () => setTypedPrompt(target.slice(0, typedPrompt.length + 1));
@@ -683,14 +682,25 @@ function ContactPanel({ urgency, setUrgency, agreed, setAgreed, sent, setSent }:
 
     const promptTimer = window.setTimeout(update, delay);
     return () => window.clearTimeout(promptTimer);
-  }, [message, promptIndex, promptPhase, typedPrompt]);
+  }, [message, promptDismissed, promptIndex, promptPhase, typedPrompt]);
+
+  const activateMessage = () => setPromptDismissed(true);
 
   return (
     <section className="glass-panel contact-panel">
       <label htmlFor="message">Messege</label>
-      <div className={`message-field ${message ? "has-value" : ""}`}>
-        <textarea id="message" value={message} onChange={(event) => setMessage(event.target.value)} aria-describedby="message-prompt" />
-        {!message && (
+      <div className={`message-field ${message ? "has-value" : ""} ${promptDismissed ? "is-active" : ""}`}>
+        <textarea
+          id="message"
+          value={message}
+          onFocus={activateMessage}
+          onChange={(event) => {
+            activateMessage();
+            setMessage(event.target.value);
+          }}
+          aria-describedby={!promptDismissed ? "message-prompt" : undefined}
+        />
+        {!message && !promptDismissed && (
           <span className="message-prompt" id="message-prompt" aria-hidden="true">
             <span className="message-prompt__text">{typedPrompt}</span>
             <span className="message-prompt__caret" />
@@ -744,32 +754,22 @@ function Dock({ overlay, view, menuSection, indicatorPhase, overlayPhase, projec
   const itemAction = { Work: onWork, Info: onInfo, Contact: onContact };
 
   return (
-    <>
-      <div className="dock-anchor dock-anchor--base">
-        <nav className={`dock dock--base ${overlay ? "dock--background" : ""} ${hidden ? "dock--hidden" : ""} indicator-${overlay ? "idle" : indicatorPhase} project-close-${projectClosePhase}`} aria-label="Primary navigation">
-          <div className="dock-item dock-circle dock-plus"><button type="button" onClick={overlay ? undefined : onProjects} aria-label="Open project index" aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span /></button></div>
-          {view === "project" && <div className="dock-item dock-circle dock-project-close"><button type="button" onClick={overlay ? undefined : onProjectClose} aria-label="Close project" aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span /></button></div>}
-          <div className="dock-links">
-            {items.map((item) => (
-              <div key={item} className={`dock-item dock-pill ${itemClass[item]} ${!overlay && active === item ? "is-selected" : ""} ${overlay && active === item ? "is-underlay-active" : ""}`}><button type="button" onClick={overlay ? undefined : itemAction[item]} aria-disabled={Boolean(overlay)} tabIndex={overlay ? -1 : 0}><span>{item}</span></button></div>
-            ))}
-          </div>
-        </nav>
-      </div>
-      {overlay && (
-        <div className="dock-anchor dock-anchor--foreground">
-          <nav className={`dock dock--foreground is-open ${hidden ? "dock--hidden" : ""} indicator-${indicatorPhase} overlay-phase-${overlayPhase}`} aria-label="Panel navigation">
-            <div className="dock-links">
-              {items.map((item) => (
-                <div key={item} className={`dock-item dock-pill dock-overlay-pill ${itemClass[item]} ${active === item ? "is-selected is-overlay-active" : ""}`}>
-                  <button type="button" onClick={itemAction[item]} aria-current={active === item ? "page" : undefined}><span>{item}</span></button>
-                </div>
-              ))}
+    <div className="dock-anchor dock-anchor--base">
+      <nav className={`dock dock--base ${overlay ? "is-open" : ""} ${hidden ? "dock--hidden" : ""} indicator-${indicatorPhase} overlay-phase-${overlayPhase} project-close-${projectClosePhase}`} aria-label="Primary navigation">
+        <div className="dock-item dock-circle dock-plus"><button type="button" onClick={overlay ? undefined : onProjects} aria-label="Open project index" aria-disabled={Boolean(overlay)}><span /></button></div>
+        {overlay ? (
+          <div className="dock-item dock-circle dock-close"><button type="button" onClick={onClose} aria-label="Close panel"><span /></button></div>
+        ) : view === "project" ? (
+          <div className="dock-item dock-circle dock-project-close"><button type="button" onClick={onProjectClose} aria-label="Close project"><span /></button></div>
+        ) : null}
+        <div className="dock-links">
+          {items.map((item) => (
+            <div key={item} className={`dock-item dock-pill ${itemClass[item]} ${active === item ? "is-selected" : ""}`}>
+              <button type="button" onClick={itemAction[item]} aria-current={active === item ? "page" : undefined}><span>{item}</span></button>
             </div>
-            <div className="dock-item dock-circle dock-close"><button type="button" onClick={onClose} aria-label="Close panel"><span /></button></div>
-          </nav>
+          ))}
         </div>
-      )}
-    </>
+      </nav>
+    </div>
   );
 }

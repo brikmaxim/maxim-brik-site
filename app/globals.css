@@ -152,12 +152,10 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .glass-panel { position: relative; z-index: 1; overflow: hidden; border: 0; border-radius: var(--layout-radius); background: var(--glass); background-clip: padding-box; color: #000; -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); -webkit-mask-image: -webkit-radial-gradient(white, black); isolation: isolate; backface-visibility: hidden; box-shadow: none; pointer-events: auto; }
 
 .project-index > .glass-panel, .info-stack > .glass-panel, .contact-panel { opacity: 1; transform: none; animation: none; }
-.overlay-phase--enter .project-index > .glass-panel, .overlay-phase--enter .info-stack > .glass-panel, .overlay-phase--enter .contact-panel { animation: panel-reveal 760ms cubic-bezier(.16,1,.3,1) both; transform-origin: center; }
-.overlay-phase--switch-exit .project-index > .glass-panel, .overlay-phase--switch-exit .info-stack > .glass-panel, .overlay-phase--switch-exit .contact-panel,
-.overlay-phase--panel-exit .project-index > .glass-panel, .overlay-phase--panel-exit .info-stack > .glass-panel, .overlay-phase--panel-exit .contact-panel { animation: panel-dismiss 380ms cubic-bezier(.4,0,.2,1) both; }
-.overlay-phase--blur-exit .project-index > .glass-panel, .overlay-phase--blur-exit .info-stack > .glass-panel, .overlay-phase--blur-exit .contact-panel { opacity: 0; transform: translateY(min(1.389vw, 7.5px)) scale(.985); animation: none; }
-@keyframes panel-reveal { from { opacity: 0; transform: translateY(min(1.852vw, 10px)) scale(1.045); } to { opacity: 1; transform: translateY(0) scale(1); } }
-@keyframes panel-dismiss { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(min(1.389vw, 7.5px)) scale(.985); } }
+.overlay-phase--enter .project-index > .glass-panel, .overlay-phase--enter .info-stack > .glass-panel, .overlay-phase--enter .contact-panel { animation: panel-reveal 220ms cubic-bezier(.16,1,.3,1) both; transform-origin: center; }
+.overlay-phase--panel-exit .project-index > .glass-panel, .overlay-phase--panel-exit .info-stack > .glass-panel, .overlay-phase--panel-exit .contact-panel { animation: panel-dismiss 160ms cubic-bezier(.4,0,.2,1) both; }
+@keyframes panel-reveal { from { opacity: 0; } to { opacity: 1; } }
+@keyframes panel-dismiss { from { opacity: 1; } to { opacity: 0; } }
 
 .project-index { position: absolute; top: var(--panel-top); right: var(--content-edge); bottom: var(--panel-bottom); left: var(--content-edge); display: grid; grid-template-rows: min(79.537vw, 429.5px) minmax(0, 1fr); gap: var(--layout-gap); pointer-events: auto; }
 .project-index__table { height: 100%; padding: min(2.963vw, 16px) min(3.426vw, 18.5px); overflow: hidden; }
@@ -183,7 +181,7 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .contact-panel > label, .contact-label { display: block; color: #bfbfbf; }
 .message-field { position: relative; width: calc(100% + min(2.407vw, 13px)); height: min(23.519vw, 127px); margin: min(2.315vw, 12.5px) calc(-1 * min(1.204vw, 6.5px)) 0; border-top: .5px solid var(--line); border-bottom: .5px solid var(--line); }
 .contact-panel textarea { display: block; width: 100%; height: 100%; margin: 0; padding: min(3.056vw, 16.5px) min(1.204vw, 6.5px); resize: none; border: 0; outline: 0; color: #000; caret-color: #000; background: transparent; font-size: max(16px, min(3.241vw, 17.5px)); }
-.message-field:not(.has-value) textarea { caret-color: transparent; }
+.message-field:not(.has-value):not(.is-active) textarea { caret-color: transparent; }
 .message-prompt { position: absolute; top: min(3.056vw, 16.5px); left: min(1.204vw, 6.5px); right: min(1.204vw, 6.5px); display: flex; align-items: baseline; overflow: hidden; color: #000; white-space: nowrap; pointer-events: none; font-size: max(16px, min(3.241vw, 17.5px)); }
 .message-prompt__text { overflow: hidden; text-overflow: clip; }
 .message-prompt__caret { flex: 0 0 auto; width: 1px; height: 1.05em; margin-left: 1px; background: currentColor; transform: translateY(.12em); animation: message-caret-blink 900ms steps(1,end) infinite; }
@@ -201,29 +199,14 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .copy-email { display: block; width: min(45.556vw, 246px); height: min(8.148vw, 44px); margin: 0 auto; border: 0; color: #000; background: transparent; font-size: min(3.241vw, 17.5px); font-weight: 400; cursor: pointer; }
 
 .dock-anchor { position: fixed; right: 0; bottom: var(--dock-bottom); left: 0; width: 100%; height: var(--dock-height); pointer-events: none; }
-.dock-anchor--base { z-index: 20; }
-.dock-anchor--foreground { z-index: 40; }
+.dock-anchor--base { z-index: 40; }
 .dock { position: absolute; top: 0; left: calc(50% - min(50vw, 270px)); width: min(100%, 540px); height: var(--dock-height); pointer-events: none; }
-.dock--background { z-index: 20; }
-.dock--foreground { z-index: 40; }
-.dock-item { position: absolute; top: 0; height: var(--dock-height); visibility: visible; opacity: 1; isolation: isolate; transform: translate3d(0, 0, 0); pointer-events: auto; background: transparent; box-shadow: none; transition: transform 620ms cubic-bezier(.16,1,.3,1), opacity 500ms cubic-bezier(.4,0,.2,1), visibility 0s linear 0s; }
-.dock-item::before { content: ""; position: absolute; z-index: 0; inset: 0; overflow: hidden; border-radius: inherit; background: var(--dock-surface); background-clip: padding-box; -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); -webkit-mask-image: -webkit-radial-gradient(white, black); backface-visibility: hidden; pointer-events: none; transition: background-color 220ms cubic-bezier(.4,0,.2,1); }
-.dock-item > button { position: relative; z-index: 1; width: 100%; height: 100%; padding: 0; border: 0; border-radius: inherit; color: var(--ink); background: transparent; box-shadow: none; cursor: pointer; pointer-events: auto; font-size: min(3.241vw, 17.5px); font-weight: 400; line-height: normal; transition: opacity 180ms cubic-bezier(.4,0,.2,1); }
+.dock-item { position: absolute; top: 0; height: var(--dock-height); visibility: visible; opacity: 1; isolation: isolate; transform: translate3d(0, 0, 0); pointer-events: auto; background: transparent; box-shadow: none; transition: transform 240ms cubic-bezier(.16,1,.3,1), opacity 160ms cubic-bezier(.4,0,.2,1), visibility 0s linear 0s; }
+.dock-item::before { content: ""; position: absolute; z-index: 0; inset: 0; overflow: hidden; border-radius: inherit; background: var(--dock-surface); background-clip: padding-box; -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); -webkit-mask-image: -webkit-radial-gradient(white, black); backface-visibility: hidden; pointer-events: none; transition: background-color 120ms cubic-bezier(.4,0,.2,1); }
+.dock-item > button { position: relative; z-index: 1; width: 100%; height: 100%; padding: 0; border: 0; border-radius: inherit; color: var(--ink); background: transparent; box-shadow: none; cursor: pointer; pointer-events: auto; font-size: min(3.241vw, 17.5px); font-weight: 400; line-height: normal; transition: opacity 120ms cubic-bezier(.4,0,.2,1); }
 .dock-pill.is-selected::before { background-color: var(--dock-selected); }
 .dock-pill > button:active { background: transparent; }
 .dock-pill:active::before { background-color: var(--dock-selected); }
-.dock--background .dock-item, .dock--background .dock-item > button { pointer-events: none; }
-.dock--background .dock-pill.is-underlay-active { visibility: hidden; opacity: 0; transition: none; }
-.dock--foreground .dock-overlay-pill, .dock--foreground .dock-close { opacity: .001; pointer-events: none; will-change: opacity; }
-.dock--foreground .dock-overlay-pill { pointer-events: auto; }
-.dock--foreground .dock-overlay-pill > button { pointer-events: auto; }
-.dock--foreground .dock-close > button { pointer-events: none; }
-.dock--foreground.is-open .dock-overlay-pill.is-overlay-active,
-.dock--foreground.is-open .dock-close { opacity: 1; pointer-events: auto; }
-.dock--foreground.is-open .dock-overlay-pill.is-overlay-active > button,
-.dock--foreground.is-open .dock-close > button { pointer-events: auto; }
-.dock.overlay-phase-panel-exit .dock-overlay-pill.is-overlay-active,
-.dock.overlay-phase-blur-exit .dock-overlay-pill.is-overlay-active { opacity: .001; pointer-events: none; transition-duration: 240ms; transition-timing-function: cubic-bezier(.4,0,.2,1); }
 .dock button:focus-visible { outline: 1px solid rgba(34,34,34,.28); outline-offset: 2px; }
 .dock-circle { width: var(--dock-height); border-radius: 50%; }
 .dock-plus { left: min(9.352vw, 50.5px); }
@@ -239,19 +222,17 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .dock-info { left: min(42.407vw, 229px); width: min(12.222vw, 66px); }
 .dock-contact { left: min(55.648vw, 300.5px); width: min(19.259vw, 104px); }
 .dock-pill.is-selected > button::after { content: ""; position: absolute; z-index: 2; width: min(2.778vw, 15px); height: min(2.778vw, 15px); top: 0; right: 0; border-radius: 50%; background: var(--green); opacity: 1; transform: scale(1); transform-origin: center; pointer-events: none; }
-.dock.indicator-exit .dock-pill.is-selected > button::after { animation: indicator-out 300ms cubic-bezier(.4,0,.2,1) both; }
-.dock.indicator-enter .dock-pill.is-selected > button::after { animation: indicator-in 420ms cubic-bezier(.16,1,.3,1) both; }
+.dock.indicator-exit .dock-pill.is-selected > button::after { animation: indicator-out 120ms cubic-bezier(.4,0,.2,1) both; }
+.dock.indicator-enter .dock-pill.is-selected > button::after { animation: indicator-in 180ms cubic-bezier(.16,1,.3,1) both; }
 @keyframes indicator-out { to { opacity: 0; transform: scale(0); } }
 @keyframes indicator-in { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
 .dock--overlay .dock-info { left: min(42.407vw, 229px); }
 .dock--overlay .dock-contact { left: min(55.648vw, 300.5px); }
 .dock-close span::before { transform: translate(-50%,-50%) rotate(45deg); }
 .dock-close span::after { transform: translate(-50%,-50%) rotate(-45deg); }
-.dock.overlay-phase-control-exit .dock-close,
 .dock.overlay-phase-panel-exit .dock-close,
-.dock.overlay-phase-blur-exit .dock-close,
 .dock.project-close-exit .dock-project-close { opacity: 0; }
-.dock.dock--hidden .dock-item { visibility: hidden; opacity: 0; transform: translate3d(0, min(3.704vw, 20px), 0); pointer-events: none; transition: transform 520ms cubic-bezier(.4,0,.2,1), opacity 420ms cubic-bezier(.4,0,.2,1), background-color 220ms cubic-bezier(.4,0,.2,1), visibility 0s linear 520ms; }
+.dock.dock--hidden .dock-item { visibility: hidden; opacity: 0; transform: translate3d(0, min(3.704vw, 20px), 0); pointer-events: none; transition: transform 240ms cubic-bezier(.4,0,.2,1), opacity 160ms cubic-bezier(.4,0,.2,1), visibility 0s linear 240ms; }
 
 @media (min-width: 541px) {
   body { background: #f4f4f4; }
