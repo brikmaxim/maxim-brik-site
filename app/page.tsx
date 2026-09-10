@@ -4,7 +4,6 @@ import { type FormEvent, useCallback, useEffect, useLayoutEffect, useRef, useSta
 
 type Overlay = "projects" | "info" | "contact" | null;
 type OverlayName = Exclude<Overlay, null>;
-type DepartingOverlay = { name: OverlayName; id: number };
 type View = "work" | "project";
 type MenuSection = "work" | "info" | "contact";
 type PromptPhase = "typing" | "deleting";
@@ -180,7 +179,8 @@ function GifVideo({
 export default function Home() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [overlay, setOverlay] = useState<Overlay>(null);
-  const [departingOverlay, setDepartingOverlay] = useState<DepartingOverlay | null>(null);
+  const [displayedOverlay, setDisplayedOverlay] = useState<Overlay>(null);
+  const [overlayVisible, setOverlayVisible] = useState(false);
   const [view, setView] = useState<View>("work");
   const [selectedProject, setSelectedProject] = useState<Project>(projects[0]);
   const [urgency, setUrgency] = useState<"1week" | "2weeks" | "4weeks">("2weeks");
@@ -191,8 +191,10 @@ export default function Home() {
   const [dockHidden, setDockHidden] = useState(false);
   const restoreFrames = useRef<number[]>([]);
   const overlayRef = useRef<Overlay>(null);
-  const departureId = useRef(0);
-  const departureTimer = useRef<number | null>(null);
+  const displayedOverlayRef = useRef<Overlay>(null);
+  const overlayVisibleRef = useRef(false);
+  const overlaySwapTimer = useRef<number | null>(null);
+  const overlayRevealFrames = useRef<number[]>([]);
   const lastScrollY = useRef(0);
   const scrollFrame = useRef<number | null>(null);
   const dockHiddenRef = useRef(false);
@@ -238,7 +240,8 @@ export default function Home() {
   }, [view]);
 
   useEffect(() => () => {
-    if (departureTimer.current !== null) window.clearTimeout(departureTimer.current);
+    if (overlaySwapTimer.current !== null) window.clearTimeout(overlaySwapTimer.current);
+    overlayRevealFrames.current.forEach(window.cancelAnimationFrame);
   }, []);
 
   useEffect(() => {
@@ -303,32 +306,87 @@ export default function Home() {
     };
   }, [overlay]);
 
-  const animateOverlayOut = useCallback((currentOverlay: OverlayName) => {
-    if (departureTimer.current !== null) window.clearTimeout(departureTimer.current);
-    const id = ++departureId.current;
-    setDepartingOverlay({ name: currentOverlay, id });
-    departureTimer.current = window.setTimeout(() => {
-      setDepartingOverlay((current) => current?.id === id ? null : current);
-      departureTimer.current = null;
-    }, 720);
+  const setPanelVisibility = useCallback((visible: boolean) => {
+    overlayVisibleRef.current = visible;
+    setOverlayVisible(visible);
   }, []);
 
+  const revealOverlay = useCallback(() => {
+    overlayRevealFrames.current.forEach(window.cancelAnimationFrame);
+    overlayRevealFrames.current = [];
+    const firstFrame = window.requestAnimationFrame(() => {
+      const secondFrame = window.requestAnimationFrame(() => {
+        if (displayedOverlayRef.current && overlayRef.current === displayedOverlayRef.current) {
+          setPanelVisibility(true);
+        }
+      });
+      overlayRevealFrames.current.push(secondFrame);
+    });
+    overlayRevealFrames.current.push(firstFrame);
+  }, [setPanelVisibility]);
+
+  const scheduleOverlaySwap = useCallback(() => {
+    if (overlaySwapTimer.current !== null) return;
+    overlaySwapTimer.current = window.setTimeout(() => {
+      overlaySwapTimer.current = null;
+      const targetOverlay = overlayRef.current;
+
+      if (!targetOverlay) {
+        displayedOverlayRef.current = null;
+        setDisplayedOverlay(null);
+        return;
+      }
+
+      if (targetOverlay === displayedOverlayRef.current) {
+        revealOverlay();
+        return;
+      }
+
+      displayedOverlayRef.current = targetOverlay;
+      setDisplayedOverlay(targetOverlay);
+      setPanelVisibility(false);
+      revealOverlay();
+    }, 340);
+  }, [revealOverlay, setPanelVisibility]);
+
   const openOverlay = useCallback((nextOverlay: OverlayName) => {
-    const currentOverlay = overlayRef.current;
-    if (currentOverlay === nextOverlay) return;
-    if (currentOverlay) animateOverlayOut(currentOverlay);
+    if (overlayRef.current === nextOverlay && overlayVisibleRef.current) return;
+
     overlayRef.current = nextOverlay;
     setOverlay(nextOverlay);
     setMenuSection(nextOverlay === "info" || nextOverlay === "contact" ? nextOverlay : "work");
-  }, [animateOverlayOut]);
+
+    if (!displayedOverlayRef.current) {
+      displayedOverlayRef.current = nextOverlay;
+      setDisplayedOverlay(nextOverlay);
+      setPanelVisibility(false);
+      revealOverlay();
+      return;
+    }
+
+    if (displayedOverlayRef.current === nextOverlay) {
+      if (overlaySwapTimer.current !== null) {
+        window.clearTimeout(overlaySwapTimer.current);
+        overlaySwapTimer.current = null;
+      }
+      revealOverlay();
+      return;
+    }
+
+    setPanelVisibility(false);
+    scheduleOverlaySwap();
+  }, [revealOverlay, scheduleOverlaySwap, setPanelVisibility]);
 
   const closeOverlay = useCallback(() => {
-    const currentOverlay = overlayRef.current;
-    if (currentOverlay) animateOverlayOut(currentOverlay);
     overlayRef.current = null;
     setOverlay(null);
     setMenuSection("work");
-  }, [animateOverlayOut]);
+    overlayRevealFrames.current.forEach(window.cancelAnimationFrame);
+    overlayRevealFrames.current = [];
+    if (!displayedOverlayRef.current) return;
+    setPanelVisibility(false);
+    scheduleOverlaySwap();
+  }, [scheduleOverlaySwap, setPanelVisibility]);
 
   const openProject = (project: Project = projects[0]) => {
     if (view === "work") workScrollY.current = window.scrollY;
@@ -363,6 +421,9 @@ export default function Home() {
       restoreWorkScroll.current = true;
       overlayRef.current = null;
       setOverlay(null);
+      displayedOverlayRef.current = null;
+      setDisplayedOverlay(null);
+      setPanelVisibility(false);
       setMenuSection("work");
       setView("work");
     };
@@ -372,7 +433,7 @@ export default function Home() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("popstate", onPopState);
     };
-  }, [closeOverlay, view]);
+  }, [closeOverlay, setPanelVisibility, view]);
 
   const renderOverlayContent = (currentOverlay: OverlayName, active: boolean) => (
     <>
@@ -415,7 +476,7 @@ export default function Home() {
         </div>
       </div>
 
-      {(overlay || departingOverlay) && (
+      {(overlay || displayedOverlay) && (
         <div
           className={`overlay-layer ${overlay ? `overlay-layer--active overlay-layer--${overlay}` : "overlay-layer--leaving"}`}
           role={overlay ? "dialog" : undefined}
@@ -423,14 +484,12 @@ export default function Home() {
           aria-label={overlay ? `${overlay} panel` : undefined}
         >
           {overlay && <button className="blur-screen" type="button" onClick={selectWork} aria-label="Close panel" />}
-          {departingOverlay && (
-            <div className="overlay-motion overlay-motion--leaving" key={`leaving-${departingOverlay.id}`} aria-hidden="true">
-              {renderOverlayContent(departingOverlay.name, false)}
-            </div>
-          )}
-          {overlay && (
-            <div className="overlay-motion overlay-motion--entering" key={`entering-${overlay}`}>
-              {renderOverlayContent(overlay, true)}
+          {displayedOverlay && (
+            <div
+              className={`overlay-motion ${overlayVisible ? "is-visible" : ""}`}
+              aria-hidden={!overlayVisible || displayedOverlay !== overlay}
+            >
+              {renderOverlayContent(displayedOverlay, overlayVisible && displayedOverlay === overlay)}
             </div>
           )}
         </div>
