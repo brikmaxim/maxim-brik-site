@@ -152,11 +152,11 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .overlay-layer { position: fixed; z-index: 30; inset: 0; pointer-events: none; backface-visibility: hidden; }
 .blur-screen { position: absolute; inset: 0; width: 100%; height: auto; padding: 0; border: 0; background: transparent; opacity: 1; -webkit-backdrop-filter: none; backdrop-filter: none; pointer-events: none; cursor: default; animation: none; }
 .overlay-layer--active .blur-screen { opacity: 1; pointer-events: auto; }
-.overlay-view { position: absolute; inset: 0; visibility: hidden; opacity: 0; pointer-events: none; backface-visibility: hidden; transition: opacity 140ms ease, visibility 0s linear 170ms; }
-.overlay-view.is-active { visibility: visible; opacity: 1; pointer-events: auto; will-change: opacity; transition: opacity 170ms ease, visibility 0s linear 0s; }
 .glass-panel { position: relative; z-index: 1; overflow: hidden; border: 0; border-radius: var(--layout-radius); background: var(--glass); background-clip: padding-box; color: #000; -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); -webkit-mask-image: -webkit-radial-gradient(white, black); isolation: isolate; backface-visibility: hidden; box-shadow: none; pointer-events: auto; }
 
 .project-index > .glass-panel, .info-stack > .glass-panel, .contact-panel { opacity: 1; transform: none; animation: none; }
+.overlay-layer--active .project-index > .glass-panel, .overlay-layer--active .info-stack > .glass-panel, .overlay-layer--active .contact-panel { animation: panel-reveal 220ms cubic-bezier(.8,.01,.11,.98) both; }
+@keyframes panel-reveal { from { opacity: 0; } to { opacity: 1; } }
 
 .project-index { position: absolute; top: var(--panel-top); right: var(--content-edge); bottom: var(--panel-bottom); left: var(--content-edge); display: grid; grid-template-rows: min(79.537vw, 429.5px) minmax(0, 1fr); gap: var(--layout-gap); pointer-events: auto; }
 .project-index__table { height: 100%; padding: min(2.963vw, 16px) min(3.426vw, 18.5px); overflow: hidden; }
@@ -239,5 +239,5 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .dock, .dock-item, .dock-item > button, .blur-screen, .overlay-view, .project-index, .info-stack, .contact-panel, .dock-pill > button::after, .dock-close span, .dock-project-close span { animation-duration: 1ms !important; transition-duration: 1ms !important; transition-delay: 0ms !important; }
+  .dock, .dock-item, .dock-item > button, .blur-screen, .project-index, .info-stack, .contact-panel, .dock-pill > button::after, .dock-close span, .dock-project-close span { animation-duration: 1ms !important; transition-duration: 1ms !important; transition-delay: 0ms !important; }
 }

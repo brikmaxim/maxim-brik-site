@@ -371,34 +371,31 @@ export default function Home() {
         </div>
       </div>
 
-      <div
-        className={`overlay-layer ${overlay ? `overlay-layer--active overlay-layer--${overlay}` : ""}`}
-        role="dialog"
-        aria-modal={Boolean(overlay)}
-        aria-hidden={!overlay}
-        aria-label={`${overlay ?? "menu"} panel`}
-      >
-        <button className="blur-screen" type="button" onClick={selectWork} aria-label="Close panel" tabIndex={overlay ? 0 : -1} />
-        <div className={`overlay-view overlay-view--projects ${overlay === "projects" ? "is-active" : ""}`} aria-hidden={overlay !== "projects"} inert={overlay !== "projects"}>
-          <ProjectIndex onOpenProject={openProject} />
+      {overlay && (
+        <div
+          className={`overlay-layer overlay-layer--active overlay-layer--${overlay}`}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${overlay} panel`}
+        >
+          <button className="blur-screen" type="button" onClick={selectWork} aria-label="Close panel" />
+          {overlay === "projects" && <ProjectIndex onOpenProject={openProject} />}
+          {overlay === "info" && <InfoPanel />}
+          {overlay === "contact" && (
+            <ContactPanel
+              urgency={urgency}
+              setUrgency={setUrgency}
+              agreed={agreed}
+              setAgreed={setAgreed}
+              sent={sent}
+              setSent={setSent}
+              promptDismissed={messagePromptDismissed}
+              setPromptDismissed={setMessagePromptDismissed}
+              active
+            />
+          )}
         </div>
-        <div className={`overlay-view overlay-view--info ${overlay === "info" ? "is-active" : ""}`} aria-hidden={overlay !== "info"} inert={overlay !== "info"}>
-          <InfoPanel />
-        </div>
-        <div className={`overlay-view overlay-view--contact ${overlay === "contact" ? "is-active" : ""}`} aria-hidden={overlay !== "contact"} inert={overlay !== "contact"}>
-          <ContactPanel
-            urgency={urgency}
-            setUrgency={setUrgency}
-            agreed={agreed}
-            setAgreed={setAgreed}
-            sent={sent}
-            setSent={setSent}
-            promptDismissed={messagePromptDismissed}
-            setPromptDismissed={setMessagePromptDismissed}
-            active={overlay === "contact"}
-          />
-        </div>
-      </div>
+      )}
 
       {!isUnlocked && <PasswordGate onUnlock={() => setIsUnlocked(true)} />}
 
