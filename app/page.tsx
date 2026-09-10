@@ -395,6 +395,13 @@ export default function Home() {
     scheduleOverlaySwap();
   }, [scheduleOverlaySwap, setPanelVisibility]);
 
+  const restoreDock = useCallback(() => {
+    dockHiddenRef.current = false;
+    scrollDistance.current = 0;
+    scrollDirection.current = 0;
+    setDockHidden(false);
+  }, []);
+
   const setContentVisibility = useCallback((visible: boolean) => {
     contentVisibleRef.current = visible;
     setContentVisible(visible);
@@ -441,6 +448,7 @@ export default function Home() {
   const showWork = () => {
     closeOverlay();
     if (view === "project") {
+      restoreDock();
       restoreWorkScroll.current = true;
       if (window.history.state?.portfolioView === "project") window.history.back();
       else transitionContent(() => setView("work"));
@@ -466,6 +474,7 @@ export default function Home() {
       setDisplayedOverlay(null);
       setPanelVisibility(false);
       setMenuSection("work");
+      restoreDock();
       transitionContent(() => setView("work"));
     };
     window.addEventListener("keydown", onKeyDown);
@@ -474,7 +483,7 @@ export default function Home() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("popstate", onPopState);
     };
-  }, [closeOverlay, setPanelVisibility, transitionContent, view]);
+  }, [closeOverlay, restoreDock, setPanelVisibility, transitionContent, view]);
 
   const renderOverlayContent = (currentOverlay: OverlayName, active: boolean) => (
     <>
