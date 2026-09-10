@@ -3,6 +3,8 @@
 import { type FormEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 type Overlay = "projects" | "info" | "contact" | null;
+type OverlayName = Exclude<Overlay, null>;
+type DepartingOverlay = { name: OverlayName; id: number };
 type View = "work" | "project";
 type MenuSection = "work" | "info" | "contact";
 type PromptPhase = "typing" | "deleting";
@@ -178,6 +180,7 @@ function GifVideo({
 export default function Home() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [overlay, setOverlay] = useState<Overlay>(null);
+  const [departingOverlay, setDepartingOverlay] = useState<DepartingOverlay | null>(null);
   const [view, setView] = useState<View>("work");
   const [selectedProject, setSelectedProject] = useState<Project>(projects[0]);
   const [urgency, setUrgency] = useState<"1week" | "2weeks" | "4weeks">("2weeks");
@@ -187,6 +190,9 @@ export default function Home() {
   const [menuSection, setMenuSection] = useState<MenuSection>("work");
   const [dockHidden, setDockHidden] = useState(false);
   const restoreFrames = useRef<number[]>([]);
+  const overlayRef = useRef<Overlay>(null);
+  const departureId = useRef(0);
+  const departureTimer = useRef<number | null>(null);
   const lastScrollY = useRef(0);
   const scrollFrame = useRef<number | null>(null);
   const dockHiddenRef = useRef(false);
@@ -230,6 +236,10 @@ export default function Home() {
     });
     restoreFrames.current.push(firstFrame);
   }, [view]);
+
+  useEffect(() => () => {
+    if (departureTimer.current !== null) window.clearTimeout(departureTimer.current);
+  }, []);
 
   useEffect(() => {
     const readPageTop = () => Math.max(0, window.scrollY);
@@ -293,22 +303,38 @@ export default function Home() {
     };
   }, [overlay]);
 
-  const openOverlay = useCallback((nextOverlay: Exclude<Overlay, null>) => {
-    setOverlay(nextOverlay);
-    setMenuSection(nextOverlay === "info" || nextOverlay === "contact" ? nextOverlay : "work");
+  const animateOverlayOut = useCallback((currentOverlay: OverlayName) => {
+    if (departureTimer.current !== null) window.clearTimeout(departureTimer.current);
+    const id = ++departureId.current;
+    setDepartingOverlay({ name: currentOverlay, id });
+    departureTimer.current = window.setTimeout(() => {
+      setDepartingOverlay((current) => current?.id === id ? null : current);
+      departureTimer.current = null;
+    }, 720);
   }, []);
 
+  const openOverlay = useCallback((nextOverlay: OverlayName) => {
+    const currentOverlay = overlayRef.current;
+    if (currentOverlay === nextOverlay) return;
+    if (currentOverlay) animateOverlayOut(currentOverlay);
+    overlayRef.current = nextOverlay;
+    setOverlay(nextOverlay);
+    setMenuSection(nextOverlay === "info" || nextOverlay === "contact" ? nextOverlay : "work");
+  }, [animateOverlayOut]);
+
   const closeOverlay = useCallback(() => {
+    const currentOverlay = overlayRef.current;
+    if (currentOverlay) animateOverlayOut(currentOverlay);
+    overlayRef.current = null;
     setOverlay(null);
     setMenuSection("work");
-  }, []);
+  }, [animateOverlayOut]);
 
   const openProject = (project: Project = projects[0]) => {
     if (view === "work") workScrollY.current = window.scrollY;
     const commitProject = () => {
       setSelectedProject(project);
-      setOverlay(null);
-      setMenuSection("work");
+      closeOverlay();
       setView("project");
       window.history.pushState({ portfolioView: "project" }, "", `${window.location.pathname}${window.location.search}`);
     };
@@ -316,8 +342,7 @@ export default function Home() {
   };
 
   const showWork = () => {
-    setOverlay(null);
-    setMenuSection("work");
+    closeOverlay();
     if (view === "project") {
       restoreWorkScroll.current = true;
       if (window.history.state?.portfolioView === "project") window.history.back();
@@ -329,7 +354,7 @@ export default function Home() {
     if (view === "project") showWork();
   };
 
-  const selectWork = () => overlay ? closeOverlay() : showWork();
+  const selectWork = () => overlayRef.current ? closeOverlay() : showWork();
   const selectInfo = () => openOverlay("info");
   const selectContact = () => openOverlay("contact");
 
@@ -338,6 +363,7 @@ export default function Home() {
     const onPopState = () => {
       if (view !== "project") return;
       restoreWorkScroll.current = true;
+      overlayRef.current = null;
       setOverlay(null);
       setMenuSection("work");
       setView("work");
@@ -349,6 +375,26 @@ export default function Home() {
       window.removeEventListener("popstate", onPopState);
     };
   }, [closeOverlay, view]);
+
+  const renderOverlayContent = (currentOverlay: OverlayName, active: boolean) => (
+    <>
+      {currentOverlay === "projects" && <ProjectIndex onOpenProject={openProject} />}
+      {currentOverlay === "info" && <InfoPanel />}
+      {currentOverlay === "contact" && (
+        <ContactPanel
+          urgency={urgency}
+          setUrgency={setUrgency}
+          agreed={agreed}
+          setAgreed={setAgreed}
+          sent={sent}
+          setSent={setSent}
+          promptDismissed={messagePromptDismissed}
+          setPromptDismissed={setMessagePromptDismissed}
+          active={active}
+        />
+      )}
+    </>
+  );
 
   return (
     <main className="portfolio-viewport">
@@ -371,28 +417,23 @@ export default function Home() {
         </div>
       </div>
 
-      {overlay && (
+      {(overlay || departingOverlay) && (
         <div
-          className={`overlay-layer overlay-layer--active overlay-layer--${overlay}`}
-          role="dialog"
-          aria-modal="true"
-          aria-label={`${overlay} panel`}
+          className={`overlay-layer ${overlay ? `overlay-layer--active overlay-layer--${overlay}` : "overlay-layer--leaving"}`}
+          role={overlay ? "dialog" : undefined}
+          aria-modal={overlay ? "true" : undefined}
+          aria-label={overlay ? `${overlay} panel` : undefined}
         >
-          <button className="blur-screen" type="button" onClick={selectWork} aria-label="Close panel" />
-          {overlay === "projects" && <ProjectIndex onOpenProject={openProject} />}
-          {overlay === "info" && <InfoPanel />}
-          {overlay === "contact" && (
-            <ContactPanel
-              urgency={urgency}
-              setUrgency={setUrgency}
-              agreed={agreed}
-              setAgreed={setAgreed}
-              sent={sent}
-              setSent={setSent}
-              promptDismissed={messagePromptDismissed}
-              setPromptDismissed={setMessagePromptDismissed}
-              active
-            />
+          {overlay && <button className="blur-screen" type="button" onClick={selectWork} aria-label="Close panel" />}
+          {departingOverlay && (
+            <div className="overlay-motion overlay-motion--leaving" key={`leaving-${departingOverlay.id}`} aria-hidden="true">
+              {renderOverlayContent(departingOverlay.name, false)}
+            </div>
+          )}
+          {overlay && (
+            <div className="overlay-motion overlay-motion--entering" key={`entering-${overlay}`}>
+              {renderOverlayContent(overlay, true)}
+            </div>
           )}
         </div>
       )}
