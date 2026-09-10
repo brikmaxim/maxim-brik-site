@@ -523,9 +523,12 @@ function ProjectIndex({ onOpenProject }: { onOpenProject: (project: Project) => 
       <section className="glass-panel project-index__table">
         <div className="project-table project-table--head"><span>#</span><span>name</span><span>Categories</span><span>Year</span></div>
         <div className="project-list">
-          {visibleProjects.map((project) => (
+          {visibleProjects.map((project, index) => (
             <button className="project-table" type="button" key={project.id} onClick={() => onOpenProject(project)}>
-              {[project.id, project.name, project.category, project.year].map((value) => <span key={value}>{value}</span>)}
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <span>{project.name}</span>
+              <span>{project.category}</span>
+              <span>{project.year}</span>
             </button>
           ))}
         </div>
