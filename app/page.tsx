@@ -182,6 +182,7 @@ export default function Home() {
   const [displayedOverlay, setDisplayedOverlay] = useState<Overlay>(null);
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [view, setView] = useState<View>("work");
+  const [contentVisible, setContentVisible] = useState(true);
   const [selectedProject, setSelectedProject] = useState<Project>(projects[0]);
   const [urgency, setUrgency] = useState<"1week" | "2weeks" | "4weeks">("2weeks");
   const [agreed, setAgreed] = useState(false);
@@ -195,6 +196,10 @@ export default function Home() {
   const overlayVisibleRef = useRef(false);
   const overlaySwapTimer = useRef<number | null>(null);
   const overlayRevealFrames = useRef<number[]>([]);
+  const contentVisibleRef = useRef(true);
+  const contentTransitionTimer = useRef<number | null>(null);
+  const contentRevealFrames = useRef<number[]>([]);
+  const pendingContentTransition = useRef<(() => void) | null>(null);
   const lastScrollY = useRef(0);
   const scrollFrame = useRef<number | null>(null);
   const dockHiddenRef = useRef(false);
@@ -242,6 +247,8 @@ export default function Home() {
   useEffect(() => () => {
     if (overlaySwapTimer.current !== null) window.clearTimeout(overlaySwapTimer.current);
     overlayRevealFrames.current.forEach(window.cancelAnimationFrame);
+    if (contentTransitionTimer.current !== null) window.clearTimeout(contentTransitionTimer.current);
+    contentRevealFrames.current.forEach(window.cancelAnimationFrame);
   }, []);
 
   useEffect(() => {
@@ -388,13 +395,47 @@ export default function Home() {
     scheduleOverlaySwap();
   }, [scheduleOverlaySwap, setPanelVisibility]);
 
+  const setContentVisibility = useCallback((visible: boolean) => {
+    contentVisibleRef.current = visible;
+    setContentVisible(visible);
+  }, []);
+
+  const revealContent = useCallback(() => {
+    contentRevealFrames.current.forEach(window.cancelAnimationFrame);
+    contentRevealFrames.current = [];
+    const firstFrame = window.requestAnimationFrame(() => {
+      const secondFrame = window.requestAnimationFrame(() => setContentVisibility(true));
+      contentRevealFrames.current.push(secondFrame);
+    });
+    contentRevealFrames.current.push(firstFrame);
+  }, [setContentVisibility]);
+
+  const transitionContent = useCallback((commitTransition: () => void) => {
+    pendingContentTransition.current = commitTransition;
+    contentRevealFrames.current.forEach(window.cancelAnimationFrame);
+    contentRevealFrames.current = [];
+    if (contentTransitionTimer.current !== null) return;
+
+    const exitDuration = contentVisibleRef.current && !window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 320 : 0;
+    setContentVisibility(false);
+    contentTransitionTimer.current = window.setTimeout(() => {
+      contentTransitionTimer.current = null;
+      const nextTransition = pendingContentTransition.current;
+      pendingContentTransition.current = null;
+      nextTransition?.();
+      revealContent();
+    }, exitDuration);
+  }, [revealContent, setContentVisibility]);
+
   const openProject = (project: Project = projects[0]) => {
     if (view === "work") workScrollY.current = window.scrollY;
     closeOverlay();
-    setSelectedProject(project);
-    setView("project");
-    window.scrollTo({ top: 0, behavior: "auto" });
-    window.history.pushState({ portfolioView: "project" }, "", `${window.location.pathname}${window.location.search}`);
+    transitionContent(() => {
+      setSelectedProject(project);
+      setView("project");
+      window.scrollTo({ top: 0, behavior: "auto" });
+      window.history.pushState({ portfolioView: "project" }, "", `${window.location.pathname}${window.location.search}`);
+    });
   };
 
   const showWork = () => {
@@ -402,7 +443,7 @@ export default function Home() {
     if (view === "project") {
       restoreWorkScroll.current = true;
       if (window.history.state?.portfolioView === "project") window.history.back();
-      else setView("work");
+      else transitionContent(() => setView("work"));
     }
   };
 
@@ -425,7 +466,7 @@ export default function Home() {
       setDisplayedOverlay(null);
       setPanelVisibility(false);
       setMenuSection("work");
-      setView("work");
+      transitionContent(() => setView("work"));
     };
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("popstate", onPopState);
@@ -433,7 +474,7 @@ export default function Home() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("popstate", onPopState);
     };
-  }, [closeOverlay, setPanelVisibility, view]);
+  }, [closeOverlay, setPanelVisibility, transitionContent, view]);
 
   const renderOverlayContent = (currentOverlay: OverlayName, active: boolean) => (
     <>
@@ -471,7 +512,7 @@ export default function Home() {
       />
 
       <div className={`portfolio-shell ${view === "project" ? "is-project" : "is-work"}`}>
-        <div className="site-content" key={view === "project" ? selectedProject.id : "work"}>
+        <div className={`site-content ${contentVisible ? "is-visible" : ""}`} key={view === "project" ? selectedProject.id : "work"}>
           {view === "work" ? <WorkView onOpenProject={openProject} hidden={dockHidden} /> : <ProjectView project={selectedProject} />}
         </div>
       </div>
