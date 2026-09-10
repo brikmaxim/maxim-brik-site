@@ -154,12 +154,11 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .overlay-layer--active .blur-screen { opacity: 1; pointer-events: auto; }
 .glass-panel { position: relative; z-index: 1; overflow: hidden; border: 0; border-radius: var(--layout-radius); background: var(--glass); background-clip: padding-box; color: #000; -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); -webkit-mask-image: -webkit-radial-gradient(white, black); isolation: isolate; backface-visibility: hidden; box-shadow: none; pointer-events: auto; }
 
-.project-index > .glass-panel, .info-stack > .glass-panel, .contact-panel { opacity: 1; transform: none; animation: none; }
-.overlay-layer--active .project-index > .glass-panel, .overlay-layer--active .info-stack > .glass-panel, .overlay-layer--active .contact-panel { transform-origin: 50% 100%; animation: panel-reveal 420ms cubic-bezier(.8,.01,.11,.98) both; }
-.overlay-layer--active .project-index > .glass-panel:nth-child(2), .overlay-layer--active .info-stack > .glass-panel:nth-child(2) { animation-delay: 55ms; }
+.project-index > .glass-panel, .info-stack > .glass-panel, .contact-panel { opacity: 1; transform: none; filter: none; animation: none; }
+.overlay-layer--active .project-index > .glass-panel, .overlay-layer--active .info-stack > .glass-panel, .overlay-layer--active .contact-panel { transform-origin: 50% 100%; will-change: transform, opacity, filter; animation: panel-reveal 700ms cubic-bezier(.7,.01,.11,.96) both; }
 @keyframes panel-reveal {
-  from { opacity: 0; transform: translate3d(0, min(4.63vw, 25px), 0) scale(1.055); }
-  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  from { opacity: 0; transform: translate3d(0, min(1.481vw, 8px), 0) scale(1.15); filter: blur(12px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
 }
 
 .project-index { position: absolute; top: var(--panel-top); right: var(--content-edge); bottom: var(--panel-bottom); left: var(--content-edge); display: grid; grid-template-rows: min(79.537vw, 429.5px) minmax(0, 1fr); gap: var(--layout-gap); pointer-events: auto; }
