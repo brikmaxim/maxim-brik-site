@@ -152,9 +152,8 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .overlay-layer { position: fixed; z-index: 30; inset: 0; pointer-events: none; backface-visibility: hidden; }
 .blur-screen { position: absolute; inset: 0; width: 100%; height: auto; padding: 0; border: 0; background: transparent; opacity: 1; -webkit-backdrop-filter: none; backdrop-filter: none; pointer-events: none; cursor: default; animation: none; }
 .overlay-layer--active .blur-screen { opacity: 1; pointer-events: auto; }
-.overlay-view { position: absolute; inset: 0; visibility: hidden; opacity: 0; transform: translate3d(0, min(2.222vw, 12px), 0) scale(.985); transform-origin: 50% 50%; pointer-events: none; backface-visibility: hidden; transition: opacity 140ms ease, transform 220ms cubic-bezier(.8,.01,.11,.98), visibility 0s linear 220ms; }
-.overlay-view.is-active { visibility: visible; opacity: 1; transform: translate3d(0, 0, 0) scale(1); pointer-events: auto; will-change: transform, opacity; transition: opacity 170ms ease, transform 260ms cubic-bezier(.8,.01,.11,.98), visibility 0s linear 0s; }
-.overlay-view:not(.is-active) .glass-panel { -webkit-backdrop-filter: none; backdrop-filter: none; }
+.overlay-view { position: absolute; inset: 0; visibility: hidden; opacity: 0; pointer-events: none; backface-visibility: hidden; transition: opacity 140ms ease, visibility 0s linear 170ms; }
+.overlay-view.is-active { visibility: visible; opacity: 1; pointer-events: auto; will-change: opacity; transition: opacity 170ms ease, visibility 0s linear 0s; }
 .glass-panel { position: relative; z-index: 1; overflow: hidden; border: 0; border-radius: var(--layout-radius); background: var(--glass); background-clip: padding-box; color: #000; -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); -webkit-mask-image: -webkit-radial-gradient(white, black); isolation: isolate; backface-visibility: hidden; box-shadow: none; pointer-events: auto; }
 
 .project-index > .glass-panel, .info-stack > .glass-panel, .contact-panel { opacity: 1; transform: none; animation: none; }
