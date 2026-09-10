@@ -1,13 +1,10 @@
 "use client";
 
-import { type FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 type Overlay = "projects" | "info" | "contact" | null;
 type View = "work" | "project";
 type MenuSection = "work" | "info" | "contact";
-type IndicatorPhase = "idle" | "exit" | "enter";
-type OverlayPhase = "enter" | "idle" | "panel-exit";
-type ProjectClosePhase = "idle" | "exit";
 type PromptPhase = "typing" | "deleting";
 
 type Project = {
@@ -45,9 +42,6 @@ const messagePrompts = [
   "Share your idea with us",
 ] as const;
 
-const INDICATOR_ENTER_MS = 180;
-const PANEL_ENTER_MS = 240;
-const PANEL_EXIT_MS = 160;
 const PASSWORD_HASH = "576786d48ecd81b7eeb68563dfa21147520a9175df55384ab1be1ef9ea268670";
 
 async function hashPassword(value: string) {
@@ -191,11 +185,7 @@ export default function Home() {
   const [sent, setSent] = useState(false);
   const [messagePromptDismissed, setMessagePromptDismissed] = useState(false);
   const [menuSection, setMenuSection] = useState<MenuSection>("work");
-  const [indicatorPhase, setIndicatorPhase] = useState<IndicatorPhase>("idle");
-  const [overlayPhase, setOverlayPhase] = useState<OverlayPhase>("idle");
-  const [projectClosePhase, setProjectClosePhase] = useState<ProjectClosePhase>("idle");
   const [dockHidden, setDockHidden] = useState(false);
-  const transitionTimers = useRef<number[]>([]);
   const restoreFrames = useRef<number[]>([]);
   const lastScrollY = useRef(0);
   const scrollFrame = useRef<number | null>(null);
@@ -223,7 +213,6 @@ export default function Home() {
     window.history.scrollRestoration = "manual";
     return () => {
       window.history.scrollRestoration = previousScrollRestoration;
-      transitionTimers.current.forEach(window.clearTimeout);
       restoreFrames.current.forEach(window.cancelAnimationFrame);
     };
   }, []);
@@ -304,99 +293,31 @@ export default function Home() {
     };
   }, [overlay]);
 
-  const switchSection = (nextSection: MenuSection, commit: () => void) => {
-    transitionTimers.current.forEach(window.clearTimeout);
-    transitionTimers.current = [];
-
-    if (menuSection === nextSection) {
-      commit();
-      return;
-    }
-
-    commit();
-    setMenuSection(nextSection);
-    setIndicatorPhase("enter");
-    transitionTimers.current.push(window.setTimeout(() => setIndicatorPhase("idle"), INDICATOR_ENTER_MS));
-  };
-
-  const openOverlay = (nextOverlay: Exclude<Overlay, null>) => {
-    transitionTimers.current.forEach(window.clearTimeout);
-    transitionTimers.current = [];
-    setOverlayPhase("enter");
+  const openOverlay = useCallback((nextOverlay: Exclude<Overlay, null>) => {
     setOverlay(nextOverlay);
-    transitionTimers.current.push(window.setTimeout(() => setOverlayPhase("idle"), PANEL_ENTER_MS));
-  };
+    setMenuSection(nextOverlay === "info" || nextOverlay === "contact" ? nextOverlay : "work");
+  }, []);
 
-  const switchOverlay = (nextOverlay: "info" | "contact", nextSection: "info" | "contact") => {
-    if (!overlay) {
-      switchSection(nextSection, () => openOverlay(nextOverlay));
-      return;
-    }
-
-    if (overlay === nextOverlay) {
-      if (overlayPhase === "panel-exit") {
-        transitionTimers.current.forEach(window.clearTimeout);
-        transitionTimers.current = [];
-        setOverlayPhase("enter");
-        transitionTimers.current.push(window.setTimeout(() => setOverlayPhase("idle"), PANEL_ENTER_MS));
-      }
-      return;
-    }
-
-    transitionTimers.current.forEach(window.clearTimeout);
-    transitionTimers.current = [];
-    setOverlay(nextOverlay);
-    setMenuSection(nextSection);
-    setOverlayPhase("enter");
-    setIndicatorPhase("enter");
-    transitionTimers.current.push(window.setTimeout(() => setIndicatorPhase("idle"), INDICATOR_ENTER_MS));
-    transitionTimers.current.push(window.setTimeout(() => setOverlayPhase("idle"), PANEL_ENTER_MS));
-  };
-
-  const closeOverlay = () => {
-    if (!overlay) return;
-    transitionTimers.current.forEach(window.clearTimeout);
-    transitionTimers.current = [];
-    setOverlayPhase("panel-exit");
-    transitionTimers.current.push(window.setTimeout(() => {
-      setOverlay(null);
-      setOverlayPhase("idle");
-      setMenuSection("work");
-      setIndicatorPhase("enter");
-      transitionTimers.current.push(window.setTimeout(() => setIndicatorPhase("idle"), INDICATOR_ENTER_MS));
-    }, PANEL_EXIT_MS));
-  };
+  const closeOverlay = useCallback(() => {
+    setOverlay(null);
+    setMenuSection("work");
+  }, []);
 
   const openProject = (project: Project = projects[0]) => {
     if (view === "work") workScrollY.current = window.scrollY;
     const commitProject = () => {
       setSelectedProject(project);
       setOverlay(null);
-      setOverlayPhase("idle");
       setMenuSection("work");
-      setIndicatorPhase("idle");
-      setProjectClosePhase("idle");
       setView("project");
       window.history.pushState({ portfolioView: "project" }, "", `${window.location.pathname}${window.location.search}`);
     };
-
-    if (!overlay) {
-      commitProject();
-      return;
-    }
-
-    transitionTimers.current.forEach(window.clearTimeout);
-    transitionTimers.current = [];
-    setIndicatorPhase("exit");
-    setOverlayPhase("panel-exit");
-    transitionTimers.current.push(window.setTimeout(() => {
-      commitProject();
-    }, PANEL_EXIT_MS));
+    commitProject();
   };
 
   const showWork = () => {
     setOverlay(null);
-    setOverlayPhase("idle");
+    setMenuSection("work");
     if (view === "project") {
       restoreWorkScroll.current = true;
       if (window.history.state?.portfolioView === "project") window.history.back();
@@ -405,17 +326,12 @@ export default function Home() {
   };
 
   const closeProjectFromButton = () => {
-    if (view !== "project" || projectClosePhase === "exit") return;
-    setProjectClosePhase("exit");
-    transitionTimers.current.push(window.setTimeout(() => {
-      showWork();
-      setProjectClosePhase("idle");
-    }, 160));
+    if (view === "project") showWork();
   };
 
-  const selectWork = () => overlay ? closeOverlay() : switchSection("work", showWork);
-  const selectInfo = () => switchOverlay("info", "info");
-  const selectContact = () => switchOverlay("contact", "contact");
+  const selectWork = () => overlay ? closeOverlay() : showWork();
+  const selectInfo = () => openOverlay("info");
+  const selectContact = () => openOverlay("contact");
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => event.key === "Escape" && closeOverlay();
@@ -423,7 +339,7 @@ export default function Home() {
       if (view !== "project") return;
       restoreWorkScroll.current = true;
       setOverlay(null);
-      setProjectClosePhase("idle");
+      setMenuSection("work");
       setView("work");
     };
     window.addEventListener("keydown", onKeyDown);
@@ -432,7 +348,7 @@ export default function Home() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("popstate", onPopState);
     };
-  }, [overlay, overlayPhase, menuSection, view]);
+  }, [closeOverlay, view]);
 
   return (
     <main className="portfolio-viewport">
@@ -440,9 +356,6 @@ export default function Home() {
         overlay={overlay}
         view={view}
         menuSection={menuSection}
-        indicatorPhase={indicatorPhase}
-        overlayPhase={overlayPhase}
-        projectClosePhase={projectClosePhase}
         hidden={dockHidden}
         onProjects={() => openOverlay("projects")}
         onWork={selectWork}
@@ -458,30 +371,34 @@ export default function Home() {
         </div>
       </div>
 
-      {overlay && (
-        <div
-          className={`overlay-layer overlay-layer--active overlay-layer--${overlay} overlay-phase--${overlayPhase}`}
-          role="dialog"
-          aria-modal="true"
-          aria-label={`${overlay} panel`}
-        >
-          <button className="blur-screen" type="button" onClick={selectWork} aria-label="Close panel" />
-          {overlay === "projects" && <ProjectIndex onOpenProject={openProject} />}
-          {overlay === "info" && <InfoPanel />}
-          {overlay === "contact" && (
-            <ContactPanel
-              urgency={urgency}
-              setUrgency={setUrgency}
-              agreed={agreed}
-              setAgreed={setAgreed}
-              sent={sent}
-              setSent={setSent}
-              promptDismissed={messagePromptDismissed}
-              setPromptDismissed={setMessagePromptDismissed}
-            />
-          )}
+      <div
+        className={`overlay-layer ${overlay ? `overlay-layer--active overlay-layer--${overlay}` : ""}`}
+        role="dialog"
+        aria-modal={Boolean(overlay)}
+        aria-hidden={!overlay}
+        aria-label={`${overlay ?? "menu"} panel`}
+      >
+        <button className="blur-screen" type="button" onClick={selectWork} aria-label="Close panel" tabIndex={overlay ? 0 : -1} />
+        <div className={`overlay-view overlay-view--projects ${overlay === "projects" ? "is-active" : ""}`} aria-hidden={overlay !== "projects"} inert={overlay !== "projects"}>
+          <ProjectIndex onOpenProject={openProject} />
         </div>
-      )}
+        <div className={`overlay-view overlay-view--info ${overlay === "info" ? "is-active" : ""}`} aria-hidden={overlay !== "info"} inert={overlay !== "info"}>
+          <InfoPanel />
+        </div>
+        <div className={`overlay-view overlay-view--contact ${overlay === "contact" ? "is-active" : ""}`} aria-hidden={overlay !== "contact"} inert={overlay !== "contact"}>
+          <ContactPanel
+            urgency={urgency}
+            setUrgency={setUrgency}
+            agreed={agreed}
+            setAgreed={setAgreed}
+            sent={sent}
+            setSent={setSent}
+            promptDismissed={messagePromptDismissed}
+            setPromptDismissed={setMessagePromptDismissed}
+            active={overlay === "contact"}
+          />
+        </div>
+      </div>
 
       {!isUnlocked && <PasswordGate onUnlock={() => setIsUnlocked(true)} />}
 
@@ -645,7 +562,7 @@ function InfoPanel() {
   );
 }
 
-function ContactPanel({ urgency, setUrgency, agreed, setAgreed, sent, setSent, promptDismissed, setPromptDismissed }: {
+function ContactPanel({ urgency, setUrgency, agreed, setAgreed, sent, setSent, promptDismissed, setPromptDismissed, active }: {
   urgency: "1week" | "2weeks" | "4weeks";
   setUrgency: (value: "1week" | "2weeks" | "4weeks") => void;
   agreed: boolean;
@@ -654,6 +571,7 @@ function ContactPanel({ urgency, setUrgency, agreed, setAgreed, sent, setSent, p
   setSent: (value: boolean) => void;
   promptDismissed: boolean;
   setPromptDismissed: (value: boolean) => void;
+  active: boolean;
 }) {
   const [message, setMessage] = useState("");
   const [promptIndex, setPromptIndex] = useState(0);
@@ -661,7 +579,7 @@ function ContactPanel({ urgency, setUrgency, agreed, setAgreed, sent, setSent, p
   const [promptPhase, setPromptPhase] = useState<PromptPhase>("typing");
 
   useEffect(() => {
-    if (message || promptDismissed) return;
+    if (!active || message || promptDismissed) return;
     const target = messagePrompts[promptIndex];
     let delay = 38;
     let update = () => setTypedPrompt(target.slice(0, typedPrompt.length + 1));
@@ -682,7 +600,7 @@ function ContactPanel({ urgency, setUrgency, agreed, setAgreed, sent, setSent, p
 
     const promptTimer = window.setTimeout(update, delay);
     return () => window.clearTimeout(promptTimer);
-  }, [message, promptDismissed, promptIndex, promptPhase, typedPrompt]);
+  }, [active, message, promptDismissed, promptIndex, promptPhase, typedPrompt]);
 
   const activateMessage = () => setPromptDismissed(true);
 
@@ -733,13 +651,10 @@ function ContactPanel({ urgency, setUrgency, agreed, setAgreed, sent, setSent, p
   );
 }
 
-function Dock({ overlay, view, menuSection, indicatorPhase, overlayPhase, projectClosePhase, hidden, onProjects, onWork, onInfo, onContact, onClose, onProjectClose }: {
+function Dock({ overlay, view, menuSection, hidden, onProjects, onWork, onInfo, onContact, onClose, onProjectClose }: {
   overlay: Overlay;
   view: View;
   menuSection: MenuSection;
-  indicatorPhase: IndicatorPhase;
-  overlayPhase: OverlayPhase;
-  projectClosePhase: ProjectClosePhase;
   hidden: boolean;
   onProjects: () => void;
   onWork: () => void;
@@ -755,13 +670,10 @@ function Dock({ overlay, view, menuSection, indicatorPhase, overlayPhase, projec
 
   return (
     <div className="dock-anchor dock-anchor--base">
-      <nav className={`dock dock--base ${overlay ? "is-open" : ""} ${hidden ? "dock--hidden" : ""} indicator-${indicatorPhase} overlay-phase-${overlayPhase} project-close-${projectClosePhase}`} aria-label="Primary navigation">
-        <div className="dock-item dock-circle dock-plus"><button type="button" onClick={overlay ? undefined : onProjects} aria-label="Open project index" aria-disabled={Boolean(overlay)}><span /></button></div>
-        {overlay ? (
-          <div className="dock-item dock-circle dock-close"><button type="button" onClick={onClose} aria-label="Close panel"><span /></button></div>
-        ) : view === "project" ? (
-          <div className="dock-item dock-circle dock-project-close"><button type="button" onClick={onProjectClose} aria-label="Close project"><span /></button></div>
-        ) : null}
+      <nav className={`dock dock--base ${overlay ? "is-open" : ""} ${hidden ? "dock--hidden" : ""}`} aria-label="Primary navigation">
+        <div className="dock-item dock-circle dock-plus"><button type="button" onClick={onProjects} aria-label="Open project index"><span /></button></div>
+        <div className={`dock-item dock-circle dock-close ${overlay ? "is-visible" : ""}`}><button type="button" onClick={onClose} aria-label="Close panel" tabIndex={overlay ? 0 : -1}><span /></button></div>
+        <div className={`dock-item dock-circle dock-project-close ${!overlay && view === "project" ? "is-visible" : ""}`}><button type="button" onClick={onProjectClose} aria-label="Close project" tabIndex={!overlay && view === "project" ? 0 : -1}><span /></button></div>
         <div className="dock-links">
           {items.map((item) => (
             <div key={item} className={`dock-item dock-pill ${itemClass[item]} ${active === item ? "is-selected" : ""}`}>
