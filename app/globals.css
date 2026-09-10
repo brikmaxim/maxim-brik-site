@@ -152,8 +152,8 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .overlay-layer { position: fixed; z-index: 30; inset: 0; pointer-events: none; backface-visibility: hidden; }
 .blur-screen { position: absolute; inset: 0; width: 100%; height: auto; padding: 0; border: 0; background: transparent; opacity: 1; -webkit-backdrop-filter: none; backdrop-filter: none; pointer-events: none; cursor: default; animation: none; }
 .overlay-layer--active .blur-screen { opacity: 1; pointer-events: auto; }
-.overlay-motion { position: absolute; inset: 0; opacity: 0; filter: blur(12px); transform: translate3d(0, min(1.481vw, 8px), 0) scale(1.15); transform-origin: 50% 100%; will-change: transform, opacity, filter; transition: opacity 340ms cubic-bezier(.89,.04,.3,.99), transform 340ms cubic-bezier(.89,.04,.3,.99), filter 340ms cubic-bezier(.89,.04,.3,.99); }
-.overlay-motion.is-visible { opacity: 1; filter: blur(0); transform: translate3d(0, 0, 0) scale(1); transition-duration: 600ms; transition-timing-function: cubic-bezier(.7,.01,.11,.96); }
+.overlay-motion { position: absolute; inset: 0; opacity: 0; transform: translate3d(0, min(1.481vw, 8px), 0) scale(1.15); transform-origin: 50% 100%; will-change: transform, opacity; transition: opacity 340ms cubic-bezier(.89,.04,.3,.99), transform 340ms cubic-bezier(.89,.04,.3,.99); }
+.overlay-motion.is-visible { opacity: 1; transform: translate3d(0, 0, 0) scale(1); transition-duration: 600ms; transition-timing-function: cubic-bezier(.7,.01,.11,.96); }
 .overlay-motion:not(.is-visible), .overlay-motion:not(.is-visible) * { pointer-events: none !important; }
 .glass-panel { position: relative; z-index: 1; overflow: hidden; border: 0; border-radius: var(--layout-radius); background: var(--glass); background-clip: padding-box; color: #000; -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); -webkit-mask-image: -webkit-radial-gradient(white, black); isolation: isolate; backface-visibility: hidden; box-shadow: none; pointer-events: auto; }
 
