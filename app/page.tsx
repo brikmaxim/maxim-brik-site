@@ -189,11 +189,7 @@ export default function Home() {
   const [messagePromptDismissed, setMessagePromptDismissed] = useState(false);
   const [menuSection, setMenuSection] = useState<MenuSection>("work");
   const [dockHidden, setDockHidden] = useState(false);
-  const [contentHidden, setContentHidden] = useState(false);
   const restoreFrames = useRef<number[]>([]);
-  const viewTransitionFrames = useRef<number[]>([]);
-  const viewTransitionTimer = useRef<number | null>(null);
-  const skipNextPop = useRef(false);
   const overlayRef = useRef<Overlay>(null);
   const departureId = useRef(0);
   const departureTimer = useRef<number | null>(null);
@@ -224,8 +220,6 @@ export default function Home() {
     return () => {
       window.history.scrollRestoration = previousScrollRestoration;
       restoreFrames.current.forEach(window.cancelAnimationFrame);
-      viewTransitionFrames.current.forEach(window.cancelAnimationFrame);
-      if (viewTransitionTimer.current !== null) window.clearTimeout(viewTransitionTimer.current);
     };
   }, []);
 
@@ -336,45 +330,21 @@ export default function Home() {
     setMenuSection("work");
   }, [animateOverlayOut]);
 
-  const transitionContent = useCallback((commit: () => void) => {
-    if (viewTransitionTimer.current !== null) window.clearTimeout(viewTransitionTimer.current);
-    viewTransitionFrames.current.forEach(window.cancelAnimationFrame);
-    viewTransitionFrames.current = [];
-    setContentHidden(true);
-    viewTransitionTimer.current = window.setTimeout(() => {
-      commit();
-      viewTransitionTimer.current = null;
-      const firstFrame = window.requestAnimationFrame(() => {
-        const secondFrame = window.requestAnimationFrame(() => setContentHidden(false));
-        viewTransitionFrames.current.push(secondFrame);
-      });
-      viewTransitionFrames.current.push(firstFrame);
-    }, 500);
-  }, []);
-
   const openProject = (project: Project = projects[0]) => {
     if (view === "work") workScrollY.current = window.scrollY;
     closeOverlay();
-    transitionContent(() => {
-      setSelectedProject(project);
-      setView("project");
-      window.scrollTo({ top: 0, behavior: "auto" });
-      window.history.pushState({ portfolioView: "project" }, "", `${window.location.pathname}${window.location.search}`);
-    });
+    setSelectedProject(project);
+    setView("project");
+    window.scrollTo({ top: 0, behavior: "auto" });
+    window.history.pushState({ portfolioView: "project" }, "", `${window.location.pathname}${window.location.search}`);
   };
 
   const showWork = () => {
     closeOverlay();
     if (view === "project") {
-      const returnThroughHistory = window.history.state?.portfolioView === "project";
-      transitionContent(() => {
-        restoreWorkScroll.current = true;
-        setView("work");
-        if (returnThroughHistory) {
-          skipNextPop.current = true;
-          window.history.back();
-        }
-      });
+      restoreWorkScroll.current = true;
+      if (window.history.state?.portfolioView === "project") window.history.back();
+      else setView("work");
     }
   };
 
@@ -389,18 +359,12 @@ export default function Home() {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => event.key === "Escape" && closeOverlay();
     const onPopState = () => {
-      if (skipNextPop.current) {
-        skipNextPop.current = false;
-        return;
-      }
       if (view !== "project") return;
+      restoreWorkScroll.current = true;
       overlayRef.current = null;
       setOverlay(null);
       setMenuSection("work");
-      transitionContent(() => {
-        restoreWorkScroll.current = true;
-        setView("work");
-      });
+      setView("work");
     };
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("popstate", onPopState);
@@ -408,7 +372,7 @@ export default function Home() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("popstate", onPopState);
     };
-  }, [closeOverlay, transitionContent, view]);
+  }, [closeOverlay, view]);
 
   const renderOverlayContent = (currentOverlay: OverlayName, active: boolean) => (
     <>
@@ -446,7 +410,7 @@ export default function Home() {
       />
 
       <div className={`portfolio-shell ${view === "project" ? "is-project" : "is-work"}`}>
-        <div className={`site-content ${contentHidden ? "site-content--hidden" : ""}`}>
+        <div className="site-content" key={view === "project" ? selectedProject.id : "work"}>
           {view === "work" ? <WorkView onOpenProject={openProject} hidden={dockHidden} /> : <ProjectView project={selectedProject} />}
         </div>
       </div>

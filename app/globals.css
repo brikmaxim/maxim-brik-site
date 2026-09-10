@@ -60,8 +60,7 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .portfolio-viewport { position: relative; width: 100%; overflow-x: hidden; }
 .portfolio-shell { width: min(100%, 540px); margin: 0 auto; padding: var(--panel-top) var(--content-inset) min(37vw, 200px); position: relative; background: #fff; }
 .portfolio-shell.is-project { padding-top: var(--panel-top); }
-.site-content { position: relative; opacity: 1; transition: opacity 500ms ease; }
-.site-content--hidden { opacity: 0; pointer-events: none; }
+.site-content { position: relative; transform-origin: 50% 0; will-change: transform, opacity, filter; animation: panel-reveal 700ms cubic-bezier(.7,.01,.11,.96) both; }
 .brand-mark { position: fixed; z-index: 25; top: calc(var(--panel-top) - min(13.148vw, 71px)); left: 50%; width: min(10.741vw, 58px); height: min(10.741vw, 58px); visibility: visible; opacity: .96; background: var(--glass); -webkit-backdrop-filter: blur(9px) saturate(2.5); backdrop-filter: blur(9px) saturate(2.5); -webkit-mask: url("/maxim-brik-mark.svg") center / contain no-repeat; mask: url("/maxim-brik-mark.svg") center / contain no-repeat; transform: translate3d(-50%, 0, 0); pointer-events: none; transition: opacity 500ms cubic-bezier(.4,0,.2,1), visibility 0s linear 0s; }
 .brand-mark--hidden { visibility: hidden; opacity: 0; transition: opacity 420ms cubic-bezier(.4,0,.2,1), visibility 0s linear 520ms; }
 .work-grid { display: grid; gap: var(--layout-gap); }
