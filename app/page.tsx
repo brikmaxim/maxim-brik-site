@@ -535,9 +535,11 @@ export default function Home() {
         onProjectClose={closeProjectFromButton}
       />
 
+      <div className={`brand-mark ${dockHidden ? "brand-mark--hidden" : ""}`} aria-hidden="true" />
+
       <div className={`portfolio-shell ${view === "project" ? "is-project" : "is-work"}`}>
         <div className={`site-content ${contentVisible ? "is-visible" : ""} ${contentTransitionTarget ? `site-content--to-${contentTransitionTarget}` : ""}`} key={view === "project" ? selectedProject.id : "work"}>
-          {view === "work" ? <WorkView onOpenProject={openProject} hidden={dockHidden} /> : <ProjectView project={selectedProject} />}
+          {view === "work" ? <WorkView onOpenProject={openProject} /> : <ProjectView project={selectedProject} />}
         </div>
       </div>
 
@@ -568,10 +570,9 @@ export default function Home() {
   );
 }
 
-function WorkView({ onOpenProject, hidden }: { onOpenProject: (project: Project) => void; hidden: boolean }) {
+function WorkView({ onOpenProject }: { onOpenProject: (project: Project) => void }) {
   return (
     <>
-      <div className={`brand-mark ${hidden ? "brand-mark--hidden" : ""}`} aria-hidden="true" />
       <section className="work-grid" aria-label="Selected work">
         {projects.map((project) => (
           <button
