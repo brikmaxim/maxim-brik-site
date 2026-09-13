@@ -46,8 +46,9 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .password-field { width: 100%; height: min(12.037vw, 65px); border-top: .5px solid var(--line); border-bottom: .5px solid var(--line); }
 .password-panel input,
 .password-panel button { width: 100%; border: 0; font-size: max(16px, min(3.241vw, 17.5px)); outline: 0; }
-.password-panel input { display: block; height: 100%; padding: 0 min(1.204vw, 6.5px); border-radius: 0; color: var(--ink); background: transparent; text-align: center; }
+.password-panel input { display: block; height: 100%; padding: 0 min(1.204vw, 6.5px); border-radius: 0; color: var(--ink); caret-color: #000; accent-color: #000; background: transparent; text-align: center; }
 .password-panel input::placeholder { color: rgba(34,34,34,.5); opacity: 1; }
+.password-panel input:focus::placeholder { color: transparent; opacity: 0; }
 .password-panel input:focus { background: transparent; }
 .password-panel button { height: min(8.148vw, 44px); overflow: hidden; border-radius: 999px; color: #fff; background: rgba(0,0,0,.76); -webkit-mask-image: -webkit-radial-gradient(white, black); cursor: pointer; transition: opacity 220ms cubic-bezier(.4,0,.2,1), background-color 220ms cubic-bezier(.4,0,.2,1); }
 .password-panel__submit { justify-self: stretch; margin: 0; }
