@@ -93,14 +93,14 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
               setPassword(event.target.value);
               if (error) setError(false);
             }}
-            placeholder="Enter password"
+            placeholder="enter password"
             autoComplete="current-password"
             spellCheck={false}
             aria-invalid={error}
             aria-describedby="password-error"
           />
         </div>
-        <button type="submit" disabled={!password || checking}>{checking ? "Checking…" : "Continue"}</button>
+        <button className="password-panel__submit" type="submit" disabled={!password || checking}>{checking ? "Checking…" : "Continue"}</button>
         <p id="password-error" className="password-panel__error" aria-live="polite">{error ? "Incorrect password" : ""}</p>
       </form>
     </div>
