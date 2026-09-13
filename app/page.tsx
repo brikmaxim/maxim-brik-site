@@ -16,14 +16,15 @@ type Project = {
   image: string;
   visual: string;
   video?: string;
+  videoPreview?: string;
   isNew?: boolean;
 };
 
 const projects: Project[] = [
   { id: "01", name: "KYNG", category: "CGI,Dev", year: "2026", image: "/kyng-work-front.jpg", visual: "kyng", isNew: true },
   { id: "02", name: "Solution", category: "CGI", year: "2022", image: "/solution-cover.jpg", visual: "solution" },
-  { id: "03", name: "NDSP", category: "CGI,AI,Dev", year: "2025", image: "/kyng-detail-drawing.png", visual: "drawing", video: "/ndsp-card.mp4" },
-  { id: "04", name: "ANGEL 333", category: "ID,CGI", year: "2024", image: "/angel-333-cover.jpg", visual: "angel", video: "/angel-card.mp4" },
+  { id: "03", name: "NDSP", category: "CGI,AI,Dev", year: "2025", image: "/kyng-detail-drawing.png", visual: "drawing", video: "/ndsp-card.mp4", videoPreview: "/ndsp-card-preview.jpg" },
+  { id: "04", name: "ANGEL 333", category: "ID,CGI", year: "2024", image: "/angel-333-cover.jpg", visual: "angel", video: "/angel-card.mp4", videoPreview: "/angel-card-preview.jpg" },
   { id: "05", name: "Yandex", category: "CGI", year: "2023", image: "/kyng-detail-cover.png", visual: "cover-warm" },
   { id: "06", name: "SBER", category: "CGI,Dev", year: "2022", image: "/sber-cover.jpg", visual: "sber" },
   { id: "07", name: "Sicko", category: "CGI,AI,Dev", year: "2026", image: "/sicko-work.png", visual: "sicko" },
@@ -110,17 +111,18 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
 function GifVideo({
   src,
   className,
-  poster,
+  preview,
   ariaLabel,
   ariaHidden,
 }: {
   src: string;
   className?: string;
-  poster?: string;
+  preview?: string;
   ariaLabel?: string;
   ariaHidden?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -153,26 +155,38 @@ function GifVideo({
   }, [src]);
 
   return (
-    <video
-      ref={videoRef}
-      className={`gif-video${className ? ` ${className}` : ""}`}
-      src={src}
-      poster={poster}
-      autoPlay
-      muted
-      loop
-      playsInline
-      controls={false}
-      disablePictureInPicture
-      controlsList="nodownload nofullscreen noremoteplayback"
-      preload="auto"
-      aria-label={ariaLabel}
-      aria-hidden={ariaHidden}
-      onCanPlay={(event) => {
-        event.currentTarget.muted = true;
-        void event.currentTarget.play().catch(() => undefined);
-      }}
-    />
+    <>
+      {preview && (
+        <img
+          className={`gif-video__preview ${isPlaying ? "gif-video__preview--hidden" : ""}${className ? ` ${className}` : ""}`}
+          src={preview}
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+        />
+      )}
+      <video
+        ref={videoRef}
+        className={`gif-video ${isPlaying ? "gif-video--playing" : ""}${className ? ` ${className}` : ""}`}
+        src={src}
+        autoPlay
+        muted
+        loop
+        playsInline
+        controls={false}
+        disablePictureInPicture
+        disableRemotePlayback
+        controlsList="nodownload nofullscreen noremoteplayback"
+        preload="auto"
+        aria-label={ariaLabel}
+        aria-hidden={ariaHidden}
+        onCanPlay={(event) => {
+          event.currentTarget.muted = true;
+          void event.currentTarget.play().catch(() => undefined);
+        }}
+        onPlaying={() => setIsPlaying(true)}
+      />
+    </>
   );
 }
 
@@ -585,7 +599,7 @@ function WorkView({ onOpenProject }: { onOpenProject: (project: Project) => void
               <GifVideo
                 className="project-card__video"
                 src={project.video}
-                poster={project.image}
+                preview={project.videoPreview ?? project.image}
                 aria-hidden="true"
               />
             ) : (
@@ -666,7 +680,7 @@ function ProjectView({ project }: { project: Project }) {
               </figure>
 
               <figure className="project-content-card project-content-card--video">
-                <GifVideo src="/kyng-motion.mp4" ariaLabel="KYNG object in motion" />
+                <GifVideo src="/kyng-motion.mp4" preview="/kyng-motion-preview.jpg" ariaLabel="KYNG object in motion" />
               </figure>
             </>
           )}
