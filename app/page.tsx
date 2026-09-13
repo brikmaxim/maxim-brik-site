@@ -238,6 +238,11 @@ export default function Home() {
     const firstFrame = window.requestAnimationFrame(() => {
       const secondFrame = window.requestAnimationFrame(() => {
         window.scrollTo({ top: targetScrollY, behavior: "auto" });
+        lastScrollY.current = targetScrollY;
+        scrollDistance.current = 0;
+        scrollDirection.current = 0;
+        dockHiddenRef.current = false;
+        setDockHidden(false);
         restoreWorkScroll.current = false;
       });
       restoreFrames.current.push(secondFrame);
@@ -273,6 +278,14 @@ export default function Home() {
         const currentScrollY = readPageTop();
         const distance = currentScrollY - lastScrollY.current;
         lastScrollY.current = currentScrollY;
+
+        if (restoreWorkScroll.current) {
+          scrollDistance.current = 0;
+          scrollDirection.current = 0;
+          setDockVisibility(false);
+          scrollFrame.current = null;
+          return;
+        }
 
         if (overlay || currentScrollY <= 24) {
           scrollDistance.current = 0;
