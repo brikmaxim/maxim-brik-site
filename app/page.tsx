@@ -51,6 +51,52 @@ async function hashPassword(value: string) {
   return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+async function copyText(text: string) {
+  const activeElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const selection = window.getSelection();
+  const selectedRange = selection?.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
+  const helper = document.createElement("textarea");
+
+  helper.value = text;
+  helper.readOnly = true;
+  helper.setAttribute("aria-hidden", "true");
+  Object.assign(helper.style, {
+    position: "fixed",
+    top: "0",
+    left: "-9999px",
+    width: "1px",
+    height: "1px",
+    opacity: "0",
+    fontSize: "16px",
+    pointerEvents: "none",
+  });
+  document.body.appendChild(helper);
+  helper.select();
+  helper.setSelectionRange(0, helper.value.length);
+
+  let copied = false;
+  try {
+    copied = document.execCommand("copy");
+  } catch {
+    copied = false;
+  }
+  helper.remove();
+
+  if (activeElement) activeElement.focus({ preventScroll: true });
+  if (selection && selectedRange) {
+    selection.removeAllRanges();
+    selection.addRange(selectedRange);
+  }
+  if (copied) return true;
+
+  try {
+    await navigator.clipboard?.writeText(text);
+    return Boolean(navigator.clipboard);
+  } catch {
+    return false;
+  }
+}
+
 function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
@@ -757,6 +803,19 @@ function ContactPanel({ urgency, setUrgency, agreed, setAgreed, sent, setSent, p
   const [promptIndex, setPromptIndex] = useState(0);
   const [typedPrompt, setTypedPrompt] = useState("");
   const [promptPhase, setPromptPhase] = useState<PromptPhase>("typing");
+  const [emailCopied, setEmailCopied] = useState(false);
+  const copiedResetTimer = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (copiedResetTimer.current !== null) window.clearTimeout(copiedResetTimer.current);
+  }, []);
+
+  const copyEmail = async () => {
+    if (!await copyText("hello@maximbrik.com")) return;
+    setEmailCopied(true);
+    if (copiedResetTimer.current !== null) window.clearTimeout(copiedResetTimer.current);
+    copiedResetTimer.current = window.setTimeout(() => setEmailCopied(false), 1400);
+  };
 
   useEffect(() => {
     if (!active || message || promptDismissed) return;
@@ -826,7 +885,7 @@ function ContactPanel({ urgency, setUrgency, agreed, setAgreed, sent, setSent, p
         </label>
       </div>
       <button className="continue-button" type="button" onClick={() => setSent(true)}>{sent ? "Thank you" : "Continue"}</button>
-      <button className="copy-email" type="button" onClick={() => navigator.clipboard?.writeText("hello@maximbrik.com")}>Copy Email</button>
+      <button className="copy-email" type="button" onClick={copyEmail}>{emailCopied ? "Copied" : "Copy Email"}</button>
     </section>
   );
 }
