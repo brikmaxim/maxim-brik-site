@@ -62,7 +62,7 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .portfolio-viewport { position: relative; width: 100%; overflow-x: hidden; }
 .portfolio-shell { width: min(100%, 540px); margin: 0 auto; padding: var(--panel-top) var(--content-inset) min(37vw, 200px); position: relative; background: #fff; }
 .portfolio-shell.is-project { padding-top: var(--panel-top); }
-.site-content { position: relative; opacity: 1; transform: translate3d(0, min(1.481vw, 8px), 0) scale(1.04); transform-origin: 50% 0; pointer-events: none; transition: transform 320ms cubic-bezier(.89,.04,.3,.99); }
+.site-content { position: relative; opacity: 0; transform: translate3d(0, min(1.481vw, 8px), 0) scale(1.04); transform-origin: 50% 0; pointer-events: none; transition: opacity 320ms cubic-bezier(.89,.04,.3,.99), transform 320ms cubic-bezier(.89,.04,.3,.99); }
 .site-content--to-work { transform: translate3d(0, min(.741vw, 4px), 0) scale(1.015); }
 .site-content.is-visible { opacity: 1; transform: translate3d(0, 0, 0) scale(1); pointer-events: auto; transition-duration: 700ms; transition-timing-function: cubic-bezier(.7,.01,.11,.96); }
 .site-content--to-work.is-visible { transition-duration: 420ms; }
@@ -223,6 +223,7 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .dock { position: absolute; top: 0; left: calc(50% - min(50vw, 270px)); width: min(100%, 540px); height: var(--dock-height); pointer-events: none; }
 .dock-item { position: absolute; top: 0; height: var(--dock-height); visibility: visible; opacity: 1; isolation: isolate; transform: translate3d(0, 0, 0); pointer-events: auto; background: transparent; box-shadow: none; transition: transform 260ms cubic-bezier(.7,.01,.11,.96), opacity 260ms cubic-bezier(.7,.01,.11,.96); }
 .dock-item::before { content: ""; position: absolute; z-index: 0; inset: 0; overflow: hidden; border-radius: inherit; background: var(--dock-surface); background-clip: padding-box; -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); -webkit-mask-image: -webkit-radial-gradient(white, black); backface-visibility: hidden; pointer-events: none; transition: background-color 110ms ease; }
+.portfolio-viewport.is-content-transitioning .dock-item:not(.is-selected)::before { background-color: rgba(190,190,190,.72); }
 .dock-item > button { position: relative; z-index: 1; width: 100%; height: 100%; padding: 0; border: 0; border-radius: inherit; color: var(--ink); background: transparent; box-shadow: none; cursor: pointer; pointer-events: auto; touch-action: manipulation; font-size: min(3.241vw, 17.5px); font-weight: 400; line-height: normal; transition: opacity 110ms ease, transform 110ms cubic-bezier(.8,.01,.11,.98); }
 .dock-pill.is-selected::before { background-color: var(--dock-selected); }
 .dock-pill > button:active { background: transparent; }

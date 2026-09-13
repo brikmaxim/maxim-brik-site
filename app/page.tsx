@@ -243,6 +243,7 @@ export default function Home() {
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [view, setView] = useState<View>("work");
   const [contentVisible, setContentVisible] = useState(true);
+  const [contentTransitioning, setContentTransitioning] = useState(false);
   const [contentTransitionTarget, setContentTransitionTarget] = useState<View | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project>(projects[0]);
   const [urgency, setUrgency] = useState<"1week" | "2weeks" | "4weeks">("2weeks");
@@ -259,6 +260,7 @@ export default function Home() {
   const overlayRevealFrames = useRef<number[]>([]);
   const contentVisibleRef = useRef(true);
   const contentTransitionTimer = useRef<number | null>(null);
+  const contentTransitionEndTimer = useRef<number | null>(null);
   const contentRevealFrames = useRef<number[]>([]);
   const pendingContentTransition = useRef<(() => void) | null>(null);
   const lastScrollY = useRef(0);
@@ -314,6 +316,7 @@ export default function Home() {
     if (overlaySwapTimer.current !== null) window.clearTimeout(overlaySwapTimer.current);
     overlayRevealFrames.current.forEach(window.cancelAnimationFrame);
     if (contentTransitionTimer.current !== null) window.clearTimeout(contentTransitionTimer.current);
+    if (contentTransitionEndTimer.current !== null) window.clearTimeout(contentTransitionEndTimer.current);
     contentRevealFrames.current.forEach(window.cancelAnimationFrame);
   }, []);
 
@@ -494,6 +497,11 @@ export default function Home() {
   const transitionContent = useCallback((targetView: View, commitTransition: () => void) => {
     pendingContentTransition.current = commitTransition;
     setContentTransitionTarget(targetView);
+    setContentTransitioning(true);
+    if (contentTransitionEndTimer.current !== null) {
+      window.clearTimeout(contentTransitionEndTimer.current);
+      contentTransitionEndTimer.current = null;
+    }
     contentRevealFrames.current.forEach(window.cancelAnimationFrame);
     contentRevealFrames.current = [];
     if (contentTransitionTimer.current !== null) return;
@@ -506,6 +514,11 @@ export default function Home() {
       pendingContentTransition.current = null;
       nextTransition?.();
       revealContent();
+      const settleDuration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 560;
+      contentTransitionEndTimer.current = window.setTimeout(() => {
+        contentTransitionEndTimer.current = null;
+        setContentTransitioning(false);
+      }, settleDuration);
     }, exitDuration);
   }, [revealContent, setContentVisibility]);
 
@@ -581,7 +594,7 @@ export default function Home() {
   );
 
   return (
-    <main className="portfolio-viewport">
+    <main className={`portfolio-viewport ${contentTransitioning ? "is-content-transitioning" : ""}`}>
       <Dock
         overlay={overlay}
         view={view}
