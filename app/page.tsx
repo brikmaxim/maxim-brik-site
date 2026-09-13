@@ -911,8 +911,8 @@ function Dock({ overlay, view, menuSection, hidden, onProjects, onWork, onInfo, 
     <div className="dock-anchor dock-anchor--base">
       <nav className={`dock dock--base ${overlay ? "is-open" : ""} ${hidden ? "dock--hidden" : ""}`} aria-label="Primary navigation" aria-hidden={hidden || undefined} inert={hidden}>
         <div className="dock-item dock-circle dock-plus"><button type="button" onClick={onProjects} aria-label="Open project index"><span /></button></div>
-        <div className={`dock-item dock-circle dock-close ${overlay ? "is-visible" : ""}`}><button type="button" onClick={onClose} aria-label="Close panel" tabIndex={overlay ? 0 : -1}><span /></button></div>
-        <div className={`dock-item dock-circle dock-project-close ${!overlay && view === "project" ? "is-visible" : ""}`}><button type="button" onClick={onProjectClose} aria-label="Close project" tabIndex={!overlay && view === "project" ? 0 : -1}><span /></button></div>
+        <div className={`dock-item dock-circle dock-close ${overlay ? "is-visible" : ""}`} aria-hidden={!overlay} inert={!overlay}><button type="button" onClick={onClose} aria-label="Close panel" tabIndex={overlay ? 0 : -1}><span /></button></div>
+        <div className={`dock-item dock-circle dock-project-close ${!overlay && view === "project" ? "is-visible" : ""}`} aria-hidden={Boolean(overlay) || view !== "project"} inert={Boolean(overlay) || view !== "project"}><button type="button" onClick={onProjectClose} aria-label="Close project" tabIndex={!overlay && view === "project" ? 0 : -1}><span /></button></div>
         <div className="dock-links">
           {items.map((item) => (
             <div key={item} className={`dock-item dock-pill ${itemClass[item]} ${active === item ? "is-selected" : ""}`}>
