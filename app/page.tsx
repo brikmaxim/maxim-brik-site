@@ -103,6 +103,25 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   const [checking, setChecking] = useState(false);
   const [leaving, setLeaving] = useState(false);
 
+  useEffect(() => {
+    const lockedScrollY = window.scrollY;
+    const preventScroll = (event: Event) => {
+      if (event.cancelable) event.preventDefault();
+    };
+    const restoreLockedPosition = () => {
+      if (window.scrollY !== lockedScrollY) window.scrollTo({ top: lockedScrollY, behavior: "auto" });
+    };
+
+    document.addEventListener("touchmove", preventScroll, { passive: false });
+    window.addEventListener("wheel", preventScroll, { passive: false });
+    window.addEventListener("scroll", restoreLockedPosition, { passive: true });
+    return () => {
+      document.removeEventListener("touchmove", preventScroll);
+      window.removeEventListener("wheel", preventScroll);
+      window.removeEventListener("scroll", restoreLockedPosition);
+    };
+  }, []);
+
   const submitPassword = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!password || checking || leaving) return;
@@ -243,7 +262,6 @@ export default function Home() {
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [view, setView] = useState<View>("work");
   const [contentVisible, setContentVisible] = useState(true);
-  const [contentTransitioning, setContentTransitioning] = useState(false);
   const [contentTransitionTarget, setContentTransitionTarget] = useState<View | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project>(projects[0]);
   const [urgency, setUrgency] = useState<"1week" | "2weeks" | "4weeks">("2weeks");
@@ -260,7 +278,6 @@ export default function Home() {
   const overlayRevealFrames = useRef<number[]>([]);
   const contentVisibleRef = useRef(true);
   const contentTransitionTimer = useRef<number | null>(null);
-  const contentTransitionEndTimer = useRef<number | null>(null);
   const contentRevealFrames = useRef<number[]>([]);
   const pendingContentTransition = useRef<(() => void) | null>(null);
   const lastScrollY = useRef(0);
@@ -270,6 +287,8 @@ export default function Home() {
   const scrollDirection = useRef<-1 | 0 | 1>(0);
   const workScrollY = useRef(0);
   const restoreWorkScroll = useRef(false);
+  const preserveDockDuringViewTransition = useRef(false);
+  const preservedDockHidden = useRef(false);
 
   useEffect(() => {
     try {
@@ -296,6 +315,7 @@ export default function Home() {
   useLayoutEffect(() => {
     if (view !== "work" || !restoreWorkScroll.current) return;
     const targetScrollY = workScrollY.current;
+    const keepDockHidden = preservedDockHidden.current;
     window.scrollTo({ top: targetScrollY, behavior: "auto" });
     const firstFrame = window.requestAnimationFrame(() => {
       const secondFrame = window.requestAnimationFrame(() => {
@@ -303,9 +323,10 @@ export default function Home() {
         lastScrollY.current = targetScrollY;
         scrollDistance.current = 0;
         scrollDirection.current = 0;
-        dockHiddenRef.current = false;
-        setDockHidden(false);
+        dockHiddenRef.current = keepDockHidden;
+        setDockHidden(keepDockHidden);
         restoreWorkScroll.current = false;
+        preserveDockDuringViewTransition.current = false;
       });
       restoreFrames.current.push(secondFrame);
     });
@@ -316,7 +337,6 @@ export default function Home() {
     if (overlaySwapTimer.current !== null) window.clearTimeout(overlaySwapTimer.current);
     overlayRevealFrames.current.forEach(window.cancelAnimationFrame);
     if (contentTransitionTimer.current !== null) window.clearTimeout(contentTransitionTimer.current);
-    if (contentTransitionEndTimer.current !== null) window.clearTimeout(contentTransitionEndTimer.current);
     contentRevealFrames.current.forEach(window.cancelAnimationFrame);
   }, []);
 
@@ -341,6 +361,13 @@ export default function Home() {
         const currentScrollY = readPageTop();
         const distance = currentScrollY - lastScrollY.current;
         lastScrollY.current = currentScrollY;
+
+        if (preserveDockDuringViewTransition.current) {
+          scrollDistance.current = 0;
+          scrollDirection.current = 0;
+          scrollFrame.current = null;
+          return;
+        }
 
         if (restoreWorkScroll.current) {
           scrollDistance.current = 0;
@@ -472,13 +499,6 @@ export default function Home() {
     scheduleOverlaySwap();
   }, [scheduleOverlaySwap, setPanelVisibility]);
 
-  const restoreDock = useCallback(() => {
-    dockHiddenRef.current = false;
-    scrollDistance.current = 0;
-    scrollDirection.current = 0;
-    setDockHidden(false);
-  }, []);
-
   const setContentVisibility = useCallback((visible: boolean) => {
     contentVisibleRef.current = visible;
     setContentVisible(visible);
@@ -497,11 +517,6 @@ export default function Home() {
   const transitionContent = useCallback((targetView: View, commitTransition: () => void) => {
     pendingContentTransition.current = commitTransition;
     setContentTransitionTarget(targetView);
-    setContentTransitioning(true);
-    if (contentTransitionEndTimer.current !== null) {
-      window.clearTimeout(contentTransitionEndTimer.current);
-      contentTransitionEndTimer.current = null;
-    }
     contentRevealFrames.current.forEach(window.cancelAnimationFrame);
     contentRevealFrames.current = [];
     if (contentTransitionTimer.current !== null) return;
@@ -514,21 +529,32 @@ export default function Home() {
       pendingContentTransition.current = null;
       nextTransition?.();
       revealContent();
-      const settleDuration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 560;
-      contentTransitionEndTimer.current = window.setTimeout(() => {
-        contentTransitionEndTimer.current = null;
-        setContentTransitioning(false);
-      }, settleDuration);
     }, exitDuration);
   }, [revealContent, setContentVisibility]);
 
   const openProject = (project: Project = projects[0]) => {
     if (view === "work") workScrollY.current = window.scrollY;
+    const keepDockHidden = dockHiddenRef.current;
     closeOverlay();
     transitionContent("project", () => {
+      preserveDockDuringViewTransition.current = true;
+      preservedDockHidden.current = keepDockHidden;
       setSelectedProject(project);
       setView("project");
       window.scrollTo({ top: 0, behavior: "auto" });
+      lastScrollY.current = 0;
+      scrollDistance.current = 0;
+      scrollDirection.current = 0;
+      dockHiddenRef.current = keepDockHidden;
+      setDockHidden(keepDockHidden);
+      const firstFrame = window.requestAnimationFrame(() => {
+        const secondFrame = window.requestAnimationFrame(() => {
+          lastScrollY.current = Math.max(0, window.scrollY);
+          preserveDockDuringViewTransition.current = false;
+        });
+        restoreFrames.current.push(secondFrame);
+      });
+      restoreFrames.current.push(firstFrame);
       window.history.pushState({ portfolioView: "project" }, "", `${window.location.pathname}${window.location.search}`);
     });
   };
@@ -536,7 +562,8 @@ export default function Home() {
   const showWork = () => {
     closeOverlay();
     if (view === "project") {
-      restoreDock();
+      preservedDockHidden.current = dockHiddenRef.current;
+      preserveDockDuringViewTransition.current = true;
       restoreWorkScroll.current = true;
       if (window.history.state?.portfolioView === "project") window.history.back();
       else transitionContent("work", () => setView("work"));
@@ -555,6 +582,8 @@ export default function Home() {
     const onKeyDown = (event: KeyboardEvent) => event.key === "Escape" && closeOverlay();
     const onPopState = () => {
       if (view !== "project") return;
+      preservedDockHidden.current = dockHiddenRef.current;
+      preserveDockDuringViewTransition.current = true;
       restoreWorkScroll.current = true;
       overlayRef.current = null;
       setOverlay(null);
@@ -562,7 +591,6 @@ export default function Home() {
       setDisplayedOverlay(null);
       setPanelVisibility(false);
       setMenuSection("work");
-      restoreDock();
       transitionContent("work", () => setView("work"));
     };
     window.addEventListener("keydown", onKeyDown);
@@ -571,7 +599,7 @@ export default function Home() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("popstate", onPopState);
     };
-  }, [closeOverlay, restoreDock, setPanelVisibility, transitionContent, view]);
+  }, [closeOverlay, setPanelVisibility, transitionContent, view]);
 
   const renderOverlayContent = (currentOverlay: OverlayName, active: boolean) => (
     <>
@@ -594,7 +622,7 @@ export default function Home() {
   );
 
   return (
-    <main className={`portfolio-viewport ${contentTransitioning ? "is-content-transitioning" : ""}`}>
+    <main className="portfolio-viewport">
       <Dock
         overlay={overlay}
         view={view}
@@ -615,8 +643,6 @@ export default function Home() {
           {view === "work" ? <WorkView onOpenProject={openProject} /> : <ProjectView project={selectedProject} />}
         </div>
       </div>
-
-      <div className={`content-transition-blur ${contentVisible ? "" : "is-active"}`} aria-hidden="true" />
 
       {(overlay || displayedOverlay) && (
         <div
