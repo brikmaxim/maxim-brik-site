@@ -183,6 +183,7 @@ export default function Home() {
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [view, setView] = useState<View>("work");
   const [contentVisible, setContentVisible] = useState(true);
+  const [contentTransitionTarget, setContentTransitionTarget] = useState<View | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project>(projects[0]);
   const [urgency, setUrgency] = useState<"1week" | "2weeks" | "4weeks">("2weeks");
   const [agreed, setAgreed] = useState(false);
@@ -417,8 +418,9 @@ export default function Home() {
     contentRevealFrames.current.push(firstFrame);
   }, [setContentVisibility]);
 
-  const transitionContent = useCallback((commitTransition: () => void) => {
+  const transitionContent = useCallback((targetView: View, commitTransition: () => void) => {
     pendingContentTransition.current = commitTransition;
+    setContentTransitionTarget(targetView);
     contentRevealFrames.current.forEach(window.cancelAnimationFrame);
     contentRevealFrames.current = [];
     if (contentTransitionTimer.current !== null) return;
@@ -437,7 +439,7 @@ export default function Home() {
   const openProject = (project: Project = projects[0]) => {
     if (view === "work") workScrollY.current = window.scrollY;
     closeOverlay();
-    transitionContent(() => {
+    transitionContent("project", () => {
       setSelectedProject(project);
       setView("project");
       window.scrollTo({ top: 0, behavior: "auto" });
@@ -451,7 +453,7 @@ export default function Home() {
       restoreDock();
       restoreWorkScroll.current = true;
       if (window.history.state?.portfolioView === "project") window.history.back();
-      else transitionContent(() => setView("work"));
+      else transitionContent("work", () => setView("work"));
     }
   };
 
@@ -475,7 +477,7 @@ export default function Home() {
       setPanelVisibility(false);
       setMenuSection("work");
       restoreDock();
-      transitionContent(() => setView("work"));
+      transitionContent("work", () => setView("work"));
     };
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("popstate", onPopState);
@@ -521,10 +523,12 @@ export default function Home() {
       />
 
       <div className={`portfolio-shell ${view === "project" ? "is-project" : "is-work"}`}>
-        <div className={`site-content ${contentVisible ? "is-visible" : ""}`} key={view === "project" ? selectedProject.id : "work"}>
+        <div className={`site-content ${contentVisible ? "is-visible" : ""} ${contentTransitionTarget ? `site-content--to-${contentTransitionTarget}` : ""}`} key={view === "project" ? selectedProject.id : "work"}>
           {view === "work" ? <WorkView onOpenProject={openProject} hidden={dockHidden} /> : <ProjectView project={selectedProject} />}
         </div>
       </div>
+
+      <div className={`content-transition-blur ${contentVisible ? "" : "is-active"}`} aria-hidden="true" />
 
       {(overlay || displayedOverlay) && (
         <div
