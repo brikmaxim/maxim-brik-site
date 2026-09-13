@@ -62,7 +62,7 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 .portfolio-viewport { position: relative; width: 100%; overflow-x: hidden; }
 .portfolio-shell { width: min(100%, 540px); margin: 0 auto; padding: var(--panel-top) var(--content-inset) min(37vw, 200px); position: relative; background: #fff; }
 .portfolio-shell.is-project { padding-top: var(--panel-top); }
-.site-content { position: relative; opacity: 0; transform: translate3d(0, min(1.481vw, 8px), 0) scale(1.04); transform-origin: 50% 0; pointer-events: none; transition: opacity 320ms cubic-bezier(.89,.04,.3,.99), transform 320ms cubic-bezier(.89,.04,.3,.99); }
+.site-content { position: relative; opacity: 1; transform: translate3d(0, min(1.481vw, 8px), 0) scale(1.04); transform-origin: 50% 0; pointer-events: none; transition: transform 320ms cubic-bezier(.89,.04,.3,.99); }
 .site-content--to-work { transform: translate3d(0, min(.741vw, 4px), 0) scale(1.015); }
 .site-content.is-visible { opacity: 1; transform: translate3d(0, 0, 0) scale(1); pointer-events: auto; transition-duration: 700ms; transition-timing-function: cubic-bezier(.7,.01,.11,.96); }
 .site-content--to-work.is-visible { transition-duration: 420ms; }
