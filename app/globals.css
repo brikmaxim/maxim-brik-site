@@ -27,9 +27,10 @@
 
 * { box-sizing: border-box; }
 html { overflow-anchor: none; }
+/* Keep the document paintable behind Safari chrome; lock gestures without clipping it. */
 html.password-locked,
-html.password-locked body { height: 100%; overflow: hidden; overscroll-behavior: none; }
-html.password-locked body { position: fixed; inset: 0; width: 100%; }
+html.password-locked body { overscroll-behavior: none; }
+html.password-locked body { touch-action: none; }
 html, body { margin: 0; width: 100%; color: var(--ink); }
 body { overflow-x: hidden; background: #fff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: min(3.241vw, 17.5px); line-height: 1.2; font-weight: 300; letter-spacing: 0; }
 button, input, textarea { color: inherit; font: inherit; letter-spacing: 0; }

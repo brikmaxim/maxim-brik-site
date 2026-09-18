@@ -141,15 +141,21 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
     const preventScroll = (event: Event) => {
       if (event.cancelable) event.preventDefault();
     };
+    const preventScrollKey = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLElement && event.target.closest("input, textarea, button, [contenteditable]")) return;
+      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) event.preventDefault();
+    };
     const restoreLockedPosition = () => {
       if (window.scrollY !== lockedScrollY) window.scrollTo({ top: lockedScrollY, behavior: "auto" });
     };
 
     document.addEventListener("touchmove", preventScroll, { passive: false });
+    document.addEventListener("keydown", preventScrollKey);
     window.addEventListener("wheel", preventScroll, { passive: false });
     window.addEventListener("scroll", restoreLockedPosition, { passive: true });
     return () => {
       document.removeEventListener("touchmove", preventScroll);
+      document.removeEventListener("keydown", preventScrollKey);
       window.removeEventListener("wheel", preventScroll);
       window.removeEventListener("scroll", restoreLockedPosition);
     };
