@@ -622,50 +622,51 @@ export default function Home() {
   );
 
   return (
-    <main className="portfolio-viewport">
-      <Dock
-        overlay={overlay}
-        view={view}
-        menuSection={menuSection}
-        hidden={dockHidden}
-        onProjects={() => openOverlay("projects")}
-        onWork={selectWork}
-        onInfo={selectInfo}
-        onContact={selectContact}
-        onClose={selectWork}
-        onProjectClose={closeProjectFromButton}
-      />
+    <>
+      <main className="portfolio-viewport" inert={!isUnlocked}>
+        <Dock
+          overlay={overlay}
+          view={view}
+          menuSection={menuSection}
+          hidden={dockHidden}
+          onProjects={() => openOverlay("projects")}
+          onWork={selectWork}
+          onInfo={selectInfo}
+          onContact={selectContact}
+          onClose={selectWork}
+          onProjectClose={closeProjectFromButton}
+        />
 
-      <div className={`brand-mark ${dockHidden ? "brand-mark--hidden" : ""}`} aria-hidden="true" />
+        <div className={`brand-mark ${dockHidden ? "brand-mark--hidden" : ""}`} aria-hidden="true" />
 
-      <div className={`portfolio-shell ${view === "project" ? "is-project" : "is-work"}`}>
-        <div className={`site-content ${contentVisible ? "is-visible" : ""} ${contentTransitionTarget ? `site-content--to-${contentTransitionTarget}` : ""}`} key={view === "project" ? selectedProject.id : "work"}>
-          {view === "work" ? <WorkView onOpenProject={openProject} /> : <ProjectView project={selectedProject} />}
+        <div className={`portfolio-shell ${view === "project" ? "is-project" : "is-work"}`}>
+          <div className={`site-content ${contentVisible ? "is-visible" : ""} ${contentTransitionTarget ? `site-content--to-${contentTransitionTarget}` : ""}`} key={view === "project" ? selectedProject.id : "work"}>
+            {view === "work" ? <WorkView onOpenProject={openProject} /> : <ProjectView project={selectedProject} />}
+          </div>
         </div>
-      </div>
 
-      {(overlay || displayedOverlay) && (
-        <div
-          className={`overlay-layer ${overlay ? `overlay-layer--active overlay-layer--${overlay}` : "overlay-layer--leaving"}`}
-          role={overlay ? "dialog" : undefined}
-          aria-modal={overlay ? "true" : undefined}
-          aria-label={overlay ? `${overlay} panel` : undefined}
-        >
-          {overlay && <button className="blur-screen" type="button" onClick={selectWork} aria-label="Close panel" />}
-          {displayedOverlay && (
-            <div
-              className={`overlay-motion ${overlayVisible ? "is-visible" : ""}`}
-              aria-hidden={!overlayVisible || displayedOverlay !== overlay}
-            >
-              {renderOverlayContent(displayedOverlay, overlayVisible && displayedOverlay === overlay)}
-            </div>
-          )}
-        </div>
-      )}
+        {(overlay || displayedOverlay) && (
+          <div
+            className={`overlay-layer ${overlay ? `overlay-layer--active overlay-layer--${overlay}` : "overlay-layer--leaving"}`}
+            role={overlay ? "dialog" : undefined}
+            aria-modal={overlay ? "true" : undefined}
+            aria-label={overlay ? `${overlay} panel` : undefined}
+          >
+            {overlay && <button className="blur-screen" type="button" onClick={selectWork} aria-label="Close panel" />}
+            {displayedOverlay && (
+              <div
+                className={`overlay-motion ${overlayVisible ? "is-visible" : ""}`}
+                aria-hidden={!overlayVisible || displayedOverlay !== overlay}
+              >
+                {renderOverlayContent(displayedOverlay, overlayVisible && displayedOverlay === overlay)}
+              </div>
+            )}
+          </div>
+        )}
+      </main>
 
       {!isUnlocked && <PasswordGate onUnlock={() => setIsUnlocked(true)} />}
-
-    </main>
+    </>
   );
 }
 
