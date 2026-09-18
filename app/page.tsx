@@ -109,30 +109,25 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
     if (!gate) return;
 
     const viewport = window.visualViewport;
-    let viewportFrame = 0;
-    const syncViewport = () => {
-      viewportFrame = 0;
-      // Safari resizes/pans the visual viewport for the keyboard, not the page.
+    // Capture the resting height once. Keyboard resize must not recenter the panel.
+    gate.style.setProperty("--password-viewport-height", `${viewport?.height ?? window.innerHeight}px`);
+    const syncViewportOffset = () => {
+      // Compensate Safari viewport panning without changing the screen-space position.
       gate.style.setProperty("--password-viewport-top", `${viewport?.offsetTop ?? 0}px`);
-      gate.style.setProperty("--password-viewport-height", `${viewport?.height ?? window.innerHeight}px`);
-    };
-    const scheduleViewportSync = () => {
-      if (!viewportFrame) viewportFrame = window.requestAnimationFrame(syncViewport);
     };
 
-    syncViewport();
-    viewport?.addEventListener("resize", scheduleViewportSync);
-    viewport?.addEventListener("scroll", scheduleViewportSync);
-    window.addEventListener("resize", scheduleViewportSync);
-    gate.addEventListener("focusin", scheduleViewportSync);
-    gate.addEventListener("focusout", scheduleViewportSync);
+    syncViewportOffset();
+    viewport?.addEventListener("resize", syncViewportOffset);
+    viewport?.addEventListener("scroll", syncViewportOffset);
+    window.addEventListener("resize", syncViewportOffset);
+    gate.addEventListener("focusin", syncViewportOffset);
+    gate.addEventListener("focusout", syncViewportOffset);
     return () => {
-      window.cancelAnimationFrame(viewportFrame);
-      viewport?.removeEventListener("resize", scheduleViewportSync);
-      viewport?.removeEventListener("scroll", scheduleViewportSync);
-      window.removeEventListener("resize", scheduleViewportSync);
-      gate.removeEventListener("focusin", scheduleViewportSync);
-      gate.removeEventListener("focusout", scheduleViewportSync);
+      viewport?.removeEventListener("resize", syncViewportOffset);
+      viewport?.removeEventListener("scroll", syncViewportOffset);
+      window.removeEventListener("resize", syncViewportOffset);
+      gate.removeEventListener("focusin", syncViewportOffset);
+      gate.removeEventListener("focusout", syncViewportOffset);
     };
   }, []);
 
@@ -194,6 +189,11 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
             id="portfolio-password"
             type="password"
             value={password}
+            onPointerDown={(event) => {
+              if (event.button !== 0 || document.activeElement === event.currentTarget) return;
+              event.preventDefault();
+              event.currentTarget.focus({ preventScroll: true });
+            }}
             onChange={(event) => {
               setPassword(event.target.value);
               if (error) setError(false);
