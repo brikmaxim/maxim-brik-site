@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { type CSSProperties, type FormEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 type Overlay = "projects" | "info" | "contact" | null;
 type OverlayName = Exclude<Overlay, null>;
@@ -18,6 +18,16 @@ type Project = {
   video?: string;
   videoPreview?: string;
   isNew?: boolean;
+};
+
+type ContentSnapshot = {
+  view: View;
+  project: Project;
+  screenTop: number;
+  zoomOrigin: string;
+  viewportHeight: number;
+  overscan: number;
+  fadeOut: boolean;
 };
 
 const projects: Project[] = [
@@ -304,6 +314,7 @@ export default function Home() {
   const [view, setView] = useState<View>("work");
   const [contentVisible, setContentVisible] = useState(true);
   const [contentTransitionTarget, setContentTransitionTarget] = useState<View | null>(null);
+  const [outgoingContent, setOutgoingContent] = useState<ContentSnapshot | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project>(projects[0]);
   const [urgency, setUrgency] = useState<"1week" | "2weeks" | "4weeks">("2weeks");
   const [agreed, setAgreed] = useState(false);
@@ -312,6 +323,8 @@ export default function Home() {
   const [menuSection, setMenuSection] = useState<MenuSection>("work");
   const [dockHidden, setDockHidden] = useState(false);
   const siteContentRef = useRef<HTMLDivElement>(null);
+  const outgoingLayerRef = useRef<HTMLDivElement>(null);
+  const outgoingContentRef = useRef<ContentSnapshot | null>(null);
   const restoreFrames = useRef<number[]>([]);
   const overlayRef = useRef<Overlay>(null);
   const displayedOverlayRef = useRef<Overlay>(null);
@@ -321,7 +334,6 @@ export default function Home() {
   const contentVisibleRef = useRef(true);
   const contentTransitionTimer = useRef<number | null>(null);
   const contentRevealFrames = useRef<number[]>([]);
-  const pendingContentTransition = useRef<(() => void) | null>(null);
   const lastScrollY = useRef(0);
   const scrollFrame = useRef<number | null>(null);
   const dockHiddenRef = useRef(false);
@@ -387,8 +399,14 @@ export default function Home() {
   }, [view]);
 
   useLayoutEffect(() => {
+    const layer = outgoingLayerRef.current;
+    if (layer && outgoingContent) {
+      const shellTop = layer.parentElement?.getBoundingClientRect().top ?? 0;
+      const viewportTop = window.visualViewport?.offsetTop ?? 0;
+      layer.style.setProperty("--outgoing-layer-top", `${viewportTop - shellTop - outgoingContent.overscan}px`);
+    }
     syncContentZoomOrigin();
-  }, [view, selectedProject.id, syncContentZoomOrigin]);
+  }, [view, selectedProject.id, outgoingContent, syncContentZoomOrigin]);
 
   useEffect(() => () => {
     if (overlaySwapTimer.current !== null) window.clearTimeout(overlaySwapTimer.current);
@@ -561,36 +579,77 @@ export default function Home() {
     setContentVisible(visible);
   }, []);
 
+  const finishContentTransition = useCallback(() => {
+    if (contentTransitionTimer.current !== null) window.clearTimeout(contentTransitionTimer.current);
+    contentTransitionTimer.current = null;
+    outgoingContentRef.current = null;
+    setOutgoingContent(null);
+    setContentTransitionTarget(null);
+    setContentVisibility(true);
+  }, [setContentVisibility]);
+
+  const scheduleContentCleanup = useCallback(() => {
+    if (contentTransitionTimer.current !== null) window.clearTimeout(contentTransitionTimer.current);
+    // Transition events finish normally; this also handles background tabs and interrupted motion.
+    contentTransitionTimer.current = window.setTimeout(finishContentTransition, 750);
+  }, [finishContentTransition]);
+
   const revealContent = useCallback(() => {
     contentRevealFrames.current.forEach(window.cancelAnimationFrame);
     contentRevealFrames.current = [];
     const firstFrame = window.requestAnimationFrame(() => {
-      const secondFrame = window.requestAnimationFrame(() => setContentVisibility(true));
+      const secondFrame = window.requestAnimationFrame(() => {
+        setContentVisibility(true);
+        scheduleContentCleanup();
+      });
       contentRevealFrames.current.push(secondFrame);
     });
     contentRevealFrames.current.push(firstFrame);
-  }, [setContentVisibility]);
+  }, [setContentVisibility, scheduleContentCleanup]);
 
-  const transitionContent = useCallback((targetView: View, commitTransition: () => void) => {
-    pendingContentTransition.current = commitTransition;
-    setContentTransitionTarget(targetView);
+  const transitionContent = useCallback((targetView: View, commitTransition: () => void, targetProject?: Project) => {
+    const previousOutgoing = outgoingContentRef.current;
+    const returningToUnderlay = previousOutgoing?.view === targetView && (targetView === "work" || previousOutgoing.project.id === targetProject?.id);
     contentRevealFrames.current.forEach(window.cancelAnimationFrame);
     contentRevealFrames.current = [];
-    if (contentTransitionTimer.current !== null) return;
+
+    if (returningToUnderlay && !contentVisibleRef.current) {
+      commitTransition();
+      finishContentTransition();
+      return;
+    }
 
     syncContentZoomOrigin();
-    const exitDuration = contentVisibleRef.current && !window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 320 : 0;
-    setContentVisibility(false);
-    contentTransitionTimer.current = window.setTimeout(() => {
-      contentTransitionTimer.current = null;
-      const nextTransition = pendingContentTransition.current;
-      pendingContentTransition.current = null;
-      nextTransition?.();
-      revealContent();
-    }, exitDuration);
-  }, [revealContent, setContentVisibility, syncContentZoomOrigin]);
+    const content = siteContentRef.current;
+    const viewport = window.visualViewport;
+    const viewportHeight = Math.max(window.innerHeight, viewport?.height ?? 0);
+    const snapshot: ContentSnapshot = {
+      view,
+      project: selectedProject,
+      screenTop: (content?.parentElement?.getBoundingClientRect().top ?? 0) + (content?.offsetTop ?? 0) - (viewport?.offsetTop ?? 0),
+      zoomOrigin: content?.style.getPropertyValue("--content-zoom-origin") || "0px",
+      viewportHeight,
+      overscan: Math.ceil(viewportHeight * .2 + 40),
+      fadeOut: returningToUnderlay && targetView === "project",
+    };
+    const underlay = previousOutgoing && targetView === view && !returningToUnderlay ? previousOutgoing : snapshot;
+    outgoingContentRef.current = underlay;
+    setOutgoingContent(underlay);
+    setContentTransitionTarget(targetView);
+    if (!previousOutgoing) setContentVisibility(false);
+
+    // Keep the outgoing DOM painted while the new page joins the same animation timeline.
+    commitTransition();
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) finishContentTransition();
+    else if (previousOutgoing && contentVisibleRef.current) scheduleContentCleanup();
+    else revealContent();
+  }, [view, selectedProject, revealContent, setContentVisibility, syncContentZoomOrigin, finishContentTransition, scheduleContentCleanup]);
 
   const openProject = (project: Project = projects[0]) => {
+    if (view === "project" && project.id === selectedProject.id) {
+      closeOverlay();
+      return;
+    }
     if (view === "work") workScrollY.current = window.scrollY;
     const keepDockHidden = dockHiddenRef.current;
     closeOverlay();
@@ -614,7 +673,7 @@ export default function Home() {
       });
       restoreFrames.current.push(firstFrame);
       window.history.pushState({ portfolioView: "project" }, "", `${window.location.pathname}${window.location.search}`);
-    });
+    }, project);
   };
 
   const showWork = () => {
@@ -679,6 +738,15 @@ export default function Home() {
     </>
   );
 
+  const activeContent = { view, project: selectedProject };
+  const contentLayers = outgoingContent ? [outgoingContent, activeContent] : [activeContent];
+  // Project stays above Work in both directions, so reversing never swaps the compositing order.
+  contentLayers.sort((a, b) => {
+    if (a.view !== b.view) return a.view === "work" ? -1 : 1;
+    if (outgoingContent?.fadeOut) return a === outgoingContent ? 1 : b === outgoingContent ? -1 : 0;
+    return 0;
+  });
+
   return (
     <>
       <main className="portfolio-viewport" inert={!isUnlocked}>
@@ -698,9 +766,33 @@ export default function Home() {
         <div className={`brand-mark ${dockHidden ? "brand-mark--hidden" : ""}`} aria-hidden="true" />
 
         <div className={`portfolio-shell ${view === "project" ? "is-project" : "is-work"}`}>
-          <div ref={siteContentRef} className={`site-content ${contentVisible ? "is-visible" : ""} ${contentTransitionTarget ? `site-content--to-${contentTransitionTarget}` : ""}`} key={view === "project" ? selectedProject.id : "work"}>
-            {view === "work" ? <WorkView onOpenProject={openProject} /> : <ProjectView project={selectedProject} />}
-          </div>
+          {contentLayers.map((content) => {
+            const outgoing = content === outgoingContent;
+            const snapshot = outgoing ? outgoingContent : null;
+            return (
+              <div
+                key={content.view === "work" ? "work" : `project-${content.project.id}`}
+                ref={outgoing ? outgoingLayerRef : undefined}
+                className={`view-layer view-layer--${content.view} ${outgoing ? "view-layer--outgoing" : "view-layer--incoming"} ${contentVisible ? "is-visible" : ""} ${snapshot?.fadeOut ? "view-layer--fading-out" : ""} ${contentTransitionTarget ? `view-layer--to-${contentTransitionTarget}` : ""}`}
+                aria-hidden={outgoing || undefined}
+                inert={outgoing}
+                style={snapshot ? {
+                  "--outgoing-layer-height": `${snapshot.viewportHeight + snapshot.overscan * 2}px`,
+                } as CSSProperties : undefined}
+              >
+                <div
+                  ref={outgoing ? undefined : siteContentRef}
+                  className={`site-content site-content--${content.view} ${outgoing ? "site-content--outgoing" : "site-content--incoming"} ${contentVisible ? "is-visible" : ""}`}
+                  style={snapshot ? { top: `${snapshot.screenTop + snapshot.overscan}px`, "--content-zoom-origin": snapshot.zoomOrigin } as CSSProperties : undefined}
+                  onTransitionEnd={outgoing ? undefined : (event) => {
+                    if (event.target === event.currentTarget && event.propertyName === "transform" && outgoingContentRef.current) finishContentTransition();
+                  }}
+                >
+                  {content.view === "work" ? <WorkView onOpenProject={openProject} /> : <ProjectView project={content.project} />}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {(overlay || displayedOverlay) && (
