@@ -98,10 +98,43 @@ async function copyText(text: string) {
 }
 
 function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
+  const gateRef = useRef<HTMLDivElement>(null);
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
   const [checking, setChecking] = useState(false);
   const [leaving, setLeaving] = useState(false);
+
+  useLayoutEffect(() => {
+    const gate = gateRef.current;
+    if (!gate) return;
+
+    const viewport = window.visualViewport;
+    let viewportFrame = 0;
+    const syncViewport = () => {
+      viewportFrame = 0;
+      // Safari resizes/pans the visual viewport for the keyboard, not the page.
+      gate.style.setProperty("--password-viewport-top", `${viewport?.offsetTop ?? 0}px`);
+      gate.style.setProperty("--password-viewport-height", `${viewport?.height ?? window.innerHeight}px`);
+    };
+    const scheduleViewportSync = () => {
+      if (!viewportFrame) viewportFrame = window.requestAnimationFrame(syncViewport);
+    };
+
+    syncViewport();
+    viewport?.addEventListener("resize", scheduleViewportSync);
+    viewport?.addEventListener("scroll", scheduleViewportSync);
+    window.addEventListener("resize", scheduleViewportSync);
+    gate.addEventListener("focusin", scheduleViewportSync);
+    gate.addEventListener("focusout", scheduleViewportSync);
+    return () => {
+      window.cancelAnimationFrame(viewportFrame);
+      viewport?.removeEventListener("resize", scheduleViewportSync);
+      viewport?.removeEventListener("scroll", scheduleViewportSync);
+      window.removeEventListener("resize", scheduleViewportSync);
+      gate.removeEventListener("focusin", scheduleViewportSync);
+      gate.removeEventListener("focusout", scheduleViewportSync);
+    };
+  }, []);
 
   useEffect(() => {
     const lockedScrollY = window.scrollY;
@@ -146,7 +179,7 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   };
 
   return (
-    <div className={`password-gate ${leaving ? "password-gate--leaving" : ""}`} role="dialog" aria-modal="true" aria-labelledby="password-title">
+    <div ref={gateRef} className={`password-gate ${leaving ? "password-gate--leaving" : ""}`} role="dialog" aria-modal="true" aria-labelledby="password-title">
       <form className={`password-panel ${error ? "password-panel--error" : ""}`} onSubmit={submitPassword}>
         <span className="password-panel__logo" aria-hidden="true" />
         <label className="sr-only" id="password-title" htmlFor="portfolio-password">Password</label>
