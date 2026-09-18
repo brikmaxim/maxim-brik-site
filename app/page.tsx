@@ -311,6 +311,7 @@ export default function Home() {
   const [messagePromptDismissed, setMessagePromptDismissed] = useState(false);
   const [menuSection, setMenuSection] = useState<MenuSection>("work");
   const [dockHidden, setDockHidden] = useState(false);
+  const siteContentRef = useRef<HTMLDivElement>(null);
   const restoreFrames = useRef<number[]>([]);
   const overlayRef = useRef<Overlay>(null);
   const displayedOverlayRef = useRef<Overlay>(null);
@@ -330,6 +331,17 @@ export default function Home() {
   const restoreWorkScroll = useRef(false);
   const preserveDockDuringViewTransition = useRef(false);
   const preservedDockHidden = useRef(false);
+
+  const syncContentZoomOrigin = useCallback(() => {
+    const content = siteContentRef.current;
+    const shell = content?.parentElement;
+    if (!content || !shell) return;
+    // Zoom around the visible screen, not the top of the entire scrolled gallery.
+    const viewport = window.visualViewport;
+    const screenCenter = (viewport?.offsetTop ?? 0) + (viewport?.height ?? window.innerHeight) / 2;
+    const contentTop = shell.getBoundingClientRect().top + content.offsetTop;
+    content.style.setProperty("--content-zoom-origin", `${Math.max(0, screenCenter - contentTop)}px`);
+  }, []);
 
   useEffect(() => {
     try {
@@ -373,6 +385,10 @@ export default function Home() {
     });
     restoreFrames.current.push(firstFrame);
   }, [view]);
+
+  useLayoutEffect(() => {
+    syncContentZoomOrigin();
+  }, [view, selectedProject.id, syncContentZoomOrigin]);
 
   useEffect(() => () => {
     if (overlaySwapTimer.current !== null) window.clearTimeout(overlaySwapTimer.current);
@@ -562,6 +578,7 @@ export default function Home() {
     contentRevealFrames.current = [];
     if (contentTransitionTimer.current !== null) return;
 
+    syncContentZoomOrigin();
     const exitDuration = contentVisibleRef.current && !window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 320 : 0;
     setContentVisibility(false);
     contentTransitionTimer.current = window.setTimeout(() => {
@@ -571,7 +588,7 @@ export default function Home() {
       nextTransition?.();
       revealContent();
     }, exitDuration);
-  }, [revealContent, setContentVisibility]);
+  }, [revealContent, setContentVisibility, syncContentZoomOrigin]);
 
   const openProject = (project: Project = projects[0]) => {
     if (view === "work") workScrollY.current = window.scrollY;
@@ -681,7 +698,7 @@ export default function Home() {
         <div className={`brand-mark ${dockHidden ? "brand-mark--hidden" : ""}`} aria-hidden="true" />
 
         <div className={`portfolio-shell ${view === "project" ? "is-project" : "is-work"}`}>
-          <div className={`site-content ${contentVisible ? "is-visible" : ""} ${contentTransitionTarget ? `site-content--to-${contentTransitionTarget}` : ""}`} key={view === "project" ? selectedProject.id : "work"}>
+          <div ref={siteContentRef} className={`site-content ${contentVisible ? "is-visible" : ""} ${contentTransitionTarget ? `site-content--to-${contentTransitionTarget}` : ""}`} key={view === "project" ? selectedProject.id : "work"}>
             {view === "work" ? <WorkView onOpenProject={openProject} /> : <ProjectView project={selectedProject} />}
           </div>
         </div>
@@ -987,13 +1004,13 @@ function Dock({ overlay, view, menuSection, hidden, onProjects, onWork, onInfo, 
   const items = ["Work", "Info", "Contact"] as const;
   const itemClass = { Work: "dock-work", Info: "dock-info", Contact: "dock-contact" };
   const itemAction = { Work: onWork, Info: onInfo, Contact: onContact };
+  const closeVisible = Boolean(overlay) || view === "project";
 
   return (
     <div className="dock-anchor dock-anchor--base">
       <nav className={`dock dock--base ${overlay ? "is-open" : ""} ${hidden ? "dock--hidden" : ""}`} aria-label="Primary navigation" aria-hidden={hidden || undefined} inert={hidden}>
         <div className="dock-item dock-circle dock-plus"><button type="button" onClick={onProjects} aria-label="Open project index"><span /></button></div>
-        <div className={`dock-item dock-circle dock-close ${overlay ? "is-visible" : ""}`} aria-hidden={!overlay} inert={!overlay}><button type="button" onClick={onClose} aria-label="Close panel" tabIndex={overlay ? 0 : -1}><span /></button></div>
-        <div className={`dock-item dock-circle dock-project-close ${!overlay && view === "project" ? "is-visible" : ""}`} aria-hidden={Boolean(overlay) || view !== "project"} inert={Boolean(overlay) || view !== "project"}><button type="button" onClick={onProjectClose} aria-label="Close project" tabIndex={!overlay && view === "project" ? 0 : -1}><span /></button></div>
+        <div className={`dock-item dock-circle dock-close ${closeVisible ? "is-visible" : ""}`} aria-hidden={!closeVisible} inert={!closeVisible}><button type="button" onClick={overlay ? onClose : onProjectClose} aria-label={overlay ? "Close panel" : "Close project"} tabIndex={closeVisible ? 0 : -1}><span /></button></div>
         <div className="dock-links">
           {items.map((item) => (
             <div key={item} className={`dock-item dock-pill ${itemClass[item]} ${active === item ? "is-selected" : ""}`}>
