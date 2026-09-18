@@ -40,12 +40,13 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
-.password-gate { position: fixed; z-index: 100; top: var(--password-viewport-top, 0px); right: 0; left: 0; height: var(--password-viewport-height, 100%); display: grid; place-items: center; padding: var(--content-inset); overflow: hidden; overscroll-behavior: none; touch-action: none; opacity: 1; isolation: isolate; transition: opacity 460ms cubic-bezier(.4,0,.2,1); }
+/* Keep fixed password UI away from Safari's edge-color sampling areas. */
+.password-gate { position: fixed; z-index: 100; top: calc(var(--password-viewport-top, 0px) + var(--password-centered-top, 40svh)); right: max(var(--content-inset), calc(50% - 223.5px)); left: max(var(--content-inset), calc(50% - 223.5px)); overscroll-behavior: none; touch-action: none; opacity: 1; isolation: isolate; transition: opacity 460ms cubic-bezier(.4,0,.2,1); }
 @media (max-width: 540px) {
-  .password-gate { align-items: start; padding-top: clamp(80px, calc(var(--password-viewport-height, 100svh) * .16), 160px); }
+  .password-gate { top: calc(var(--password-viewport-top, 0px) + clamp(80px, calc(var(--password-viewport-height, 100svh) * .16), 160px) + 75px); }
 }
 .password-gate--leaving { opacity: 0; pointer-events: none; }
-.password-panel { position: relative; z-index: 1; width: min(calc(100vw - var(--content-inset) - var(--content-inset)), 447px); padding: var(--layout-gap); display: grid; grid-template-columns: 1fr; gap: var(--layout-gap); overflow: hidden; border-radius: var(--layout-radius); background: var(--glass); background-clip: padding-box; -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); -webkit-mask-image: -webkit-radial-gradient(white, black); isolation: isolate; backface-visibility: hidden; touch-action: manipulation; transform: translateY(0) scale(1); animation: password-panel-in 620ms cubic-bezier(.16,1,.3,1) both; transition: transform 460ms cubic-bezier(.4,0,.2,1), opacity 380ms cubic-bezier(.4,0,.2,1); }
+.password-panel { position: relative; z-index: 1; width: 100%; padding: var(--layout-gap); display: grid; grid-template-columns: 1fr; gap: var(--layout-gap); overflow: hidden; border-radius: var(--layout-radius); background: var(--glass); background-clip: padding-box; -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); -webkit-mask-image: -webkit-radial-gradient(white, black); isolation: isolate; backface-visibility: hidden; touch-action: manipulation; transform: translateY(0) scale(1); animation: password-panel-in 620ms cubic-bezier(.16,1,.3,1) both; transition: transform 460ms cubic-bezier(.4,0,.2,1), opacity 380ms cubic-bezier(.4,0,.2,1); }
 .password-gate--leaving .password-panel { opacity: 0; transform: translateY(min(1.852vw, 10px)) scale(.985); }
 .password-panel__logo { display: block; width: min(10.741vw, 58px); height: min(10.741vw, 58px); margin: 0 auto; background: var(--glass); -webkit-backdrop-filter: blur(9px) saturate(2.5); backdrop-filter: blur(9px) saturate(2.5); -webkit-mask: url("/maxim-brik-mark.svg") center / contain no-repeat; mask: url("/maxim-brik-mark.svg") center / contain no-repeat; }
 .password-panel label { color: rgba(0,0,0,.5); }

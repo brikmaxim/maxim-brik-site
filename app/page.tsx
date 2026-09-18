@@ -110,7 +110,9 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
 
     const viewport = window.visualViewport;
     // Capture the resting height once. Keyboard resize must not recenter the panel.
-    gate.style.setProperty("--password-viewport-height", `${viewport?.height ?? window.innerHeight}px`);
+    const restingHeight = viewport?.height ?? window.innerHeight;
+    gate.style.setProperty("--password-viewport-height", `${restingHeight}px`);
+    gate.style.setProperty("--password-centered-top", `${Math.max(0, (restingHeight - gate.offsetHeight) / 2)}px`);
     const syncViewportOffset = () => {
       // Compensate Safari viewport panning without changing the screen-space position.
       gate.style.setProperty("--password-viewport-top", `${viewport?.offsetTop ?? 0}px`);
