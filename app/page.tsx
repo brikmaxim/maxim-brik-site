@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type FormEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { type CSSProperties, type FormEvent, memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 type Overlay = "projects" | "info" | "contact" | null;
 type OverlayName = Exclude<Overlay, null>;
@@ -230,14 +230,20 @@ function GifVideo({
   preview,
   ariaLabel,
   ariaHidden,
+  width,
+  height,
 }: {
   src: string;
   className?: string;
   preview?: string;
   ariaLabel?: string;
   ariaHidden?: boolean;
+  width?: number;
+  height?: number;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const visibleRef = useRef(false);
+  const [shouldLoad, setShouldLoad] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
@@ -249,22 +255,35 @@ function GifVideo({
     video.playsInline = true;
 
     const play = () => {
-      if (video.paused) void video.play().catch(() => undefined);
+      if (visibleRef.current && !document.hidden && video.getAttribute("src") && video.paused) {
+        void video.play().catch(() => undefined);
+      }
     };
     const handleVisibility = () => {
-      if (!document.hidden) play();
+      if (document.hidden) video.pause();
+      else play();
     };
     const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) play();
+      visibleRef.current = entries.some((entry) => entry.isIntersecting);
+      if (visibleRef.current) play();
+      else video.pause();
     }, { threshold: 0.01 });
+    // Fetch just ahead of scrolling; do not decode every gallery/project video at once.
+    const preloadObserver = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      setShouldLoad(true);
+      preloadObserver.disconnect();
+    }, { rootMargin: "200px 0px" });
 
     observer.observe(video);
+    preloadObserver.observe(video);
     document.addEventListener("visibilitychange", handleVisibility);
     window.addEventListener("pageshow", play);
-    play();
 
     return () => {
       observer.disconnect();
+      preloadObserver.disconnect();
+      video.pause();
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("pageshow", play);
     };
@@ -284,7 +303,9 @@ function GifVideo({
       <video
         ref={videoRef}
         className={`gif-video ${isPlaying ? "gif-video--playing" : ""}${className ? ` ${className}` : ""}`}
-        src={src}
+        src={shouldLoad ? src : undefined}
+        width={width}
+        height={height}
         autoPlay
         muted
         loop
@@ -293,14 +314,18 @@ function GifVideo({
         disablePictureInPicture
         disableRemotePlayback
         controlsList="nodownload nofullscreen noremoteplayback"
-        preload="auto"
+        preload={shouldLoad ? "auto" : "none"}
         aria-label={ariaLabel}
         aria-hidden={ariaHidden}
         onCanPlay={(event) => {
           event.currentTarget.muted = true;
-          void event.currentTarget.play().catch(() => undefined);
+          if (visibleRef.current && !document.hidden) void event.currentTarget.play().catch(() => undefined);
+          else event.currentTarget.pause();
         }}
-        onPlaying={() => setIsPlaying(true)}
+        onPlaying={(event) => {
+          if (visibleRef.current && !document.hidden) setIsPlaying(true);
+          else event.currentTarget.pause();
+        }}
       />
     </>
   );
@@ -351,7 +376,10 @@ export default function Home() {
     // Zoom around the visible screen, not the top of the entire scrolled gallery.
     const viewport = window.visualViewport;
     const screenCenter = (viewport?.offsetTop ?? 0) + (viewport?.height ?? window.innerHeight) / 2;
-    const contentTop = shell.getBoundingClientRect().top + content.offsetTop;
+    const contentOffsetTop = shell.hasAttribute("data-transition-window")
+      ? parseFloat(shell.style.getPropertyValue("--incoming-window-top"))
+      : content.offsetTop;
+    const contentTop = shell.getBoundingClientRect().top + contentOffsetTop;
     content.style.setProperty("--content-zoom-origin", `${Math.max(0, screenCenter - contentTop)}px`);
   }, []);
 
@@ -405,7 +433,64 @@ export default function Home() {
       const viewportTop = window.visualViewport?.offsetTop ?? 0;
       layer.style.setProperty("--outgoing-layer-top", `${viewportTop - shellTop - outgoingContent.overscan}px`);
     }
+    const content = siteContentRef.current;
+    const incomingLayer = content?.parentElement;
+    const scene = content?.firstElementChild as HTMLElement | null;
+    let resizeObserver: ResizeObserver | undefined;
+    if (outgoingContent && incomingLayer && scene) {
+      // Reserve the natural document height, but composite/blur only the visible window.
+      const syncSceneHeight = () => incomingLayer.style.setProperty("--incoming-scene-height", `${scene.offsetHeight}px`);
+      syncSceneHeight();
+      const viewportTop = window.visualViewport?.offsetTop ?? 0;
+      incomingLayer.style.setProperty("--incoming-window-top", `${viewportTop - incomingLayer.getBoundingClientRect().top - outgoingContent.overscan}px`);
+      incomingLayer.style.setProperty("--incoming-window-height", `${outgoingContent.viewportHeight + outgoingContent.overscan * 2}px`);
+      incomingLayer.setAttribute("data-transition-window", "");
+      resizeObserver = new ResizeObserver(syncSceneHeight);
+      resizeObserver.observe(scene);
+    }
     syncContentZoomOrigin();
+    const viewport = window.visualViewport;
+    const startScrollY = window.scrollY;
+    const sceneZoomOrigin = parseFloat(content?.style.getPropertyValue("--content-zoom-origin") || "0")
+      + parseFloat(incomingLayer?.style.getPropertyValue("--incoming-window-top") || "0");
+    let windowFrame: number | null = null;
+    const syncWindows = () => {
+      if (windowFrame !== null || !outgoingContent || !incomingLayer || !content || !layer) return;
+      windowFrame = window.requestAnimationFrame(() => {
+        windowFrame = null;
+        const viewportTop = viewport?.offsetTop ?? 0;
+        const shellTop = layer.parentElement?.getBoundingClientRect().top ?? 0;
+        const incomingTop = incomingLayer.getBoundingClientRect().top;
+        const windowTop = viewportTop - incomingTop - outgoingContent.overscan;
+        const sceneTop = outgoingContent.screenTop + outgoingContent.overscan - (window.scrollY - startScrollY);
+        layer.style.setProperty("--outgoing-layer-top", `${viewportTop - shellTop - outgoingContent.overscan}px`);
+        const outgoingSurface = layer.firstElementChild as HTMLElement;
+        const outgoingScene = outgoingSurface.firstElementChild as HTMLElement;
+        outgoingScene.style.top = `${sceneTop}px`;
+        outgoingSurface.style.setProperty("--content-zoom-origin", `${parseFloat(outgoingContent.zoomOrigin) + sceneTop}px`);
+        incomingLayer.style.setProperty("--incoming-window-top", `${windowTop}px`);
+        content.style.setProperty("--content-zoom-origin", `${sceneZoomOrigin - windowTop}px`);
+      });
+    };
+    if (outgoingContent) {
+      // Keep clipping windows over newly visible pixels if the user scrolls during the blend.
+      window.addEventListener("scroll", syncWindows, { passive: true });
+      window.addEventListener("resize", syncWindows);
+      viewport?.addEventListener("scroll", syncWindows);
+      viewport?.addEventListener("resize", syncWindows);
+    }
+    return () => {
+      window.removeEventListener("scroll", syncWindows);
+      window.removeEventListener("resize", syncWindows);
+      viewport?.removeEventListener("scroll", syncWindows);
+      viewport?.removeEventListener("resize", syncWindows);
+      if (windowFrame !== null) window.cancelAnimationFrame(windowFrame);
+      resizeObserver?.disconnect();
+      incomingLayer?.removeAttribute("data-transition-window");
+      incomingLayer?.style.removeProperty("--incoming-scene-height");
+      incomingLayer?.style.removeProperty("--incoming-window-top");
+      incomingLayer?.style.removeProperty("--incoming-window-height");
+    };
   }, [view, selectedProject.id, outgoingContent, syncContentZoomOrigin]);
 
   useEffect(() => () => {
@@ -621,13 +706,20 @@ export default function Home() {
 
     syncContentZoomOrigin();
     const content = siteContentRef.current;
+    const scene = content?.firstElementChild as HTMLElement | null;
+    const contentLayer = content?.parentElement;
+    const windowTop = contentLayer?.hasAttribute("data-transition-window")
+      ? parseFloat(contentLayer.style.getPropertyValue("--incoming-window-top"))
+      : null;
+    const contentOffsetTop = windowTop ?? content?.offsetTop ?? 0;
+    const sceneOffsetTop = windowTop !== null ? -windowTop : scene?.offsetTop ?? 0;
     const viewport = window.visualViewport;
     const viewportHeight = Math.max(window.innerHeight, viewport?.height ?? 0);
     const snapshot: ContentSnapshot = {
       view,
       project: selectedProject,
-      screenTop: (content?.parentElement?.getBoundingClientRect().top ?? 0) + (content?.offsetTop ?? 0) - (viewport?.offsetTop ?? 0),
-      zoomOrigin: content?.style.getPropertyValue("--content-zoom-origin") || "0px",
+      screenTop: (contentLayer?.getBoundingClientRect().top ?? 0) + contentOffsetTop + sceneOffsetTop - (viewport?.offsetTop ?? 0),
+      zoomOrigin: `${parseFloat(content?.style.getPropertyValue("--content-zoom-origin") || "0") - sceneOffsetTop}px`,
       viewportHeight,
       overscan: Math.ceil(viewportHeight * .2 + 40),
       fadeOut: returningToUnderlay && targetView === "project",
@@ -645,7 +737,7 @@ export default function Home() {
     else revealContent();
   }, [view, selectedProject, revealContent, setContentVisibility, syncContentZoomOrigin, finishContentTransition, scheduleContentCleanup]);
 
-  const openProject = (project: Project = projects[0]) => {
+  const openProject = useCallback((project: Project = projects[0]) => {
     if (view === "project" && project.id === selectedProject.id) {
       closeOverlay();
       return;
@@ -674,7 +766,7 @@ export default function Home() {
       restoreFrames.current.push(firstFrame);
       window.history.pushState({ portfolioView: "project" }, "", `${window.location.pathname}${window.location.search}`);
     }, project);
-  };
+  }, [closeOverlay, selectedProject.id, transitionContent, view]);
 
   const showWork = () => {
     closeOverlay();
@@ -783,12 +875,14 @@ export default function Home() {
                 <div
                   ref={outgoing ? undefined : siteContentRef}
                   className={`site-content site-content--${content.view} ${outgoing ? "site-content--outgoing" : "site-content--incoming"} ${contentVisible ? "is-visible" : ""}`}
-                  style={snapshot ? { top: `${snapshot.screenTop + snapshot.overscan}px`, "--content-zoom-origin": snapshot.zoomOrigin } as CSSProperties : undefined}
+                  style={snapshot ? { "--content-zoom-origin": `${parseFloat(snapshot.zoomOrigin) + snapshot.screenTop + snapshot.overscan}px` } as CSSProperties : undefined}
                   onTransitionEnd={outgoing ? undefined : (event) => {
                     if (event.target === event.currentTarget && event.propertyName === "transform" && outgoingContentRef.current) finishContentTransition();
                   }}
                 >
-                  {content.view === "work" ? <WorkView onOpenProject={openProject} /> : <ProjectView project={content.project} />}
+                  <div className="content-scene" style={snapshot ? { top: `${snapshot.screenTop + snapshot.overscan}px` } : undefined}>
+                    {content.view === "work" ? <WorkView onOpenProject={openProject} /> : <ProjectView project={content.project} />}
+                  </div>
                 </div>
               </div>
             );
@@ -820,11 +914,11 @@ export default function Home() {
   );
 }
 
-function WorkView({ onOpenProject }: { onOpenProject: (project: Project) => void }) {
+const WorkView = memo(function WorkView({ onOpenProject }: { onOpenProject: (project: Project) => void }) {
   return (
     <>
       <section className="work-grid" aria-label="Selected work">
-        {projects.map((project) => (
+        {projects.map((project, index) => (
           <button
             className={`project-card project-card--${project.visual}`}
             type="button"
@@ -839,7 +933,7 @@ function WorkView({ onOpenProject }: { onOpenProject: (project: Project) => void
                 aria-hidden="true"
               />
             ) : (
-              <img className="project-card__image" src={project.image} alt="" />
+              <img className="project-card__image" src={project.image} alt="" loading={index === 0 ? "eager" : "lazy"} decoding="async" />
             )}
             <span className="card-chip card-chip--name"><span>{project.name}</span></span>
             {project.isNew && <span className="card-chip card-chip--new"><span>NEW</span></span>}
@@ -849,9 +943,9 @@ function WorkView({ onOpenProject }: { onOpenProject: (project: Project) => void
       </section>
     </>
   );
-}
+});
 
-function ProjectView({ project }: { project: Project }) {
+const ProjectView = memo(function ProjectView({ project }: { project: Project }) {
   const isAngel = project.visual === "angel";
   const isKyng = project.visual === "kyng";
 
@@ -916,7 +1010,7 @@ function ProjectView({ project }: { project: Project }) {
               </figure>
 
               <figure className="project-content-card project-content-card--video">
-                <GifVideo src="/kyng-motion.mp4" preview="/kyng-motion-preview.jpg" ariaLabel="KYNG object in motion" />
+                <GifVideo src="/kyng-motion.mp4" preview="/kyng-motion-preview.jpg" ariaLabel="KYNG object in motion" width={464} height={824} />
               </figure>
             </>
           )}
@@ -924,7 +1018,7 @@ function ProjectView({ project }: { project: Project }) {
       )}
     </article>
   );
-}
+});
 
 function ProjectIndex({ onOpenProject }: { onOpenProject: (project: Project) => void }) {
   const [filter, setFilter] = useState<"recent" | "oldest" | "alphabetical">("recent");

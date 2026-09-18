@@ -14,10 +14,12 @@
   --layout-radius: calc(var(--inner-radius) + var(--card-inset));
   --ui-lower-shift: clamp(42px, 11.85vw, 50px);
   --content-lift: clamp(38px, 10vw, 54px);
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   --dock-lower-shift: clamp(22px, 5.926vw, 32px);
-  --panel-top: calc(min(26.019vw, 140.5px) - var(--content-lift));
+  --panel-top: calc(min(26.019vw, 140.5px) - var(--content-lift) + var(--safe-area-top));
   --dock-height: min(9.074vw, 49px);
-  --dock-bottom: calc(var(--ui-lower-shift) - var(--dock-lower-shift));
+  --dock-bottom: max(calc(var(--ui-lower-shift) - var(--dock-lower-shift)), var(--safe-area-bottom));
   --panel-bottom: calc(var(--dock-bottom) + var(--dock-height) + var(--layout-gap));
   --menu-left: min(23.519vw, 127px);
   --menu-width: min(51.389vw, 277.5px);
@@ -32,8 +34,8 @@ html { overflow-anchor: none; }
 html.password-locked,
 html.password-locked body { overscroll-behavior: none; }
 html.password-locked body { touch-action: none; }
-html, body { margin: 0; width: 100%; color: var(--ink); }
-body { overflow-x: hidden; background: #fff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: min(3.241vw, 17.5px); line-height: 1.2; font-weight: 300; letter-spacing: 0; }
+html, body { margin: 0; width: 100%; min-height: 100svh; color: var(--ink); }
+body { overflow-x: clip; background: #fff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: min(3.241vw, 17.5px); line-height: 1.2; font-weight: 300; letter-spacing: 0; }
 button, input, textarea { color: inherit; font: inherit; letter-spacing: 0; }
 button { -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; }
 a { color: inherit; text-decoration: none; }
@@ -67,11 +69,11 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 @keyframes password-panel-in { from { opacity: 0; transform: translateY(min(1.852vw, 10px)) scale(1.025); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes password-panel-shake { 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
 
-.portfolio-viewport { position: relative; width: 100%; overflow-x: hidden; }
+.portfolio-viewport { position: relative; width: 100%; overflow-x: clip; }
 /* Keep the password blur in the document surface, including pixels sampled by Safari chrome. */
 html.password-locked .site-content { filter: blur(15px); transform: translate3d(0, 0, 0) scale(1.035); pointer-events: none; }
 html.password-locked .brand-mark,
-html.password-locked .dock-anchor { filter: blur(15px); pointer-events: none; }
+html.password-locked .dock { filter: blur(15px); pointer-events: none; }
 .portfolio-shell { width: min(100%, 540px); margin: 0 auto; padding: var(--panel-top) var(--content-inset) min(37vw, 200px); position: relative; background: #fff; }
 .portfolio-shell.is-project { padding-top: var(--panel-top); }
 .view-layer { position: relative; z-index: 1; margin: 0 calc(-1 * var(--content-inset)); padding: 0 var(--content-inset); background: #fff; overflow-x: clip; opacity: 1; transition: opacity 700ms cubic-bezier(.7,.01,.11,.96); }
@@ -80,6 +82,12 @@ html.password-locked .dock-anchor { filter: blur(15px); pointer-events: none; }
 /* Retain just the visible outgoing area in the document, without a fixed full-screen overlay. */
 .view-layer--outgoing { position: absolute; top: var(--outgoing-layer-top, 0px); right: 0; left: 0; margin: 0; height: var(--outgoing-layer-height); overflow: clip; contain: paint; pointer-events: none; }
 .site-content { position: relative; opacity: 1; filter: none; transform: translate3d(0, 0, 0) scale(1); transform-origin: 50% var(--content-zoom-origin, 0px); transition: filter 700ms cubic-bezier(.7,.01,.11,.96), transform 700ms cubic-bezier(.7,.01,.11,.96); }
+.content-scene { position: relative; }
+/* Blur only viewport-sized surfaces, not the entire long gallery in either direction. */
+.site-content--outgoing { height: 100%; overflow: clip; contain: paint; }
+.view-layer--incoming[data-transition-window] { height: var(--incoming-scene-height); }
+.view-layer--incoming[data-transition-window] > .site-content { position: absolute; top: var(--incoming-window-top); right: var(--content-inset); left: var(--content-inset); height: var(--incoming-window-height); overflow: clip; contain: paint; }
+.view-layer--incoming[data-transition-window] .content-scene { top: calc(-1 * var(--incoming-window-top)); }
 .site-content--incoming:not(.is-visible), .site-content--outgoing.is-visible { filter: blur(8px); transform: translate3d(0, min(1.481vw, 8px), 0) scale(var(--project-zoom-scale)); }
 .site-content--incoming:not(.is-visible), .site-content--outgoing { pointer-events: none; }
 /* Work remains opaque underneath: the project fades over it, never through a white gap. */
@@ -176,10 +184,10 @@ html.password-locked .dock-anchor { filter: blur(15px); pointer-events: none; }
 .detail-closeup { aspect-ratio: 893 / 1173; background: #82808b; }
 .detail-closeup img { width: 100%; height: 100%; display: block; object-fit: cover; transform: scale(1.45); }
 
-.overlay-layer { position: fixed; z-index: 30; inset: 0; pointer-events: none; backface-visibility: hidden; }
-.blur-screen { position: absolute; inset: 0; width: 100%; height: auto; padding: 0; border: 0; background: transparent; opacity: 1; -webkit-backdrop-filter: none; backdrop-filter: none; pointer-events: none; cursor: default; animation: none; }
+.overlay-layer { position: fixed; z-index: 30; top: 0; left: 0; width: 0; height: 0; pointer-events: none; }
+.blur-screen { position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh; padding: 0; border: 0; background: transparent; opacity: 1; -webkit-backdrop-filter: none; backdrop-filter: none; pointer-events: none; cursor: default; animation: none; }
 .overlay-layer--active .blur-screen { opacity: 1; pointer-events: auto; }
-.overlay-motion { position: absolute; inset: 0; }
+.overlay-motion { position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh; }
 .overlay-motion:not(.is-visible), .overlay-motion:not(.is-visible) * { pointer-events: none !important; }
 .glass-panel { position: relative; z-index: 1; overflow: hidden; border: 0; border-radius: var(--layout-radius); background: var(--glass); background-clip: padding-box; color: #000; -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); -webkit-mask-image: -webkit-radial-gradient(white, black); isolation: isolate; backface-visibility: hidden; box-shadow: none; pointer-events: auto; }
 
@@ -234,9 +242,10 @@ html.password-locked .dock-anchor { filter: blur(15px); pointer-events: none; }
 .continue-button { display: block; width: min(45.556vw, 246px); height: min(8.148vw, 44px); margin: min(2.13vw, 11.5px) auto 0; border: 0; border-radius: 999px; color: #fff; background: rgba(0,0,0,.76); font-size: min(3.241vw, 17.5px); font-weight: 400; cursor: pointer; }
 .copy-email { display: block; width: min(45.556vw, 246px); height: min(8.148vw, 44px); margin: 0 auto; border: 0; color: #000; background: transparent; font-size: min(3.241vw, 17.5px); font-weight: 400; cursor: pointer; }
 
-.dock-anchor { position: fixed; right: 0; bottom: var(--dock-bottom); left: 0; width: 100%; height: var(--dock-height); pointer-events: none; }
+/* A point-width anchor avoids presenting a full-width fixed edge to Safari's chrome sampler. */
+.dock-anchor { position: fixed; bottom: var(--dock-bottom); left: calc(50% - min(50vw, 270px)); width: 0; height: var(--dock-height); pointer-events: none; }
 .dock-anchor--base { z-index: 40; }
-.dock { position: absolute; top: 0; left: calc(50% - min(50vw, 270px)); width: min(100%, 540px); height: var(--dock-height); pointer-events: none; }
+.dock { position: absolute; top: 0; left: 0; width: min(100vw, 540px); height: var(--dock-height); pointer-events: none; }
 /* Fade the filtered surface itself, never its ancestor: opacity ancestors cut off the backdrop. */
 .dock-item { --dock-reveal: 1; --dock-fade-duration: 260ms; --dock-move-duration: 260ms; --dock-ease: cubic-bezier(.7,.01,.11,.96); position: absolute; top: 0; height: var(--dock-height); visibility: visible; opacity: 1; isolation: isolate; transform: translate3d(0, 0, 0); pointer-events: auto; background: transparent; box-shadow: none; transition: transform var(--dock-move-duration) var(--dock-ease); }
 .dock-item::before { content: ""; position: absolute; z-index: 0; inset: 0; overflow: hidden; border-radius: inherit; background: var(--dock-surface); background-clip: padding-box; opacity: var(--dock-reveal); -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); -webkit-mask-image: -webkit-radial-gradient(white, black); backface-visibility: hidden; will-change: opacity; pointer-events: none; transition: opacity var(--dock-fade-duration) var(--dock-ease), background-color 110ms ease; }
