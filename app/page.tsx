@@ -407,7 +407,9 @@ export default function Home() {
 
   useLayoutEffect(() => {
     if (view !== "work" || !restoreWorkScroll.current) return;
-    const targetScrollY = workScrollY.current;
+    // One physical pixel keeps iOS Safari in its compact chrome state while remaining
+    // visually indistinguishable from the top of the document.
+    const targetScrollY = Math.max(1, workScrollY.current);
     const keepDockHidden = preservedDockHidden.current;
     window.scrollTo({ top: targetScrollY, behavior: "auto" });
     const firstFrame = window.requestAnimationFrame(() => {
@@ -436,62 +438,30 @@ export default function Home() {
     const content = siteContentRef.current;
     const incomingLayer = content?.parentElement;
     const scene = content?.firstElementChild as HTMLElement | null;
-    let resizeObserver: ResizeObserver | undefined;
     if (outgoingContent && incomingLayer && scene) {
       // Reserve the natural document height, but composite/blur only the visible window.
-      const syncSceneHeight = () => incomingLayer.style.setProperty("--incoming-scene-height", `${scene.offsetHeight}px`);
-      syncSceneHeight();
+      // Freeze this geometry for the short transition: Safari animates visualViewport
+      // while its browser chrome changes, and following those intermediate values makes
+      // the two layers visibly jump against one another.
+      incomingLayer.style.setProperty("--incoming-scene-height", `${scene.offsetHeight}px`);
       const viewportTop = window.visualViewport?.offsetTop ?? 0;
       incomingLayer.style.setProperty("--incoming-window-top", `${viewportTop - incomingLayer.getBoundingClientRect().top - outgoingContent.overscan}px`);
       incomingLayer.style.setProperty("--incoming-window-height", `${outgoingContent.viewportHeight + outgoingContent.overscan * 2}px`);
       incomingLayer.setAttribute("data-transition-window", "");
-      resizeObserver = new ResizeObserver(syncSceneHeight);
-      resizeObserver.observe(scene);
     }
     syncContentZoomOrigin();
-    const viewport = window.visualViewport;
-    const startScrollY = window.scrollY;
-    const sceneZoomOrigin = parseFloat(content?.style.getPropertyValue("--content-zoom-origin") || "0")
-      + parseFloat(incomingLayer?.style.getPropertyValue("--incoming-window-top") || "0");
-    let windowFrame: number | null = null;
-    const syncWindows = () => {
-      if (windowFrame !== null || !outgoingContent || !incomingLayer || !content || !layer) return;
-      windowFrame = window.requestAnimationFrame(() => {
-        windowFrame = null;
-        const viewportTop = viewport?.offsetTop ?? 0;
-        const shellTop = layer.parentElement?.getBoundingClientRect().top ?? 0;
-        const incomingTop = incomingLayer.getBoundingClientRect().top;
-        const windowTop = viewportTop - incomingTop - outgoingContent.overscan;
-        const sceneTop = outgoingContent.screenTop + outgoingContent.overscan - (window.scrollY - startScrollY);
-        layer.style.setProperty("--outgoing-layer-top", `${viewportTop - shellTop - outgoingContent.overscan}px`);
-        const outgoingSurface = layer.firstElementChild as HTMLElement;
-        const outgoingScene = outgoingSurface.firstElementChild as HTMLElement;
-        outgoingScene.style.top = `${sceneTop}px`;
-        outgoingSurface.style.setProperty("--content-zoom-origin", `${parseFloat(outgoingContent.zoomOrigin) + sceneTop}px`);
-        incomingLayer.style.setProperty("--incoming-window-top", `${windowTop}px`);
-        content.style.setProperty("--content-zoom-origin", `${sceneZoomOrigin - windowTop}px`);
-      });
-    };
-    if (outgoingContent) {
-      // Keep clipping windows over newly visible pixels if the user scrolls during the blend.
-      window.addEventListener("scroll", syncWindows, { passive: true });
-      window.addEventListener("resize", syncWindows);
-      viewport?.addEventListener("scroll", syncWindows);
-      viewport?.addEventListener("resize", syncWindows);
-    }
     return () => {
-      window.removeEventListener("scroll", syncWindows);
-      window.removeEventListener("resize", syncWindows);
-      viewport?.removeEventListener("scroll", syncWindows);
-      viewport?.removeEventListener("resize", syncWindows);
-      if (windowFrame !== null) window.cancelAnimationFrame(windowFrame);
-      resizeObserver?.disconnect();
       incomingLayer?.removeAttribute("data-transition-window");
       incomingLayer?.style.removeProperty("--incoming-scene-height");
       incomingLayer?.style.removeProperty("--incoming-window-top");
       incomingLayer?.style.removeProperty("--incoming-window-height");
     };
   }, [view, selectedProject.id, outgoingContent, syncContentZoomOrigin]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("project-transitioning", Boolean(outgoingContent));
+    return () => document.documentElement.classList.remove("project-transitioning");
+  }, [outgoingContent]);
 
   useEffect(() => () => {
     if (overlaySwapTimer.current !== null) window.clearTimeout(overlaySwapTimer.current);
@@ -750,8 +720,10 @@ export default function Home() {
       preservedDockHidden.current = keepDockHidden;
       setSelectedProject(project);
       setView("project");
-      window.scrollTo({ top: 0, behavior: "auto" });
-      lastScrollY.current = 0;
+      // Avoid the exact scroll boundary: on iOS Safari it expands the browser chrome
+      // over the first transition frames and exposes a white strip above the scene.
+      window.scrollTo({ top: 1, behavior: "auto" });
+      lastScrollY.current = 1;
       scrollDistance.current = 0;
       scrollDirection.current = 0;
       dockHiddenRef.current = keepDockHidden;

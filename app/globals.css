@@ -34,6 +34,8 @@ html { overflow-anchor: none; }
 html.password-locked,
 html.password-locked body { overscroll-behavior: none; }
 html.password-locked body { touch-action: none; }
+html.project-transitioning,
+html.project-transitioning body { overscroll-behavior-y: none; }
 html, body { margin: 0; width: 100%; min-height: 100svh; color: var(--ink); }
 body { overflow-x: clip; background: #fff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: min(3.241vw, 17.5px); line-height: 1.2; font-weight: 300; letter-spacing: 0; }
 button, input, textarea { color: inherit; font: inherit; letter-spacing: 0; }
@@ -69,7 +71,7 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 @keyframes password-panel-in { from { opacity: 0; transform: translateY(min(1.852vw, 10px)) scale(1.025); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes password-panel-shake { 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
 
-.portfolio-viewport { position: relative; width: 100%; overflow-x: clip; }
+.portfolio-viewport { position: relative; width: 100%; min-height: 100dvh; overflow-x: clip; background: #fff; }
 /* Keep the password blur in the document surface, including pixels sampled by Safari chrome. */
 html.password-locked .site-content { filter: blur(15px); transform: translate3d(0, 0, 0) scale(1.035); pointer-events: none; }
 html.password-locked .brand-mark,
@@ -88,7 +90,11 @@ html.password-locked .dock { filter: blur(15px); pointer-events: none; }
 .view-layer--incoming[data-transition-window] { height: var(--incoming-scene-height); }
 .view-layer--incoming[data-transition-window] > .site-content { position: absolute; top: var(--incoming-window-top); right: var(--content-inset); left: var(--content-inset); height: var(--incoming-window-height); overflow: clip; contain: paint; }
 .view-layer--incoming[data-transition-window] .content-scene { top: calc(-1 * var(--incoming-window-top)); }
-.site-content--incoming:not(.is-visible), .site-content--outgoing.is-visible { filter: blur(8px); transform: translate3d(0, min(1.481vw, 8px), 0) scale(var(--project-zoom-scale)); }
+.view-layer--outgoing, .view-layer--incoming[data-transition-window] { will-change: opacity; }
+.view-layer--outgoing > .site-content { will-change: transform, filter; }
+.view-layer--incoming[data-transition-window] > .site-content { will-change: transform; }
+.site-content--incoming:not(.is-visible) { filter: none; transform: translate3d(0, min(1.481vw, 8px), 0) scale(var(--project-zoom-scale)); }
+.site-content--outgoing.is-visible { filter: blur(8px); transform: translate3d(0, min(1.481vw, 8px), 0) scale(var(--project-zoom-scale)); }
 .site-content--incoming:not(.is-visible), .site-content--outgoing { pointer-events: none; }
 /* Work remains opaque underneath: the project fades over it, never through a white gap. */
 .view-layer--project.view-layer--incoming:not(.is-visible), .view-layer--project.view-layer--outgoing.view-layer--to-work.is-visible, .view-layer--fading-out.is-visible { opacity: 0; }
