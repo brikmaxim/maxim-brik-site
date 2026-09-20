@@ -32,7 +32,7 @@ type ContentSnapshot = {
 
 const projects: Project[] = [
   { id: "01", name: "KYNG", category: "CGI,Dev", year: "2026", image: "/kyng-card-2.jpg", visual: "kyng", isNew: true },
-  { id: "02", name: "Solution", category: "CGI", year: "2022", image: "/solution-cover.jpg", visual: "solution" },
+  { id: "02", name: "Solution", category: "CGI", year: "2022", image: "/solution-card-preview.jpg", visual: "solution", video: "/solution-card.mp4", videoPreview: "/solution-card-preview.jpg" },
   { id: "03", name: "NDSP", category: "CGI,AI,Dev", year: "2025", image: "/kyng-detail-drawing.png", visual: "drawing", video: "/ndsp-card.mp4", videoPreview: "/ndsp-card-preview.jpg" },
   { id: "04", name: "ANGEL 333", category: "ID,CGI", year: "2024", image: "/angel-333-cover.jpg", visual: "angel", video: "/angel-p-1.mp4", videoPreview: "/angel-p-1-preview.jpg" },
   { id: "05", name: "Yandex", category: "CGI", year: "2023", image: "/kyng-detail-cover.png", visual: "cover-warm" },
