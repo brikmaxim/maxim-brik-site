@@ -862,11 +862,14 @@ export default function Home() {
         </div>
 
         {outgoingContent && (
-          <div
-            key={`${contentTransitionTarget}-${outgoingContent.view}-${outgoingContent.project.id}`}
-            className="project-transition-wash"
-            aria-hidden="true"
-          />
+          <>
+            <div className="project-transition-backdrop" aria-hidden="true" />
+            <div
+              key={`${contentTransitionTarget}-${outgoingContent.view}-${outgoingContent.project.id}`}
+              className="project-transition-wash"
+              aria-hidden="true"
+            />
+          </>
         )}
 
         {(overlay || displayedOverlay) && (

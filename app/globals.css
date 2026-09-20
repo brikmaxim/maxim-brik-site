@@ -71,7 +71,7 @@ figure, h1, h2, p, dl, dd { margin: 0; }
 @keyframes password-panel-in { from { opacity: 0; transform: translateY(min(1.852vw, 10px)) scale(1.025); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes password-panel-shake { 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
 
-.portfolio-viewport { position: relative; width: 100%; min-height: 100dvh; overflow-x: clip; background: #fff; }
+.portfolio-viewport { position: relative; width: 100%; min-height: 100dvh; overflow-x: clip; background: #fff; isolation: isolate; }
 /* Keep the password blur in the document surface, including pixels sampled by Safari chrome. */
 html.password-locked .site-content { filter: blur(15px); transform: translate3d(0, 0, 0) scale(1.035); pointer-events: none; }
 html.password-locked .brand-mark,
@@ -93,11 +93,14 @@ html.password-locked .dock { filter: blur(15px); pointer-events: none; }
 .view-layer--outgoing, .view-layer--incoming[data-transition-window] { will-change: opacity; }
 .view-layer--outgoing > .site-content { will-change: transform; }
 .view-layer--incoming[data-transition-window] > .site-content { will-change: transform; }
+.project-transitioning .view-layer { z-index: 3; }
+.project-transitioning .view-layer--project { z-index: 4; }
 .site-content--incoming:not(.is-visible) { filter: none; transform: translate3d(0, min(1.481vw, 8px), 0) scale(var(--project-zoom-scale)); }
 .site-content--outgoing.is-visible { filter: none; transform: translate3d(0, min(1.481vw, 8px), 0) scale(var(--project-zoom-scale)); }
 .site-content--incoming:not(.is-visible), .site-content--outgoing { pointer-events: none; }
 /* Preserve layer order while the dedicated white wash conceals the view swap. */
 .view-layer--project.view-layer--incoming:not(.is-visible), .view-layer--project.view-layer--outgoing.view-layer--to-work.is-visible, .view-layer--fading-out.is-visible { opacity: 0; }
+.project-transition-backdrop { position: fixed; z-index: 2; top: -15dvh; right: 0; bottom: -15dvh; left: 0; background: #fff; pointer-events: none; }
 .project-transition-wash { position: fixed; z-index: 24; top: -15dvh; right: 0; bottom: -15dvh; left: 0; background: #fff; opacity: 0; pointer-events: none; will-change: opacity; animation: project-white-fade 700ms cubic-bezier(.7,.01,.11,.96) both; }
 @keyframes project-white-fade {
   0% { opacity: 0; }
