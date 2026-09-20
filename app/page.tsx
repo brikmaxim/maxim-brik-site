@@ -358,6 +358,7 @@ export default function Home() {
   const overlayRevealFrames = useRef<number[]>([]);
   const contentVisibleRef = useRef(true);
   const contentTransitionTimer = useRef<number | null>(null);
+  const contentRevealTimer = useRef<number | null>(null);
   const contentRevealFrames = useRef<number[]>([]);
   const lastScrollY = useRef(0);
   const scrollFrame = useRef<number | null>(null);
@@ -467,6 +468,7 @@ export default function Home() {
     if (overlaySwapTimer.current !== null) window.clearTimeout(overlaySwapTimer.current);
     overlayRevealFrames.current.forEach(window.cancelAnimationFrame);
     if (contentTransitionTimer.current !== null) window.clearTimeout(contentTransitionTimer.current);
+    if (contentRevealTimer.current !== null) window.clearTimeout(contentRevealTimer.current);
     contentRevealFrames.current.forEach(window.cancelAnimationFrame);
   }, []);
 
@@ -636,6 +638,8 @@ export default function Home() {
 
   const finishContentTransition = useCallback(() => {
     if (contentTransitionTimer.current !== null) window.clearTimeout(contentTransitionTimer.current);
+    if (contentRevealTimer.current !== null) window.clearTimeout(contentRevealTimer.current);
+    contentRevealTimer.current = null;
     contentTransitionTimer.current = null;
     outgoingContentRef.current = null;
     setOutgoingContent(null);
@@ -652,14 +656,14 @@ export default function Home() {
   const revealContent = useCallback(() => {
     contentRevealFrames.current.forEach(window.cancelAnimationFrame);
     contentRevealFrames.current = [];
-    const firstFrame = window.requestAnimationFrame(() => {
-      const secondFrame = window.requestAnimationFrame(() => {
-        setContentVisibility(true);
-        scheduleContentCleanup();
-      });
-      contentRevealFrames.current.push(secondFrame);
-    });
-    contentRevealFrames.current.push(firstFrame);
+    if (contentRevealTimer.current !== null) window.clearTimeout(contentRevealTimer.current);
+    // Swap pages only while the fixed white wash is opaque, so the gallery and
+    // project are never composited together in a visible frame.
+    contentRevealTimer.current = window.setTimeout(() => {
+      contentRevealTimer.current = null;
+      setContentVisibility(true);
+      scheduleContentCleanup();
+    }, 180);
   }, [setContentVisibility, scheduleContentCleanup]);
 
   const transitionContent = useCallback((targetView: View, commitTransition: () => void, targetProject?: Project) => {
@@ -667,6 +671,10 @@ export default function Home() {
     const returningToUnderlay = previousOutgoing?.view === targetView && (targetView === "work" || previousOutgoing.project.id === targetProject?.id);
     contentRevealFrames.current.forEach(window.cancelAnimationFrame);
     contentRevealFrames.current = [];
+    if (contentRevealTimer.current !== null) {
+      window.clearTimeout(contentRevealTimer.current);
+      contentRevealTimer.current = null;
+    }
 
     if (returningToUnderlay && !contentVisibleRef.current) {
       commitTransition();
@@ -862,14 +870,11 @@ export default function Home() {
         </div>
 
         {outgoingContent && (
-          <>
-            <div className="project-transition-backdrop" aria-hidden="true" />
-            <div
-              key={`${contentTransitionTarget}-${outgoingContent.view}-${outgoingContent.project.id}`}
-              className="project-transition-wash"
-              aria-hidden="true"
-            />
-          </>
+          <div
+            key={`${contentTransitionTarget}-${outgoingContent.view}-${outgoingContent.project.id}`}
+            className="project-transition-wash"
+            aria-hidden="true"
+          />
         )}
 
         {(overlay || displayedOverlay) && (
