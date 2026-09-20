@@ -587,7 +587,7 @@ export default function Home() {
       setDisplayedOverlay(targetOverlay);
       setPanelVisibility(false);
       revealOverlay();
-    }, 340);
+    }, 150);
   }, [revealOverlay, setPanelVisibility]);
 
   const openOverlay = useCallback((nextOverlay: OverlayName) => {

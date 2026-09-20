@@ -204,12 +204,8 @@ html.password-locked .dock { filter: blur(15px); pointer-events: none; }
 .glass-panel { position: relative; z-index: 1; overflow: hidden; border: 0; border-radius: var(--layout-radius); background: var(--glass); background-clip: padding-box; color: #000; -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); -webkit-mask-image: -webkit-radial-gradient(white, black); isolation: isolate; backface-visibility: hidden; box-shadow: none; pointer-events: auto; }
 
 .project-index > .glass-panel, .info-stack > .glass-panel, .contact-panel { opacity: 1; transform: none; filter: none; animation: none; }
-.overlay-motion .project-index > .glass-panel, .overlay-motion .info-stack > .glass-panel, .overlay-motion > .contact-panel { opacity: 0; filter: blur(12px); transform: translate3d(0, min(1.481vw, 8px), 0) scale(1.15); transform-origin: 50% 100%; will-change: transform, opacity, filter; transition: opacity 340ms cubic-bezier(.89,.04,.3,.99), transform 340ms cubic-bezier(.89,.04,.3,.99), filter 340ms cubic-bezier(.89,.04,.3,.99); }
-.overlay-motion.is-visible .project-index > .glass-panel, .overlay-motion.is-visible .info-stack > .glass-panel, .overlay-motion.is-visible > .contact-panel { opacity: 1; filter: none; transform: translate3d(0, 0, 0) scale(1); transition-duration: 600ms; transition-timing-function: cubic-bezier(.7,.01,.11,.96); }
-@keyframes panel-reveal {
-  from { opacity: 0; transform: translate3d(0, min(1.481vw, 8px), 0) scale(1.15); filter: blur(12px); }
-  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
-}
+.overlay-motion .project-index > .glass-panel, .overlay-motion .info-stack > .glass-panel, .overlay-motion > .contact-panel { opacity: 0; filter: none; transform: translate3d(0, min(1.481vw, 8px), 0) scale(1.15); transform-origin: 50% 100%; will-change: transform, opacity; transition: opacity 150ms cubic-bezier(.89,.04,.3,.99), transform 150ms cubic-bezier(.89,.04,.3,.99); }
+.overlay-motion.is-visible .project-index > .glass-panel, .overlay-motion.is-visible .info-stack > .glass-panel, .overlay-motion.is-visible > .contact-panel { opacity: 1; filter: none; transform: translate3d(0, 0, 0) scale(1); transition-duration: 520ms; transition-timing-function: cubic-bezier(.7,.01,.11,.96); }
 
 .project-index { position: absolute; top: var(--panel-top); right: var(--content-edge); bottom: var(--panel-bottom); left: var(--content-edge); display: grid; grid-template-rows: min(79.537vw, 429.5px) minmax(0, 1fr); gap: var(--layout-gap); pointer-events: auto; }
 .project-index__table { height: 100%; padding: min(2.963vw, 16px) min(3.426vw, 18.5px); overflow: hidden; }
@@ -258,10 +254,9 @@ html.password-locked .dock { filter: blur(15px); pointer-events: none; }
 .dock-anchor { position: fixed; bottom: var(--dock-bottom); left: calc(50% - min(50vw, 270px)); width: 0; height: var(--dock-height); pointer-events: none; }
 .dock-anchor--base { z-index: 40; }
 .dock { position: absolute; top: 0; left: 0; width: min(100vw, 540px); height: var(--dock-height); pointer-events: none; }
-/* Fade the filtered surface itself, never its ancestor: opacity ancestors cut off the backdrop. */
-.dock-item { --dock-reveal: 1; --dock-fade-duration: 260ms; --dock-move-duration: 260ms; --dock-ease: cubic-bezier(.7,.01,.11,.96); position: absolute; top: 0; height: var(--dock-height); visibility: visible; opacity: 1; isolation: isolate; transform: translate3d(0, 0, 0); pointer-events: auto; background: transparent; box-shadow: none; transition: transform var(--dock-move-duration) var(--dock-ease); }
-.dock-item::before { content: ""; position: absolute; z-index: 0; inset: 0; overflow: hidden; border-radius: inherit; background: var(--dock-surface); background-clip: padding-box; opacity: var(--dock-reveal); -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); -webkit-mask-image: -webkit-radial-gradient(white, black); backface-visibility: hidden; will-change: opacity; pointer-events: none; transition: opacity var(--dock-fade-duration) var(--dock-ease), background-color 110ms ease; }
-.dock-item > button { position: relative; z-index: 1; width: 100%; height: 100%; padding: 0; border: 0; border-radius: inherit; color: var(--ink); background: transparent; box-shadow: none; opacity: var(--dock-reveal); cursor: pointer; pointer-events: auto; touch-action: manipulation; font-size: min(3.241vw, 17.5px); font-weight: 400; line-height: normal; transition: opacity var(--dock-fade-duration) var(--dock-ease), transform 110ms cubic-bezier(.8,.01,.11,.98); }
+.dock-item { --dock-move-duration: 260ms; --dock-ease: cubic-bezier(.7,.01,.11,.96); position: absolute; top: 0; height: var(--dock-height); visibility: visible; opacity: 1; isolation: isolate; transform: translate3d(0, 0, 0); pointer-events: auto; background: transparent; box-shadow: none; will-change: transform; transition: transform var(--dock-move-duration) var(--dock-ease); }
+.dock-item::before { content: ""; position: absolute; z-index: 0; inset: 0; overflow: hidden; border-radius: inherit; background: var(--dock-surface); background-clip: padding-box; opacity: 1; -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); -webkit-mask-image: -webkit-radial-gradient(white, black); backface-visibility: hidden; pointer-events: none; transition: background-color 110ms ease; }
+.dock-item > button { position: relative; z-index: 1; width: 100%; height: 100%; padding: 0; border: 0; border-radius: inherit; color: var(--ink); background: transparent; box-shadow: none; opacity: 1; cursor: pointer; pointer-events: auto; touch-action: manipulation; font-size: min(3.241vw, 17.5px); font-weight: 400; line-height: normal; transition: transform 110ms cubic-bezier(.8,.01,.11,.98); }
 .dock-pill.is-selected::before { background-color: var(--dock-selected); }
 .dock-pill > button:active { background: transparent; }
 .dock-item:active::before { background-color: var(--dock-selected); }
@@ -269,8 +264,8 @@ html.password-locked .dock { filter: blur(15px); pointer-events: none; }
 .dock button:focus-visible { outline: 1px solid rgba(34,34,34,.28); outline-offset: 2px; }
 .dock-circle { width: var(--dock-height); border-radius: 50%; }
 .dock-plus { left: min(9.352vw, 50.5px); }
-.dock-close { --dock-reveal: 0; --dock-fade-duration: 150ms; --dock-move-duration: 220ms; --dock-ease: cubic-bezier(.8,.01,.11,.98); right: min(9.352vw, 50.5px); left: auto; top: 0; transform: scale(.78); pointer-events: none; }
-.dock-close.is-visible { --dock-reveal: 1; --dock-move-duration: 260ms; transform: scale(1); pointer-events: auto; }
+.dock-close { --dock-move-duration: 220ms; --dock-ease: cubic-bezier(.8,.01,.11,.98); right: min(9.352vw, 50.5px); left: auto; top: 0; transform: scale(.001); pointer-events: none; }
+.dock-close.is-visible { --dock-move-duration: 260ms; transform: scale(1); pointer-events: auto; }
 .dock-plus span, .dock-close span { position: absolute; inset: 0; display: block; }
 .dock-plus span::before, .dock-plus span::after, .dock-close span::before, .dock-close span::after { content: ""; position: absolute; left: 50%; top: 50%; width: min(2.917vw, 15.75px); height: min(.278vw, 1.5px); background: #222; transform: translate(-50%,-50%); }
 .dock-plus span::after { transform: translate(-50%,-50%) rotate(90deg); }
@@ -285,7 +280,7 @@ html.password-locked .dock { filter: blur(15px); pointer-events: none; }
 .dock--overlay .dock-contact { left: min(55.648vw, 300.5px); }
 .dock-close span::before { transform: translate(-50%,-50%) rotate(45deg); }
 .dock-close span::after { transform: translate(-50%,-50%) rotate(-45deg); }
-.dock.dock--hidden .dock-item { --dock-reveal: 0; --dock-fade-duration: 260ms; --dock-move-duration: 260ms; --dock-ease: cubic-bezier(.89,.04,.3,.99); transform: translate3d(0, min(3.704vw, 20px), 0); pointer-events: none; }
+.dock.dock--hidden .dock-item { --dock-move-duration: 260ms; --dock-ease: cubic-bezier(.89,.04,.3,.99); transform: translate3d(0, calc(var(--dock-height) + var(--dock-bottom) + 12px), 0); pointer-events: none; }
 
 @media (min-width: 541px) {
   body { background: #f4f4f4; }
