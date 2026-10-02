@@ -16,6 +16,7 @@ type Project = {
   image: string;
   visual: string;
   video?: string;
+  videoMobile?: string;
   videoPreview?: string;
   isNew?: boolean;
 };
@@ -32,9 +33,9 @@ type ContentSnapshot = {
 
 const projects: Project[] = [
   { id: "01", name: "KYNG", category: "CGI,Dev", year: "2026", image: "/kyng-card-2.jpg", visual: "kyng", isNew: true },
-  { id: "02", name: "Solution", category: "CGI", year: "2022", image: "/solution-card-preview.jpg", visual: "solution", video: "/solution-card.mp4", videoPreview: "/solution-card-preview.jpg" },
+  { id: "02", name: "Solution", category: "CGI", year: "2022", image: "/solution-card-preview.jpg", visual: "solution", video: "/solution-card.mp4", videoMobile: "/solution-card-mobile.mp4", videoPreview: "/solution-card-preview.jpg" },
   { id: "03", name: "NDSP", category: "CGI,AI,Dev", year: "2025", image: "/kyng-detail-drawing.png", visual: "drawing", video: "/ndsp-card.mp4", videoPreview: "/ndsp-card-preview.jpg" },
-  { id: "04", name: "ANGEL 333", category: "ID,CGI", year: "2024", image: "/angel-333-cover.jpg", visual: "angel", video: "/angel-p-1.mp4", videoPreview: "/angel-p-1-preview.jpg" },
+  { id: "04", name: "ANGEL 333", category: "ID,CGI", year: "2024", image: "/angel-333-cover.jpg", visual: "angel", video: "/angel-p-1.mp4", videoMobile: "/angel-p-1-mobile.mp4", videoPreview: "/angel-p-1-preview.jpg" },
   { id: "05", name: "Yandex", category: "CGI", year: "2023", image: "/kyng-detail-cover.png", visual: "cover-warm" },
   { id: "06", name: "SBER", category: "CGI,Dev", year: "2022", image: "/sber-cover.jpg", visual: "sber" },
   { id: "07", name: "Sicko", category: "CGI,AI,Dev", year: "2026", image: "/sicko-work.png", visual: "sicko" },
@@ -226,24 +227,28 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
 
 function GifVideo({
   src,
+  mobileSrc,
   className,
   preview,
   ariaLabel,
   ariaHidden,
   width,
   height,
+  active = true,
 }: {
   src: string;
+  mobileSrc?: string;
   className?: string;
   preview?: string;
   ariaLabel?: string;
   ariaHidden?: boolean;
   width?: number;
   height?: number;
+  active?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const visibleRef = useRef(false);
-  const [shouldLoad, setShouldLoad] = useState(false);
+  const [resolvedSrc, setResolvedSrc] = useState<string>();
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
@@ -255,7 +260,7 @@ function GifVideo({
     video.playsInline = true;
 
     const play = () => {
-      if (visibleRef.current && !document.hidden && video.getAttribute("src") && video.paused) {
+      if (active && visibleRef.current && !document.hidden && video.currentSrc && video.paused) {
         void video.play().catch(() => undefined);
       }
     };
@@ -264,16 +269,16 @@ function GifVideo({
       else play();
     };
     const observer = new IntersectionObserver((entries) => {
-      visibleRef.current = entries.some((entry) => entry.isIntersecting);
+      visibleRef.current = entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= .15);
       if (visibleRef.current) play();
       else video.pause();
-    }, { threshold: 0.01 });
+    }, { threshold: [0, .15] });
     // Fetch just ahead of scrolling; do not decode every gallery/project video at once.
     const preloadObserver = new IntersectionObserver((entries) => {
       if (!entries.some((entry) => entry.isIntersecting)) return;
-      setShouldLoad(true);
+      setResolvedSrc(window.matchMedia("(max-width: 540px)").matches && mobileSrc ? mobileSrc : src);
       preloadObserver.disconnect();
-    }, { rootMargin: "200px 0px" });
+    }, { rootMargin: "60px 0px" });
 
     observer.observe(video);
     preloadObserver.observe(video);
@@ -287,7 +292,17 @@ function GifVideo({
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("pageshow", play);
     };
-  }, [src]);
+  }, [src, mobileSrc, active]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (!active) {
+      video.pause();
+      return;
+    }
+    if (visibleRef.current && !document.hidden && video.currentSrc) void video.play().catch(() => undefined);
+  }, [active, resolvedSrc]);
 
   return (
     <>
@@ -303,7 +318,7 @@ function GifVideo({
       <video
         ref={videoRef}
         className={`gif-video ${isPlaying ? "gif-video--playing" : ""}${className ? ` ${className}` : ""}`}
-        src={shouldLoad ? src : undefined}
+        src={resolvedSrc}
         width={width}
         height={height}
         autoPlay
@@ -314,16 +329,16 @@ function GifVideo({
         disablePictureInPicture
         disableRemotePlayback
         controlsList="nodownload nofullscreen noremoteplayback"
-        preload={shouldLoad ? "auto" : "none"}
+        preload={resolvedSrc ? "auto" : "none"}
         aria-label={ariaLabel}
         aria-hidden={ariaHidden}
         onCanPlay={(event) => {
           event.currentTarget.muted = true;
-          if (visibleRef.current && !document.hidden) void event.currentTarget.play().catch(() => undefined);
+          if (active && visibleRef.current && !document.hidden) void event.currentTarget.play().catch(() => undefined);
           else event.currentTarget.pause();
         }}
         onPlaying={(event) => {
-          if (visibleRef.current && !document.hidden) setIsPlaying(true);
+          if (active && visibleRef.current && !document.hidden) setIsPlaying(true);
           else event.currentTarget.pause();
         }}
       />
@@ -852,7 +867,11 @@ export default function Home() {
                   }}
                 >
                   <div className="content-scene" style={snapshot ? { top: `${snapshot.screenTop + snapshot.overscan}px` } : undefined}>
-                    {content.view === "work" ? <WorkView onOpenProject={openProject} /> : <ProjectView project={content.project} />}
+                    {content.view === "work" ? (
+                      <WorkView onOpenProject={openProject} mediaActive={!outgoing && !overlay} />
+                    ) : (
+                      <ProjectView project={content.project} mediaActive={!outgoing && !overlay} />
+                    )}
                   </div>
                 </div>
               </div>
@@ -885,7 +904,7 @@ export default function Home() {
   );
 }
 
-const WorkView = memo(function WorkView({ onOpenProject }: { onOpenProject: (project: Project) => void }) {
+const WorkView = memo(function WorkView({ onOpenProject, mediaActive }: { onOpenProject: (project: Project) => void; mediaActive: boolean }) {
   return (
     <>
       <section className="work-grid" aria-label="Selected work">
@@ -900,8 +919,10 @@ const WorkView = memo(function WorkView({ onOpenProject }: { onOpenProject: (pro
               <GifVideo
                 className="project-card__video"
                 src={project.video}
+                mobileSrc={project.videoMobile}
                 preview={project.videoPreview ?? project.image}
                 aria-hidden="true"
+                active={mediaActive}
               />
             ) : (
               <img className="project-card__image" src={project.image} alt="" loading={index === 0 ? "eager" : "lazy"} decoding="async" />
@@ -916,7 +937,7 @@ const WorkView = memo(function WorkView({ onOpenProject }: { onOpenProject: (pro
   );
 });
 
-const ProjectView = memo(function ProjectView({ project }: { project: Project }) {
+const ProjectView = memo(function ProjectView({ project, mediaActive }: { project: Project; mediaActive: boolean }) {
   const isAngel = project.visual === "angel";
   const isKyng = project.visual === "kyng";
 
@@ -981,7 +1002,7 @@ const ProjectView = memo(function ProjectView({ project }: { project: Project })
               </figure>
 
               <figure className="project-content-card project-content-card--video">
-                <GifVideo src="/kyng-motion.mp4" preview="/kyng-motion-preview.jpg" ariaLabel="KYNG object in motion" width={464} height={824} />
+                <GifVideo src="/kyng-motion.mp4" preview="/kyng-motion-preview.jpg" ariaLabel="KYNG object in motion" width={464} height={824} active={mediaActive} />
               </figure>
             </>
           )}
