@@ -225,6 +225,66 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   );
 }
 
+type GifPlaybackEntry = {
+  active: boolean;
+  visible: boolean;
+  ratio: number;
+};
+
+const gifPlaybackEntries = new Map<HTMLVideoElement, GifPlaybackEntry>();
+let gifPlaybackFrame: number | null = null;
+
+function getGifPlaybackCandidate(): HTMLVideoElement | null {
+  if (typeof window === "undefined" || document.hidden) return null;
+
+  const viewportCenter = window.innerHeight / 2;
+  let candidate: HTMLVideoElement | null = null;
+  let candidateDistance = Number.POSITIVE_INFINITY;
+  let candidateRatio = 0;
+
+  gifPlaybackEntries.forEach((entry, video) => {
+    if (!entry.active || !entry.visible || !video.currentSrc || !video.isConnected) return;
+    const rect = video.getBoundingClientRect();
+    const distance = Math.abs(rect.top + rect.height / 2 - viewportCenter);
+    if (distance < candidateDistance || (distance === candidateDistance && entry.ratio > candidateRatio)) {
+      candidate = video;
+      candidateDistance = distance;
+      candidateRatio = entry.ratio;
+    }
+  });
+
+  return candidate;
+}
+
+function syncGifPlayback() {
+  if (typeof window === "undefined" || gifPlaybackFrame !== null) return;
+
+  gifPlaybackFrame = window.requestAnimationFrame(() => {
+    gifPlaybackFrame = null;
+    const candidate = getGifPlaybackCandidate();
+
+    gifPlaybackEntries.forEach((_entry, video) => {
+      if (video === candidate) {
+        if (video.paused) void video.play().catch(() => undefined);
+      } else if (!video.paused) {
+        video.pause();
+      }
+    });
+  });
+}
+
+function updateGifPlayback(video: HTMLVideoElement, patch: Partial<GifPlaybackEntry>) {
+  const current = gifPlaybackEntries.get(video) ?? { active: false, visible: false, ratio: 0 };
+  gifPlaybackEntries.set(video, { ...current, ...patch });
+  syncGifPlayback();
+}
+
+function removeGifPlayback(video: HTMLVideoElement) {
+  gifPlaybackEntries.delete(video);
+  video.pause();
+  syncGifPlayback();
+}
+
 function GifVideo({
   src,
   mobileSrc,
@@ -259,19 +319,13 @@ function GifVideo({
     video.muted = true;
     video.playsInline = true;
 
-    const play = () => {
-      if (active && visibleRef.current && !document.hidden && video.currentSrc && video.paused) {
-        void video.play().catch(() => undefined);
-      }
-    };
-    const handleVisibility = () => {
-      if (document.hidden) video.pause();
-      else play();
-    };
+    updateGifPlayback(video, { active, visible: false, ratio: 0 });
+    const handleVisibility = () => syncGifPlayback();
     const observer = new IntersectionObserver((entries) => {
-      visibleRef.current = entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= .15);
-      if (visibleRef.current) play();
-      else video.pause();
+      const entry = entries[0];
+      const ratio = entry?.intersectionRatio ?? 0;
+      visibleRef.current = Boolean(entry?.isIntersecting && ratio >= .15);
+      updateGifPlayback(video, { visible: visibleRef.current, ratio });
     }, { threshold: [0, .15] });
     // Fetch just ahead of scrolling; do not decode every gallery/project video at once.
     const preloadObserver = new IntersectionObserver((entries) => {
@@ -283,25 +337,21 @@ function GifVideo({
     observer.observe(video);
     preloadObserver.observe(video);
     document.addEventListener("visibilitychange", handleVisibility);
-    window.addEventListener("pageshow", play);
+    window.addEventListener("pageshow", handleVisibility);
 
     return () => {
       observer.disconnect();
       preloadObserver.disconnect();
-      video.pause();
+      removeGifPlayback(video);
       document.removeEventListener("visibilitychange", handleVisibility);
-      window.removeEventListener("pageshow", play);
+      window.removeEventListener("pageshow", handleVisibility);
     };
-  }, [src, mobileSrc, active]);
+  }, [src, mobileSrc]);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (!active) {
-      video.pause();
-      return;
-    }
-    if (visibleRef.current && !document.hidden && video.currentSrc) void video.play().catch(() => undefined);
+    updateGifPlayback(video, { active });
   }, [active, resolvedSrc]);
 
   return (
@@ -335,12 +385,14 @@ function GifVideo({
         aria-hidden={ariaHidden}
         onCanPlay={(event) => {
           event.currentTarget.muted = true;
-          if (active && visibleRef.current && !document.hidden) void event.currentTarget.play().catch(() => undefined);
-          else event.currentTarget.pause();
+          syncGifPlayback();
         }}
         onPlaying={(event) => {
-          if (active && visibleRef.current && !document.hidden) setIsPlaying(true);
-          else event.currentTarget.pause();
+          if (getGifPlaybackCandidate() === event.currentTarget) setIsPlaying(true);
+          else {
+            event.currentTarget.pause();
+            syncGifPlayback();
+          }
         }}
       />
     </>
