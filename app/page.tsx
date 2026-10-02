@@ -307,7 +307,6 @@ function GifVideo({
   active?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const visibleRef = useRef(false);
   const [resolvedSrc, setResolvedSrc] = useState<string>();
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -324,8 +323,8 @@ function GifVideo({
     const observer = new IntersectionObserver((entries) => {
       const entry = entries[0];
       const ratio = entry?.intersectionRatio ?? 0;
-      visibleRef.current = Boolean(entry?.isIntersecting && ratio >= .15);
-      updateGifPlayback(video, { visible: visibleRef.current, ratio });
+      const visible = Boolean(entry?.isIntersecting && ratio >= .15);
+      updateGifPlayback(video, { visible, ratio });
     }, { threshold: [0, .15] });
     // Fetch just ahead of scrolling; do not decode every gallery/project video at once.
     const preloadObserver = new IntersectionObserver((entries) => {
@@ -418,7 +417,6 @@ export default function Home() {
   const siteContentRef = useRef<HTMLDivElement>(null);
   const outgoingLayerRef = useRef<HTMLDivElement>(null);
   const outgoingContentRef = useRef<ContentSnapshot | null>(null);
-  const restoreFrames = useRef<number[]>([]);
   const overlayRef = useRef<Overlay>(null);
   const displayedOverlayRef = useRef<Overlay>(null);
   const overlayVisibleRef = useRef(false);
@@ -436,6 +434,16 @@ export default function Home() {
   const restoreWorkScroll = useRef(false);
   const preserveDockDuringViewTransition = useRef(false);
   const preservedDockHidden = useRef(false);
+  const restoreFrames = useRef<Set<number>>(new Set());
+
+  const queueRestoreFrame = useCallback((callback: FrameRequestCallback) => {
+    let frame = 0;
+    frame = window.requestAnimationFrame((timestamp) => {
+      restoreFrames.current.delete(frame);
+      callback(timestamp);
+    });
+    restoreFrames.current.add(frame);
+  }, []);
 
   const syncContentZoomOrigin = useCallback(() => {
     const content = siteContentRef.current;
@@ -470,6 +478,7 @@ export default function Home() {
     return () => {
       window.history.scrollRestoration = previousScrollRestoration;
       restoreFrames.current.forEach(window.cancelAnimationFrame);
+      restoreFrames.current.clear();
     };
   }, []);
 
@@ -480,8 +489,8 @@ export default function Home() {
     const targetScrollY = workScrollY.current;
     const keepDockHidden = preservedDockHidden.current;
     window.scrollTo({ top: targetScrollY, behavior: "auto" });
-    const firstFrame = window.requestAnimationFrame(() => {
-      const secondFrame = window.requestAnimationFrame(() => {
+    queueRestoreFrame(() => {
+      queueRestoreFrame(() => {
         window.scrollTo({ top: targetScrollY, behavior: "auto" });
         lastScrollY.current = targetScrollY;
         scrollDistance.current = 0;
@@ -491,10 +500,8 @@ export default function Home() {
         restoreWorkScroll.current = false;
         preserveDockDuringViewTransition.current = false;
       });
-      restoreFrames.current.push(secondFrame);
     });
-    restoreFrames.current.push(firstFrame);
-  }, [view]);
+  }, [queueRestoreFrame, view]);
 
   useLayoutEffect(() => {
     const layer = outgoingLayerRef.current;
@@ -797,17 +804,15 @@ export default function Home() {
       scrollDirection.current = 0;
       dockHiddenRef.current = keepDockHidden;
       setDockHidden(keepDockHidden);
-      const firstFrame = window.requestAnimationFrame(() => {
-        const secondFrame = window.requestAnimationFrame(() => {
+      queueRestoreFrame(() => {
+        queueRestoreFrame(() => {
           lastScrollY.current = Math.max(0, window.scrollY);
           preserveDockDuringViewTransition.current = false;
         });
-        restoreFrames.current.push(secondFrame);
       });
-      restoreFrames.current.push(firstFrame);
       window.history.pushState({ portfolioView: "project" }, "", `${window.location.pathname}${window.location.search}`);
     }, project);
-  }, [closeOverlay, selectedProject.id, transitionContent, view]);
+  }, [closeOverlay, queueRestoreFrame, selectedProject.id, transitionContent, view]);
 
   const showWork = () => {
     closeOverlay();
