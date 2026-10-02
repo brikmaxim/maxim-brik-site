@@ -407,9 +407,9 @@ export default function Home() {
 
   useLayoutEffect(() => {
     if (view !== "work" || !restoreWorkScroll.current) return;
-    // One physical pixel keeps iOS Safari in its compact chrome state while remaining
-    // visually indistinguishable from the top of the document.
-    const targetScrollY = Math.max(1, workScrollY.current);
+    // Restore the exact gallery position. A forced one-pixel offset makes fixed
+    // glass panels stop matching the card edges after returning from a project.
+    const targetScrollY = workScrollY.current;
     const keepDockHidden = preservedDockHidden.current;
     window.scrollTo({ top: targetScrollY, behavior: "auto" });
     const firstFrame = window.requestAnimationFrame(() => {
