@@ -312,6 +312,7 @@ function GifVideo({
           src={preview}
           alt=""
           aria-hidden="true"
+          loading="lazy"
           decoding="async"
         />
       )}
@@ -969,44 +970,44 @@ const ProjectView = memo(function ProjectView({ project, mediaActive }: { projec
       </section>
 
       <figure className="detail-cover">
-        <img src={["angel", "poemikoso", "mixit", "armor-hord"].includes(project.visual) ? project.image : "/kyng-detail-cover.png"} alt={`${project.name} project cover`} />
+        <img src={["angel", "poemikoso", "mixit", "armor-hord"].includes(project.visual) ? project.image : "/kyng-detail-cover.png"} alt={`${project.name} project cover`} width={893} height={1173} fetchPriority="high" decoding="async" />
         <span className="card-chip card-chip--name"><span>{project.year}</span></span>
       </figure>
 
       {isAngel ? (
         <>
           <div className="detail-pair detail-pair--square">
-            <figure><img src="/angel-333-ring.jpg" alt="ANGEL 333 silver ring" /></figure>
-            <figure><img src="/angel-333-views.jpg" alt="ANGEL 333 ring studies" /></figure>
+            <figure><img src="/angel-333-ring.jpg" alt="ANGEL 333 silver ring" width={1736} height={1736} loading="lazy" decoding="async" /></figure>
+            <figure><img src="/angel-333-views.jpg" alt="ANGEL 333 ring studies" width={1736} height={1640} loading="lazy" decoding="async" /></figure>
           </div>
 
           <figure className="project-content-card project-content-card--portrait">
-            <img src="/angel-333-development.jpg" alt="ANGEL 333 design development" />
+            <img src="/angel-333-development.jpg" alt="ANGEL 333 design development" width={1396} height={1740} loading="lazy" decoding="async" />
           </figure>
 
           <figure className="project-content-card">
-            <img src="/angel-333-boots.jpg" alt="ANGEL 333 boots" />
+            <img src="/angel-333-boots.jpg" alt="ANGEL 333 boots" width={1740} height={1736} loading="lazy" decoding="async" />
           </figure>
         </>
       ) : (
         <>
           <div className="detail-pair">
-            <figure><img src="/kyng-detail-side.png" alt="KYNG side view" /></figure>
-            <figure className="detail-drawing"><img src="/kyng-detail-drawing.png" alt="KYNG technical drawing" /></figure>
+            <figure><img src="/kyng-detail-side.png" alt="KYNG side view" width={476} height={476} loading="lazy" decoding="async" /></figure>
+            <figure className="detail-drawing"><img src="/kyng-detail-drawing.png" alt="KYNG technical drawing" width={500} height={500} loading="lazy" decoding="async" /></figure>
           </div>
 
           <p className="story-card">Instead of simply placing it on a piece of jewellery, we began looking for a form that could carry the same language. The first reference was a <em>chastity belt</em> — a rigid object built around the body, somewhere between protection, control and ornament.</p>
 
-          <figure className="detail-closeup"><img src="/kyng-detail-cover.png" alt="KYNG silver form close view" /></figure>
+          <figure className="detail-closeup"><img src="/kyng-detail-cover.png" alt="KYNG silver form close view" width={893} height={1173} loading="lazy" decoding="async" /></figure>
 
           {isKyng && (
             <>
               <figure className="project-content-card">
-                <img src="/kyng-work-front.jpg" alt="KYNG front view" />
+                <img src="/kyng-work-front.jpg" alt="KYNG front view" width={1280} height={1280} loading="lazy" decoding="async" />
               </figure>
 
               <figure className="project-content-card">
-                <img src="/kyng-work-back.jpg" alt="KYNG back view" />
+                <img src="/kyng-work-back.jpg" alt="KYNG back view" width={1280} height={1280} loading="lazy" decoding="async" />
               </figure>
 
               <figure className="project-content-card project-content-card--video">
