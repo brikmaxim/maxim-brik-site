@@ -369,8 +369,8 @@ export default function Home() {
   const overlayRef = useRef<Overlay>(null);
   const displayedOverlayRef = useRef<Overlay>(null);
   const overlayVisibleRef = useRef(false);
-  const overlaySwapTimer = useRef<number | null>(null);
-  const overlayRevealFrames = useRef<number[]>([]);
+  const overlayLeavingRef = useRef(false);
+  const overlayRevealFrame = useRef<number | null>(null);
   const contentVisibleRef = useRef(true);
   const contentTransitionTimer = useRef<number | null>(null);
   const contentRevealFrames = useRef<number[]>([]);
@@ -479,8 +479,7 @@ export default function Home() {
   }, [outgoingContent]);
 
   useEffect(() => () => {
-    if (overlaySwapTimer.current !== null) window.clearTimeout(overlaySwapTimer.current);
-    overlayRevealFrames.current.forEach(window.cancelAnimationFrame);
+    if (overlayRevealFrame.current !== null) window.cancelAnimationFrame(overlayRevealFrame.current);
     if (contentTransitionTimer.current !== null) window.clearTimeout(contentTransitionTimer.current);
     contentRevealFrames.current.forEach(window.cancelAnimationFrame);
   }, []);
@@ -568,41 +567,33 @@ export default function Home() {
   }, []);
 
   const revealOverlay = useCallback(() => {
-    overlayRevealFrames.current.forEach(window.cancelAnimationFrame);
-    overlayRevealFrames.current = [];
-    const firstFrame = window.requestAnimationFrame(() => {
-      const secondFrame = window.requestAnimationFrame(() => {
-        if (displayedOverlayRef.current && overlayRef.current === displayedOverlayRef.current) {
-          setPanelVisibility(true);
-        }
-      });
-      overlayRevealFrames.current.push(secondFrame);
+    if (overlayRevealFrame.current !== null) window.cancelAnimationFrame(overlayRevealFrame.current);
+    overlayLeavingRef.current = false;
+    overlayRevealFrame.current = window.requestAnimationFrame(() => {
+      overlayRevealFrame.current = null;
+      if (displayedOverlayRef.current && overlayRef.current === displayedOverlayRef.current) {
+        setPanelVisibility(true);
+      }
     });
-    overlayRevealFrames.current.push(firstFrame);
   }, [setPanelVisibility]);
 
-  const scheduleOverlaySwap = useCallback(() => {
-    if (overlaySwapTimer.current !== null) return;
-    overlaySwapTimer.current = window.setTimeout(() => {
-      overlaySwapTimer.current = null;
-      const targetOverlay = overlayRef.current;
+  const finishOverlayExit = useCallback(() => {
+    if (!overlayLeavingRef.current) return;
+    overlayLeavingRef.current = false;
+    const targetOverlay = overlayRef.current;
 
-      if (!targetOverlay) {
-        displayedOverlayRef.current = null;
-        setDisplayedOverlay(null);
-        return;
-      }
+    if (!targetOverlay) {
+      displayedOverlayRef.current = null;
+      setDisplayedOverlay(null);
+      return;
+    }
 
-      if (targetOverlay === displayedOverlayRef.current) {
-        revealOverlay();
-        return;
-      }
-
+    if (targetOverlay !== displayedOverlayRef.current) {
       displayedOverlayRef.current = targetOverlay;
       setDisplayedOverlay(targetOverlay);
       setPanelVisibility(false);
-      revealOverlay();
-    }, 150);
+    }
+    revealOverlay();
   }, [revealOverlay, setPanelVisibility]);
 
   const openOverlay = useCallback((nextOverlay: OverlayName) => {
@@ -621,28 +612,39 @@ export default function Home() {
     }
 
     if (displayedOverlayRef.current === nextOverlay) {
-      if (overlaySwapTimer.current !== null) {
-        window.clearTimeout(overlaySwapTimer.current);
-        overlaySwapTimer.current = null;
-      }
       revealOverlay();
       return;
     }
 
+    if (overlayLeavingRef.current) return;
+    if (!overlayVisibleRef.current) {
+      displayedOverlayRef.current = nextOverlay;
+      setDisplayedOverlay(nextOverlay);
+      revealOverlay();
+      return;
+    }
+
+    overlayLeavingRef.current = true;
     setPanelVisibility(false);
-    scheduleOverlaySwap();
-  }, [revealOverlay, scheduleOverlaySwap, setPanelVisibility]);
+  }, [revealOverlay, setPanelVisibility]);
 
   const closeOverlay = useCallback(() => {
     overlayRef.current = null;
     setOverlay(null);
     setMenuSection("work");
-    overlayRevealFrames.current.forEach(window.cancelAnimationFrame);
-    overlayRevealFrames.current = [];
+    if (overlayRevealFrame.current !== null) {
+      window.cancelAnimationFrame(overlayRevealFrame.current);
+      overlayRevealFrame.current = null;
+    }
     if (!displayedOverlayRef.current) return;
+    if (!overlayVisibleRef.current && !overlayLeavingRef.current) {
+      displayedOverlayRef.current = null;
+      setDisplayedOverlay(null);
+      return;
+    }
+    overlayLeavingRef.current = true;
     setPanelVisibility(false);
-    scheduleOverlaySwap();
-  }, [scheduleOverlaySwap, setPanelVisibility]);
+  }, [setPanelVisibility]);
 
   const setContentVisibility = useCallback((visible: boolean) => {
     contentVisibleRef.current = visible;
@@ -891,6 +893,12 @@ export default function Home() {
               <div
                 className={`overlay-motion ${overlayVisible ? "is-visible" : ""}`}
                 aria-hidden={!overlayVisible || displayedOverlay !== overlay}
+                onTransitionEnd={(event) => {
+                  if (event.propertyName !== "transform") return;
+                  const firstPanel = event.currentTarget.querySelector(".glass-panel");
+                  if (event.target !== firstPanel) return;
+                  finishOverlayExit();
+                }}
               >
                 {renderOverlayContent(displayedOverlay, overlayVisible && displayedOverlay === overlay)}
               </div>
